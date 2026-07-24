@@ -3,12 +3,11 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { PROBLEMS } from '@/lib/problems';
+import { t } from '@/lib/i18n';
 import {
   Code2,
   Clock,
   Sparkles,
-  Database,
-  ArrowRight,
   Terminal,
   BrainCircuit,
   Play
@@ -16,6 +15,14 @@ import {
 
 export default function HomePage() {
   const [selectedRole, setSelectedRole] = useState<string>('ALL');
+
+  const roleFilters = [
+    { key: 'ALL', label: t('allRoles') },
+    { key: 'Backend', label: 'Backend Engineer' },
+    { key: 'Frontend', label: 'Frontend Engineer' },
+    { key: 'Full Stack', label: 'Full Stack Engineer' },
+    { key: 'QA', label: 'QA Engineer' },
+  ];
 
   const filteredProblems = selectedRole === 'ALL'
     ? PROBLEMS
@@ -34,14 +41,14 @@ export default function HomePage() {
               <Code2 className="w-4 h-4 stroke-[2]" />
             </div>
             <span className="font-bold text-base tracking-tight text-zinc-100">
-              LiveCode <span className="text-zinc-400 font-normal">Trainer</span>
+              LiveCode <span className="text-zinc-400 font-normal">{t('appSubtitle')}</span>
             </span>
           </div>
 
           <div className="flex items-center gap-3 text-xs">
             <span className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-zinc-900/80 border border-zinc-800 text-zinc-300">
               <Sparkles className="w-3.5 h-3.5 text-zinc-400" />
-              Groq Llama 3.3 70B AI Engine
+              {t('navBadge')}
             </span>
           </div>
         </div>
@@ -51,35 +58,35 @@ export default function HomePage() {
       <header className="max-w-4xl mx-auto px-6 pt-20 pb-12 text-center space-y-6">
         <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-zinc-900/90 border border-zinc-800 text-zinc-300 text-xs font-medium tracking-wide">
           <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-          Technical Interview Simulator
+          {t('heroBadge')}
         </div>
 
         <h1 className="text-4xl md:text-6xl font-extrabold text-zinc-100 tracking-tight leading-[1.1]">
-          Master REST API Logic under <br />
+          {t('heroTitle1')} <br />
           <span className="text-transparent bg-clip-text bg-gradient-to-r from-zinc-200 via-zinc-400 to-zinc-500">
-            Real Interview Constraints
+            {t('heroTitle2')}
           </span>
         </h1>
 
         <p className="max-w-2xl mx-auto text-sm md:text-base text-zinc-400 leading-relaxed font-normal">
-          Practice 30-minute live-code challenges for Mid-Level Backend, Frontend, Full Stack, and QA roles. Real-time test execution, Groq AI code assessment, and PostgreSQL race condition feedback.
+          {t('heroDesc')}
         </p>
       </header>
 
       {/* Role Filters */}
       <section className="max-w-6xl mx-auto px-6 pb-10">
         <div className="flex items-center justify-center gap-2 flex-wrap text-xs">
-          {['ALL', 'Backend', 'Frontend', 'Full Stack', 'QA'].map((role) => (
+          {roleFilters.map(({ key, label }) => (
             <button
-              key={role}
-              onClick={() => setSelectedRole(role)}
+              key={key}
+              onClick={() => setSelectedRole(key)}
               className={`px-4 py-2 rounded-full transition-all duration-200 font-medium ${
-                selectedRole === role
+                selectedRole === key
                   ? 'bg-zinc-100 text-zinc-950 font-semibold shadow-sm'
                   : 'bg-zinc-900/60 hover:bg-zinc-900 text-zinc-400 border border-zinc-800/80 hover:text-zinc-200'
               }`}
             >
-              {role === 'ALL' ? 'All Roles' : `${role} Engineer`}
+              {label}
             </button>
           ))}
         </div>
@@ -107,7 +114,7 @@ export default function HomePage() {
 
                   <div className="flex items-center gap-1.5 font-mono text-zinc-300 font-medium">
                     <Clock className="w-3.5 h-3.5 text-zinc-400" />
-                    {prob.timeLimit} Mins
+                    {prob.timeLimit} {t('minsLabel')}
                   </div>
                 </div>
 
@@ -122,13 +129,13 @@ export default function HomePage() {
                 {/* Requirements highlights */}
                 <div className="p-4 rounded-xl bg-zinc-950/80 border border-zinc-800/60 space-y-2 text-xs text-zinc-300">
                   <div className="font-semibold text-zinc-200 flex items-center gap-1.5">
-                    <Terminal className="w-3.5 h-3.5 text-zinc-400" /> Core Task:
+                    <Terminal className="w-3.5 h-3.5 text-zinc-400" /> {t('coreTask')}
                   </div>
                   <ul className="space-y-1.5 text-zinc-400 list-disc list-inside font-normal">
-                    <li>Endpoint: <code className="text-zinc-200 font-mono bg-zinc-900 px-1 py-0.5 rounded border border-zinc-800">POST /redeem</code> with in-memory arrays</li>
-                    <li>Rules: Voucher existence, user uniqueness, quota limit (&gt; 0)</li>
+                    <li>Endpoint: <code className="text-zinc-200 font-mono bg-zinc-900 px-1 py-0.5 rounded border border-zinc-800">POST /redeem</code> dengan array in-memory</li>
+                    <li>Aturan: Keberadaan voucher, keunikan pengguna, batas kuota (&gt; 0)</li>
                     <li className="text-zinc-300 font-medium">
-                      Bonus: Explain Postgres Race Conditions (SELECT FOR UPDATE, Unique Constraints, Atomic Updates)
+                      Bonus: Jelaskan Race Condition Postgres (SELECT FOR UPDATE, Unique Constraints, Atomic Updates)
                     </li>
                   </ul>
                 </div>
@@ -145,7 +152,7 @@ export default function HomePage() {
                   className="flex items-center gap-2 px-5 py-2.5 rounded-full bg-zinc-100 hover:bg-white text-zinc-950 font-semibold text-xs transition-all shadow-md"
                 >
                   <Play className="w-3.5 h-3.5 fill-current" />
-                  Start 30-Min Challenge
+                  {t('startChallenge')}
                 </Link>
               </div>
             </div>
@@ -159,28 +166,28 @@ export default function HomePage() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 text-xs">
             <div className="space-y-2">
               <div className="font-semibold text-zinc-100 text-sm flex items-center gap-2">
-                <Terminal className="w-4 h-4 text-zinc-400" /> Monaco Editor IDE
+                <Terminal className="w-4 h-4 text-zinc-400" /> {t('featureEditor')}
               </div>
               <p className="text-zinc-400 leading-relaxed font-normal">
-                Integrated VS Dark Monaco editor with syntax highlighting, formatting, and read-only auto-lock.
+                {t('featureEditorDesc')}
               </p>
             </div>
 
             <div className="space-y-2">
               <div className="font-semibold text-zinc-100 text-sm flex items-center gap-2">
-                <Clock className="w-4 h-4 text-zinc-400" /> Enforced 30-Min Countdown
+                <Clock className="w-4 h-4 text-zinc-400" /> {t('featureTimer')}
               </div>
               <p className="text-zinc-400 leading-relaxed font-normal">
-                Simulates real-world interview pressure with auto-submit when the timer reaches 00:00.
+                {t('featureTimerDesc')}
               </p>
             </div>
 
             <div className="space-y-2">
               <div className="font-semibold text-zinc-100 text-sm flex items-center gap-2">
-                <BrainCircuit className="w-4 h-4 text-zinc-400" /> Groq Llama 3.3 70B AI Review
+                <BrainCircuit className="w-4 h-4 text-zinc-400" /> {t('featureAI')}
               </div>
               <p className="text-zinc-400 leading-relaxed font-normal">
-                Instant evaluation of logic correctness, unhandled edge cases, status codes, and PostgreSQL bonus answers.
+                {t('featureAIDesc')}
               </p>
             </div>
           </div>
