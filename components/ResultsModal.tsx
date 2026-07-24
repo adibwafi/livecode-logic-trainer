@@ -47,60 +47,60 @@ export default function ResultsModal({
     switch (result.status) {
       case 'PASS':
         return (
-          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/40">
-            <Award className="w-4 h-4" /> PASSED
+          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-950/40 text-emerald-400 border border-emerald-800/50">
+            <Award className="w-3.5 h-3.5" /> PASSED
           </span>
         );
       case 'PARTIAL':
         return (
-          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-amber-500/20 text-amber-400 border border-amber-500/40">
-            <AlertTriangle className="w-4 h-4" /> PARTIAL PASS
+          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-amber-950/40 text-amber-400 border border-amber-800/50">
+            <AlertTriangle className="w-3.5 h-3.5" /> PARTIAL PASS
           </span>
         );
       default:
         return (
-          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-rose-500/20 text-rose-400 border border-rose-500/40">
-            <XCircle className="w-4 h-4" /> NEEDS IMPROVEMENT
+          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-rose-950/40 text-rose-400 border border-rose-800/50">
+            <XCircle className="w-3.5 h-3.5" /> NEEDS IMPROVEMENT
           </span>
         );
     }
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md animate-fade-in">
-      <div className="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-4xl max-h-[90vh] flex flex-col shadow-2xl overflow-hidden">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-zinc-950/80 backdrop-blur-md animate-fade-in">
+      <div className="bg-zinc-900 border border-zinc-800 rounded-2xl w-full max-w-4xl max-h-[90vh] flex flex-col shadow-2xl overflow-hidden">
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 bg-slate-950 border-b border-slate-800">
+        <div className="flex items-center justify-between px-6 py-4 bg-zinc-950 border-b border-zinc-800/80">
           <div className="flex items-center gap-3">
-            <div className="p-2 bg-cyan-500/10 border border-cyan-500/30 rounded-xl text-cyan-400">
-              <Trophy className="w-6 h-6" />
+            <div className="p-2 bg-zinc-900 border border-zinc-800 rounded-xl text-zinc-100">
+              <Trophy className="w-5 h-5" />
             </div>
             <div>
-              <h2 className="text-lg font-bold text-slate-100 flex items-center gap-2">
+              <h2 className="text-base font-bold text-zinc-100 flex items-center gap-2">
                 Assessment Report
                 {getStatusBadge()}
               </h2>
-              <p className="text-xs text-slate-400">{problem.title} • {problem.role}</p>
+              <p className="text-xs text-zinc-400">{problem.title} • {problem.role}</p>
             </div>
           </div>
 
           <div className="flex items-center gap-4">
             {/* Score Gauge */}
             <div className="text-right">
-              <div className="text-2xl font-black font-mono text-cyan-400">{result.score}/100</div>
-              <div className="text-[10px] uppercase tracking-wider text-slate-400 font-bold">Overall Score</div>
+              <div className="text-2xl font-extrabold font-mono text-zinc-100">{result.score}/100</div>
+              <div className="text-[10px] uppercase tracking-wider text-zinc-400 font-semibold">Overall Score</div>
             </div>
           </div>
         </div>
 
         {/* Modal Navigation Tabs */}
-        <div className="flex items-center gap-1 px-6 py-2 bg-slate-950/50 border-b border-slate-800/80 text-xs font-medium overflow-x-auto">
+        <div className="flex items-center gap-1 px-6 py-2 bg-zinc-950/60 border-b border-zinc-800/80 text-xs font-medium overflow-x-auto">
           <button
             onClick={() => setActiveTab('summary')}
-            className={`px-3 py-2 rounded-lg transition-all flex items-center gap-1.5 ${
+            className={`px-3.5 py-1.5 rounded-full transition-all flex items-center gap-1.5 ${
               activeTab === 'summary'
-                ? 'bg-cyan-500/15 text-cyan-400 font-bold border border-cyan-500/30'
-                : 'text-slate-400 hover:text-slate-200'
+                ? 'bg-zinc-100 text-zinc-950 font-semibold'
+                : 'text-zinc-400 hover:text-zinc-200'
             }`}
           >
             <Sparkles className="w-3.5 h-3.5" /> Overview
@@ -108,32 +108,32 @@ export default function ResultsModal({
 
           <button
             onClick={() => setActiveTab('errors')}
-            className={`px-3 py-2 rounded-lg transition-all flex items-center gap-1.5 ${
+            className={`px-3.5 py-1.5 rounded-full transition-all flex items-center gap-1.5 ${
               activeTab === 'errors'
-                ? 'bg-rose-500/15 text-rose-400 font-bold border border-rose-500/30'
-                : 'text-slate-400 hover:text-slate-200'
+                ? 'bg-zinc-100 text-zinc-950 font-semibold'
+                : 'text-zinc-400 hover:text-zinc-200'
             }`}
           >
-            <AlertTriangle className="w-3.5 h-3.5" /> What Went Wrong ({result.errors?.length || 0})
+            <AlertTriangle className="w-3.5 h-3.5" /> Issues ({result.errors?.length || 0})
           </button>
 
           <button
             onClick={() => setActiveTab('best_practices')}
-            className={`px-3 py-2 rounded-lg transition-all flex items-center gap-1.5 ${
+            className={`px-3.5 py-1.5 rounded-full transition-all flex items-center gap-1.5 ${
               activeTab === 'best_practices'
-                ? 'bg-amber-500/15 text-amber-400 font-bold border border-amber-500/30'
-                : 'text-slate-400 hover:text-slate-200'
+                ? 'bg-zinc-100 text-zinc-950 font-semibold'
+                : 'text-zinc-400 hover:text-zinc-200'
             }`}
           >
-            <Lightbulb className="w-3.5 h-3.5" /> Best Practice Feedback
+            <Lightbulb className="w-3.5 h-3.5" /> Best Practices
           </button>
 
           <button
             onClick={() => setActiveTab('bonus')}
-            className={`px-3 py-2 rounded-lg transition-all flex items-center gap-1.5 ${
+            className={`px-3.5 py-1.5 rounded-full transition-all flex items-center gap-1.5 ${
               activeTab === 'bonus'
-                ? 'bg-purple-500/15 text-purple-400 font-bold border border-purple-500/30'
-                : 'text-slate-400 hover:text-slate-200'
+                ? 'bg-zinc-100 text-zinc-950 font-semibold'
+                : 'text-zinc-400 hover:text-zinc-200'
             }`}
           >
             <Database className="w-3.5 h-3.5" /> Bonus Question
@@ -141,10 +141,10 @@ export default function ResultsModal({
 
           <button
             onClick={() => setActiveTab('solution')}
-            className={`px-3 py-2 rounded-lg transition-all flex items-center gap-1.5 ${
+            className={`px-3.5 py-1.5 rounded-full transition-all flex items-center gap-1.5 ${
               activeTab === 'solution'
-                ? 'bg-emerald-500/15 text-emerald-400 font-bold border border-emerald-500/30'
-                : 'text-slate-400 hover:text-slate-200'
+                ? 'bg-zinc-100 text-zinc-950 font-semibold'
+                : 'text-zinc-400 hover:text-zinc-200'
             }`}
           >
             <Code className="w-3.5 h-3.5" /> Ideal Solution
@@ -155,17 +155,17 @@ export default function ResultsModal({
         <div className="flex-1 overflow-y-auto p-6 space-y-4 custom-scrollbar min-h-[350px]">
           {activeTab === 'summary' && (
             <div className="space-y-6">
-              <div className="p-4 rounded-xl bg-slate-950 border border-slate-800 space-y-2">
-                <h3 className="text-sm font-bold text-cyan-300">Executive Summary</h3>
-                <p className="text-sm text-slate-300 leading-relaxed">{result.summary}</p>
+              <div className="p-4 rounded-xl bg-zinc-950 border border-zinc-800 space-y-2">
+                <h3 className="text-xs font-semibold text-zinc-200 uppercase tracking-wider">Executive Summary</h3>
+                <p className="text-xs text-zinc-300 leading-relaxed font-normal">{result.summary}</p>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="p-4 rounded-xl bg-emerald-950/20 border border-emerald-800/40 space-y-2">
-                  <h4 className="text-xs font-bold uppercase tracking-wider text-emerald-400 flex items-center gap-1.5">
+                <div className="p-4 rounded-xl bg-zinc-950 border border-zinc-800 space-y-2">
+                  <h4 className="text-xs font-semibold uppercase tracking-wider text-emerald-400 flex items-center gap-1.5">
                     <CheckCircle2 className="w-4 h-4" /> Verified Requirements
                   </h4>
-                  <ul className="space-y-1 text-xs text-slate-300">
+                  <ul className="space-y-1.5 text-xs text-zinc-300 font-normal">
                     {result.edgeCasesPassed?.map((ec, idx) => (
                       <li key={idx} className="flex items-center gap-2">
                         <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shrink-0" />
@@ -175,20 +175,20 @@ export default function ResultsModal({
                   </ul>
                 </div>
 
-                <div className="p-4 rounded-xl bg-rose-950/20 border border-rose-800/40 space-y-2">
-                  <h4 className="text-xs font-bold uppercase tracking-wider text-rose-400 flex items-center gap-1.5">
+                <div className="p-4 rounded-xl bg-zinc-950 border border-zinc-800 space-y-2">
+                  <h4 className="text-xs font-semibold uppercase tracking-wider text-rose-400 flex items-center gap-1.5">
                     <XCircle className="w-4 h-4" /> Unhandled Edge Cases
                   </h4>
-                  <ul className="space-y-1 text-xs text-slate-300">
+                  <ul className="space-y-1.5 text-xs text-zinc-300 font-normal">
                     {result.edgeCasesMissed?.length ? (
                       result.edgeCasesMissed.map((ec, idx) => (
-                        <li key={idx} className="flex items-center gap-2 text-rose-200">
+                        <li key={idx} className="flex items-center gap-2 text-rose-300">
                           <span className="w-1.5 h-1.5 rounded-full bg-rose-400 shrink-0" />
                           {ec}
                         </li>
                       ))
                     ) : (
-                      <li className="text-slate-400 italic">No missing edge cases detected!</li>
+                      <li className="text-zinc-400 italic">No missing edge cases detected!</li>
                     )}
                   </ul>
                 </div>
@@ -198,17 +198,17 @@ export default function ResultsModal({
 
           {activeTab === 'errors' && (
             <div className="space-y-3">
-              <h3 className="text-sm font-bold text-rose-400 flex items-center gap-2">
-                <AlertTriangle className="w-4 h-4" />
-                Detected Issues & Logic Violations
+              <h3 className="text-xs font-semibold text-zinc-400 uppercase tracking-wider flex items-center gap-2">
+                <AlertTriangle className="w-4 h-4 text-rose-400" />
+                Detected Logic Issues
               </h3>
               {result.errors?.length ? (
                 result.errors.map((err, i) => (
                   <div
                     key={i}
-                    className="p-4 rounded-xl bg-rose-950/30 border border-rose-800/50 text-rose-200 text-sm flex items-start gap-3"
+                    className="p-4 rounded-xl bg-rose-950/20 border border-rose-900/40 text-rose-200 text-xs flex items-start gap-3"
                   >
-                    <XCircle className="w-5 h-5 text-rose-400 shrink-0 mt-0.5" />
+                    <XCircle className="w-4 h-4 text-rose-400 shrink-0 mt-0.5" />
                     <div>
                       <div className="font-semibold text-rose-300">Issue #{i + 1}</div>
                       <div className="text-xs text-rose-200/90 leading-relaxed mt-1">{err}</div>
@@ -216,7 +216,7 @@ export default function ResultsModal({
                   </div>
                 ))
               ) : (
-                <div className="p-4 rounded-xl bg-emerald-950/20 border border-emerald-800/40 text-emerald-300 text-sm">
+                <div className="p-4 rounded-xl bg-zinc-950 border border-zinc-800 text-zinc-300 text-xs">
                   🎉 Outstanding! No critical logic errors were found in your code submission.
                 </div>
               )}
@@ -225,19 +225,19 @@ export default function ResultsModal({
 
           {activeTab === 'best_practices' && (
             <div className="space-y-3">
-              <h3 className="text-sm font-bold text-amber-400 flex items-center gap-2">
-                <Lightbulb className="w-4 h-4" />
-                Engineering Best Practice Feedback
+              <h3 className="text-xs font-semibold text-zinc-400 uppercase tracking-wider flex items-center gap-2">
+                <Lightbulb className="w-4 h-4 text-amber-400" />
+                Best Practice Recommendations
               </h3>
               {result.bestPractices?.map((bp, i) => (
                 <div
                   key={i}
-                  className="p-4 rounded-xl bg-amber-950/20 border border-amber-800/40 text-amber-200 text-sm flex items-start gap-3"
+                  className="p-4 rounded-xl bg-zinc-950 border border-zinc-800 text-zinc-300 text-xs flex items-start gap-3"
                 >
-                  <Sparkles className="w-5 h-5 text-amber-400 shrink-0 mt-0.5" />
+                  <Sparkles className="w-4 h-4 text-zinc-400 shrink-0 mt-0.5" />
                   <div>
-                    <div className="font-semibold text-amber-300">Recommendation #{i + 1}</div>
-                    <div className="text-xs text-amber-100/90 leading-relaxed mt-1">{bp}</div>
+                    <div className="font-semibold text-zinc-100">Recommendation #{i + 1}</div>
+                    <div className="text-xs text-zinc-400 leading-relaxed mt-1 font-normal">{bp}</div>
                   </div>
                 </div>
               ))}
@@ -246,12 +246,12 @@ export default function ResultsModal({
 
           {activeTab === 'bonus' && (
             <div className="space-y-4">
-              <div className="p-4 rounded-xl bg-purple-950/20 border border-purple-800/40 text-purple-200 space-y-2">
-                <h3 className="text-sm font-bold text-purple-300 flex items-center gap-2">
-                  <Database className="w-4 h-4" />
-                  PostgreSQL Race Condition Answer Evaluation
+              <div className="p-4 rounded-xl bg-zinc-950 border border-zinc-800 text-zinc-200 space-y-2">
+                <h3 className="text-xs font-semibold text-zinc-200 uppercase tracking-wider flex items-center gap-2">
+                  <Database className="w-4 h-4 text-zinc-400" />
+                  PostgreSQL Race Condition Evaluation
                 </h3>
-                <div className="text-xs text-slate-300 leading-relaxed whitespace-pre-line">
+                <div className="text-xs text-zinc-300 leading-relaxed whitespace-pre-line font-normal">
                   {result.bonusEvaluation}
                 </div>
               </div>
@@ -260,11 +260,11 @@ export default function ResultsModal({
 
           {activeTab === 'solution' && (
             <div className="space-y-3 flex flex-col h-[350px]">
-              <div className="flex items-center justify-between text-xs text-slate-400">
-                <span className="font-semibold text-emerald-400">Ideal Production-Grade Solution (Express.js)</span>
-                <span>Includes validation, edge-case checks, and bonus answer commentary</span>
+              <div className="flex items-center justify-between text-xs text-zinc-400">
+                <span className="font-semibold text-zinc-200">Ideal Production Solution (Express.js)</span>
+                <span>Includes validation & bonus commentary</span>
               </div>
-              <div className="flex-1 rounded-xl overflow-hidden border border-slate-800">
+              <div className="flex-1 rounded-xl overflow-hidden border border-zinc-800">
                 <Editor
                   height="100%"
                   defaultLanguage="javascript"
@@ -285,21 +285,21 @@ export default function ResultsModal({
         </div>
 
         {/* Footer Actions */}
-        <div className="flex items-center justify-between px-6 py-4 bg-slate-950 border-t border-slate-800">
+        <div className="flex items-center justify-between px-6 py-4 bg-zinc-950 border-t border-zinc-800/80">
           <button
             onClick={onRetry}
-            className="flex items-center gap-2 px-4 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-300 text-xs font-semibold transition-colors"
+            className="flex items-center gap-2 px-4 py-2 rounded-full bg-zinc-900 hover:bg-zinc-800 text-zinc-300 text-xs font-semibold transition-colors border border-zinc-800"
           >
-            <RotateCcw className="w-4 h-4" />
+            <RotateCcw className="w-3.5 h-3.5" />
             Try Again / Refactor
           </button>
 
           <button
             onClick={onClose}
-            className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-slate-950 text-xs font-bold transition-colors shadow-lg shadow-cyan-500/20"
+            className="flex items-center gap-2 px-5 py-2 rounded-full bg-zinc-100 hover:bg-white text-zinc-950 text-xs font-semibold transition-colors shadow-sm"
           >
             Back to Editor
-            <ArrowRight className="w-4 h-4" />
+            <ArrowRight className="w-3.5 h-3.5" />
           </button>
         </div>
       </div>

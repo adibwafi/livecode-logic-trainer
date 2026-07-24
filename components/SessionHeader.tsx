@@ -28,12 +28,12 @@ export default function SessionHeader({
   onTimeUpdate
 }: SessionHeaderProps) {
   return (
-    <header className="h-14 bg-slate-950 border-b border-slate-800 px-4 flex items-center justify-between text-slate-200 shrink-0">
+    <header className="h-14 bg-zinc-950/90 border-b border-zinc-800/80 px-4 flex items-center justify-between text-zinc-200 shrink-0 backdrop-blur-xl">
       {/* Left Title section */}
       <div className="flex items-center gap-3">
         <Link
           href="/"
-          className="p-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-slate-400 hover:text-white transition-colors"
+          className="p-1.5 rounded-lg bg-zinc-900/80 hover:bg-zinc-800 text-zinc-400 hover:text-zinc-100 transition-colors border border-zinc-800/60"
           title="Back to Problems"
         >
           <ArrowLeft className="w-4 h-4" />
@@ -41,12 +41,9 @@ export default function SessionHeader({
 
         <div>
           <div className="flex items-center gap-2">
-            <h1 className="text-sm font-bold text-slate-100">{problem.title}</h1>
-            <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-cyan-500/10 text-cyan-400 border border-cyan-500/30">
+            <h1 className="text-xs md:text-sm font-semibold text-zinc-100">{problem.title}</h1>
+            <span className="px-2 py-0.5 rounded-full text-[10px] font-medium bg-zinc-900 text-zinc-300 border border-zinc-800">
               {problem.role}
-            </span>
-            <span className="px-2 py-0.5 rounded text-[10px] font-semibold bg-slate-900 text-slate-400 border border-slate-800">
-              {problem.level}
             </span>
           </div>
         </div>
@@ -68,16 +65,16 @@ export default function SessionHeader({
         <button
           onClick={onRunTests}
           disabled={isSubmitting}
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-cyan-400 border border-cyan-500/30 text-xs font-semibold transition-all disabled:opacity-50"
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-zinc-900 hover:bg-zinc-800 text-zinc-200 border border-zinc-800 text-xs font-medium transition-all disabled:opacity-50"
         >
-          <Play className="w-3.5 h-3.5 fill-current" />
+          <Play className="w-3 h-3 fill-current" />
           Run Tests
         </button>
 
         <button
           onClick={onSubmitAssessment}
           disabled={isSubmitting}
-          className="flex items-center gap-1.5 px-4 py-1.5 rounded-lg bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-slate-950 text-xs font-bold transition-all shadow-md shadow-cyan-500/20 disabled:opacity-50"
+          className="flex items-center gap-1.5 px-4 py-1.5 rounded-full bg-zinc-100 hover:bg-white text-zinc-950 text-xs font-semibold transition-all shadow-sm disabled:opacity-50"
         >
           {isSubmitting ? (
             <>
