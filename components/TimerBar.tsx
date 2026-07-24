@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState, useRef } from 'react';
 import { Clock, Pause, Play, AlertTriangle } from 'lucide-react';
+import { t } from '@/lib/i18n';
 
 interface TimerBarProps {
   initialMinutes: number;
@@ -77,14 +78,14 @@ export default function TimerBar({
 
       {isLowTime && (
         <span className="flex items-center gap-1 text-[10px] font-sans font-medium text-rose-400 bg-rose-900/40 px-1.5 py-0.5 rounded-full">
-          <AlertTriangle className="w-3 h-3" /> Time Warning
+          <AlertTriangle className="w-3 h-3" /> {t('timeWarning')}
         </span>
       )}
 
       <button
         onClick={onTogglePause}
         className="ml-0.5 p-1 hover:bg-zinc-800 rounded-full text-zinc-400 hover:text-zinc-100 transition-colors"
-        title={isPaused ? 'Resume Timer' : 'Pause Timer'}
+        title={isPaused ? t('resumeTimer') : t('pauseTimer')}
       >
         {isPaused ? <Play className="w-3 h-3" /> : <Pause className="w-3 h-3" />}
       </button>

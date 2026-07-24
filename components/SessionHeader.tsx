@@ -1,10 +1,10 @@
 'use client';
-
 import React from 'react';
 import Link from 'next/link';
 import TimerBar from './TimerBar';
 import { Problem } from '@/lib/types';
 import { ArrowLeft, Play, Send, Loader2 } from 'lucide-react';
+import { t } from '@/lib/i18n';
 
 interface SessionHeaderProps {
   problem: Problem;
@@ -34,7 +34,7 @@ export default function SessionHeader({
         <Link
           href="/"
           className="p-1.5 rounded-lg bg-zinc-900/80 hover:bg-zinc-800 text-zinc-400 hover:text-zinc-100 transition-colors border border-zinc-800/60"
-          title="Back to Problems"
+          title={t('backToProblems')}
         >
           <ArrowLeft className="w-4 h-4" />
         </Link>
@@ -68,7 +68,7 @@ export default function SessionHeader({
           className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-zinc-900 hover:bg-zinc-800 text-zinc-200 border border-zinc-800 text-xs font-medium transition-all disabled:opacity-50"
         >
           <Play className="w-3 h-3 fill-current" />
-          Run Tests
+          {t('runTests')}
         </button>
 
         <button
@@ -79,12 +79,12 @@ export default function SessionHeader({
           {isSubmitting ? (
             <>
               <Loader2 className="w-3.5 h-3.5 animate-spin" />
-              Evaluating...
+              {t('evaluating')}
             </>
           ) : (
             <>
               <Send className="w-3.5 h-3.5" />
-              Submit Assessment
+              {t('submit')}
             </>
           )}
         </button>

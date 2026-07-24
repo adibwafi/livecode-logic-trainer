@@ -3,6 +3,7 @@
 import React, { useRef } from 'react';
 import Editor, { OnMount } from '@monaco-editor/react';
 import { Code, RotateCcw, Copy, Check, Sparkles } from 'lucide-react';
+import { t } from '@/lib/i18n';
 
 interface EditorPanelProps {
   code: string;
@@ -45,7 +46,7 @@ export default function EditorPanel({
           <span>solution.js</span>
           {isReadOnly && (
             <span className="px-2 py-0.5 text-[10px] uppercase font-sans font-semibold bg-rose-950/40 text-rose-400 border border-rose-800/50 rounded-full">
-              Read Only
+              {t('readOnly')}
             </span>
           )}
         </div>
@@ -58,7 +59,7 @@ export default function EditorPanel({
             title="Auto format code"
           >
             <Sparkles className="w-3 h-3 text-zinc-400" />
-            Format
+            {t('format')}
           </button>
 
           <button
@@ -67,7 +68,7 @@ export default function EditorPanel({
             title="Copy code"
           >
             {copied ? <Check className="w-3 h-3 text-emerald-400" /> : <Copy className="w-3 h-3 text-zinc-400" />}
-            {copied ? 'Copied' : 'Copy'}
+            {copied ? t('copied') : t('copy')}
           </button>
 
           <button
@@ -77,7 +78,7 @@ export default function EditorPanel({
             title="Reset starter code"
           >
             <RotateCcw className="w-3 h-3" />
-            Reset
+            {t('reset')}
           </button>
         </div>
       </div>
