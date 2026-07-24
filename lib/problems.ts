@@ -6,7 +6,7 @@ export const PROBLEMS: Problem[] = [
     title: "E-commerce Voucher Redemption API",
     role: "Backend Engineer",
     level: "Mid-Level",
-    timeLimit: 45,
+    timeLimit: 30,
     category: "REST API Logic & Data Validation",
     description: `## 1. Case Study
 A modern e-commerce application provides a promotional voucher redemption system. To protect business margins, **each voucher can only be redeemed once per user**, and vouchers have limited stock quotas.

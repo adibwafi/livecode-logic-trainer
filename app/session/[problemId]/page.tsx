@@ -64,8 +64,15 @@ export default function ProblemSessionPage() {
     handleSubmitAssessment();
   }, [handleSubmitAssessment]);
 
+  const handleTimeUpdate = useCallback(
+    (leftSec: number) => {
+      setSecondsSpent(problem.timeLimit * 60 - leftSec);
+    },
+    [problem.timeLimit]
+  );
+
   return (
-    <div className="flex flex-col h-screen w-screen bg-slate-950 text-slate-100 overflow-hidden font-sans">
+    <div className="flex flex-col h-screen w-screen bg-zinc-950 text-zinc-100 overflow-hidden font-sans selection:bg-zinc-800 selection:text-zinc-100">
       {/* Session Top Bar Header */}
       <SessionHeader
         problem={problem}
@@ -75,20 +82,18 @@ export default function ProblemSessionPage() {
         onRunTests={handleRunTests}
         onSubmitAssessment={handleSubmitAssessment}
         isSubmitting={isSubmitting}
-        onTimeUpdate={(leftSec) => {
-          setSecondsSpent(problem.timeLimit * 60 - leftSec);
-        }}
+        onTimeUpdate={handleTimeUpdate}
       />
 
       {/* Main Split-Pane Layout */}
       <div className="flex-1 flex overflow-hidden">
         {/* Left Pane: Markdown Problem Description (40% width) */}
-        <div className="w-[42%] min-w-[320px] max-w-[600px] h-full flex flex-col">
+        <div className="w-[42%] min-w-[320px] max-w-[600px] h-full flex flex-col border-r border-zinc-800/80">
           <ProblemPanel problem={problem} />
         </div>
 
         {/* Right Pane: Code Editor + Console (58% width) */}
-        <div className="flex-1 h-full flex flex-col overflow-hidden">
+        <div className="flex-1 h-full flex flex-col overflow-hidden bg-zinc-950">
           <div className="flex-1 overflow-hidden">
             <EditorPanel
               code={code}
