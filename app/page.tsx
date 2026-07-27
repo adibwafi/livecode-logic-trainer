@@ -82,8 +82,8 @@ export default function HomePage() {
               onClick={() => setSelectedRole(key)}
               className={`px-4 py-2 rounded-full transition-all duration-200 font-medium ${
                 selectedRole === key
-                  ? 'bg-zinc-100 text-zinc-950 font-semibold shadow-sm'
-                  : 'bg-zinc-900/60 hover:bg-zinc-900 text-zinc-400 border border-zinc-800/80 hover:text-zinc-200'
+                  ? 'bg-zinc-900 text-white font-semibold shadow-sm'
+                  : 'bg-zinc-100 hover:bg-zinc-200 text-zinc-600 border border-zinc-200 hover:text-zinc-900'
               }`}
             >
               {label}
@@ -98,21 +98,21 @@ export default function HomePage() {
           {filteredProblems.map((prob) => (
             <div
               key={prob.id}
-              className="group relative bg-zinc-900/40 border border-zinc-800/80 hover:border-zinc-700/80 rounded-2xl p-6 transition-all duration-300 hover:shadow-2xl hover:shadow-zinc-900/50 flex flex-col justify-between backdrop-blur-xl"
+              className="group relative bg-white border border-zinc-200 hover:border-zinc-300 rounded-2xl p-6 transition-all duration-300 hover:shadow-xl hover:shadow-zinc-200/50 flex flex-col justify-between backdrop-blur-xl"
             >
               <div className="space-y-4">
                 {/* Badges */}
                 <div className="flex items-center justify-between text-xs">
                   <div className="flex items-center gap-2">
-                    <span className="px-3 py-1 rounded-full bg-zinc-900 border border-zinc-800 text-zinc-200 font-medium">
+                    <span className="px-3 py-1 rounded-full bg-zinc-100 border border-zinc-200 text-zinc-800 font-medium">
                       {prob.role}
                     </span>
-                    <span className="px-2.5 py-1 rounded-full bg-zinc-950 text-zinc-400 border border-zinc-800/60 font-normal">
+                    <span className="px-2.5 py-1 rounded-full bg-zinc-50 text-zinc-500 border border-zinc-200 font-normal">
                       {prob.level}
                     </span>
                   </div>
 
-                  <div className="flex items-center gap-1.5 font-mono text-zinc-300 font-medium">
+                  <div className="flex items-center gap-1.5 font-mono text-zinc-600 font-medium">
                     <Clock className="w-3.5 h-3.5 text-zinc-400" />
                     {prob.timeLimit} {t('minsLabel')}
                   </div>
@@ -120,21 +120,21 @@ export default function HomePage() {
 
                 {/* Title & Category */}
                 <div>
-                  <h2 className="text-lg font-bold text-zinc-100 group-hover:text-zinc-200 transition-colors">
+                  <h2 className="text-lg font-bold text-zinc-900 group-hover:text-black transition-colors">
                     {prob.title}
                   </h2>
-                  <p className="text-xs text-zinc-400 mt-1 font-mono">{prob.category}</p>
+                  <p className="text-xs text-zinc-500 mt-1 font-mono">{prob.category}</p>
                 </div>
 
                 {/* Requirements highlights */}
-                <div className="p-4 rounded-xl bg-zinc-950/80 border border-zinc-800/60 space-y-2 text-xs text-zinc-300">
-                  <div className="font-semibold text-zinc-200 flex items-center gap-1.5">
-                    <Terminal className="w-3.5 h-3.5 text-zinc-400" /> {t('coreTask')}
+                <div className="p-4 rounded-xl bg-zinc-50 border border-zinc-200 space-y-2 text-xs text-zinc-700">
+                  <div className="font-semibold text-zinc-900 flex items-center gap-1.5">
+                    <Terminal className="w-3.5 h-3.5 text-zinc-500" /> {t('coreTask')}
                   </div>
-                  <ul className="space-y-1.5 text-zinc-400 list-disc list-inside font-normal">
-                    <li>Endpoint: <code className="text-zinc-200 font-mono bg-zinc-900 px-1 py-0.5 rounded border border-zinc-800">POST /redeem</code> dengan array in-memory</li>
+                  <ul className="space-y-1.5 text-zinc-600 list-disc list-inside font-normal">
+                    <li>Endpoint: <code className="text-zinc-900 font-mono bg-zinc-200/50 px-1 py-0.5 rounded border border-zinc-300">POST /redeem</code> dengan array in-memory</li>
                     <li>Aturan: Keberadaan voucher, keunikan pengguna, batas kuota (&gt; 0)</li>
-                    <li className="text-zinc-300 font-medium">
+                    <li className="text-zinc-700 font-medium">
                       Bonus: Jelaskan Race Condition Postgres (SELECT FOR UPDATE, Unique Constraints, Atomic Updates)
                     </li>
                   </ul>
@@ -142,14 +142,14 @@ export default function HomePage() {
               </div>
 
               {/* Card Footer CTA */}
-              <div className="pt-6 mt-6 border-t border-zinc-800/60 flex items-center justify-between">
-                <div className="flex items-center gap-2 text-xs text-zinc-400 font-mono">
+              <div className="pt-6 mt-6 border-t border-zinc-200 flex items-center justify-between">
+                <div className="flex items-center gap-2 text-xs text-zinc-500 font-mono">
                   Monaco IDE • JavaScript
                 </div>
 
                 <Link
                   href={`/session/${prob.id}`}
-                  className="flex items-center gap-2 px-5 py-2.5 rounded-full bg-zinc-100 hover:bg-white text-zinc-950 font-semibold text-xs transition-all shadow-md"
+                  className="flex items-center gap-2 px-5 py-2.5 rounded-full bg-zinc-900 hover:bg-black text-white font-semibold text-xs transition-all shadow-md hover:shadow-lg"
                 >
                   <Play className="w-3.5 h-3.5 fill-current" />
                   {t('startChallenge')}
