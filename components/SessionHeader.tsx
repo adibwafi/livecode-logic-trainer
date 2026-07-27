@@ -1,9 +1,11 @@
 'use client';
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import TimerBar from './TimerBar';
-import { Problem } from '@/lib/types';
-import { ArrowLeft, Play, Send, Loader2 } from 'lucide-react';
+import RecruiterMoodMeter from './RecruiterMoodMeter';
+import { Problem, RecruiterPersona, TestRunResult } from '@/lib/types';
+import { isSoundMuted, setSoundMuted } from '@/lib/soundFX';
+import { ArrowLeft, Play, Send, Loader2, Volume2, VolumeX } from 'lucide-react';
 import { t } from '@/lib/i18n';
 
 interface SessionHeaderProps {
@@ -15,6 +17,10 @@ interface SessionHeaderProps {
   onSubmitAssessment: () => void;
   isSubmitting: boolean;
   onTimeUpdate: (seconds: number) => void;
+  secondsSpent: number;
+  testRun: TestRunResult | null;
+  persona: RecruiterPersona;
+  onPersonaChange: (p: RecruiterPersona) => void;
 }
 
 export default function SessionHeader({
@@ -25,12 +31,28 @@ export default function SessionHeader({
   onRunTests,
   onSubmitAssessment,
   isSubmitting,
-  onTimeUpdate
+  onTimeUpdate,
+  secondsSpent,
+  testRun,
+  persona,
+  onPersonaChange
 }: SessionHeaderProps) {
+  const [muted, setMuted] = useState<boolean>(false);
+
+  useEffect(() => {
+    setMuted(isSoundMuted());
+  }, []);
+
+  const toggleSound = () => {
+    const nextMuted = !muted;
+    setMuted(nextMuted);
+    setSoundMuted(nextMuted);
+  };
+
   return (
-    <header className="h-14 bg-zinc-950/90 border-b border-zinc-800/80 px-4 flex items-center justify-between text-zinc-200 shrink-0 backdrop-blur-xl">
+    <header className="h-14 bg-zinc-950/90 border-b border-zinc-800/80 px-4 flex items-center justify-between text-zinc-200 shrink-0 backdrop-blur-xl gap-2">
       {/* Left Title section */}
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-3 shrink-0">
         <Link
           href="/"
           className="p-1.5 rounded-lg bg-zinc-900/80 hover:bg-zinc-800 text-zinc-400 hover:text-zinc-100 transition-colors border border-zinc-800/60"
@@ -41,16 +63,28 @@ export default function SessionHeader({
 
         <div>
           <div className="flex items-center gap-2">
-            <h1 className="text-xs md:text-sm font-semibold text-zinc-100">{problem.title}</h1>
-            <span className="px-2 py-0.5 rounded-full text-[10px] font-medium bg-zinc-900 text-zinc-300 border border-zinc-800">
+            <h1 className="text-xs font-semibold text-zinc-100 truncate max-w-[200px] md:max-w-xs">{problem.title}</h1>
+            <span className="hidden sm:inline-block px-2 py-0.5 rounded-full text-[10px] font-medium bg-zinc-900 text-zinc-300 border border-zinc-800 shrink-0">
               {problem.role}
             </span>
           </div>
         </div>
       </div>
 
+      {/* Recruiter Mood Meter (Center-Left) */}
+      <div className="hidden lg:flex items-center">
+        <RecruiterMoodMeter
+          secondsSpent={secondsSpent}
+          totalSeconds={problem.timeLimit * 60}
+          testRun={testRun}
+          isSubmitting={isSubmitting}
+          persona={persona}
+          onPersonaChange={onPersonaChange}
+        />
+      </div>
+
       {/* Center Timer */}
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-2 shrink-0">
         <TimerBar
           initialMinutes={problem.timeLimit}
           onTimeUp={onTimeUp}
@@ -60,8 +94,16 @@ export default function SessionHeader({
         />
       </div>
 
-      {/* Right Action buttons */}
-      <div className="flex items-center gap-2">
+      {/* Right Action & Audio buttons */}
+      <div className="flex items-center gap-2 shrink-0">
+        <button
+          onClick={toggleSound}
+          className="p-2 rounded-full bg-zinc-900 hover:bg-zinc-800 text-zinc-400 hover:text-zinc-100 border border-zinc-800 text-xs transition-all"
+          title={muted ? 'Unmute Web Audio' : 'Mute Web Audio'}
+        >
+          {muted ? <VolumeX className="w-3.5 h-3.5 text-zinc-500" /> : <Volume2 className="w-3.5 h-3.5 text-emerald-400" />}
+        </button>
+
         <button
           onClick={onRunTests}
           disabled={isSubmitting}
@@ -92,3 +134,4 @@ export default function SessionHeader({
     </header>
   );
 }
+

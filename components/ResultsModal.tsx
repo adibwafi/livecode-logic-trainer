@@ -161,6 +161,26 @@ export default function ResultsModal({
                 <p className="text-xs text-zinc-300 leading-relaxed font-normal">{result.summary}</p>
               </div>
 
+              {result.achievements && result.achievements.length > 0 && (
+                <div className="p-4 rounded-xl bg-zinc-950/90 border border-amber-500/30 space-y-3">
+                  <h3 className="text-xs font-semibold text-amber-400 uppercase tracking-wider flex items-center gap-1.5">
+                    <Trophy className="w-4 h-4 text-amber-400" /> Pencapaian Unlocked (Badges)
+                  </h3>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                    {result.achievements.map((ach) => (
+                      <div key={ach.id} className="flex items-start gap-2.5 p-2.5 rounded-lg bg-zinc-900 border border-zinc-800/80">
+                        <span className="text-xl leading-none">{ach.icon}</span>
+                        <div>
+                          <div className="text-xs font-bold text-zinc-100">{ach.title}</div>
+                          <div className="text-[11px] text-zinc-400 font-normal">{ach.description}</div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="p-4 rounded-xl bg-zinc-950 border border-zinc-800 space-y-2">
                   <h4 className="text-xs font-semibold uppercase tracking-wider text-emerald-400 flex items-center gap-1.5">

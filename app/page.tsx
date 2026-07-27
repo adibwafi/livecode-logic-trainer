@@ -71,7 +71,21 @@ export default function HomePage() {
         <p className="max-w-2xl mx-auto text-sm md:text-base text-zinc-600 leading-relaxed font-normal">
           {t('heroDesc')}
         </p>
+
+        {/* Fun Mode Highlights */}
+        <div className="pt-2 flex flex-wrap items-center justify-center gap-3 text-xs">
+          <span className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-zinc-900 text-white font-medium shadow-sm">
+            ☕ Indo Tech Lead & 🧐 FAANG Recruiter Personas
+          </span>
+          <span className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200 font-medium">
+            🔊 Web Audio FX & ⚡ Badges
+          </span>
+          <span className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-amber-50 text-amber-800 border border-amber-200 font-medium">
+            ⏱️ Max 30 Min Interview Limit
+          </span>
+        </div>
       </header>
+
 
       {/* Role Filters */}
       <section className="max-w-6xl mx-auto px-6 pb-10">
@@ -132,13 +146,14 @@ export default function HomePage() {
                     <Terminal className="w-3.5 h-3.5 text-zinc-500" /> {t('coreTask')}
                   </div>
                   <ul className="space-y-1.5 text-zinc-600 list-disc list-inside font-normal">
-                    <li>Endpoint: <code className="text-zinc-900 font-mono bg-zinc-200/50 px-1 py-0.5 rounded border border-zinc-300">POST /redeem</code> dengan array in-memory</li>
-                    <li>Aturan: Keberadaan voucher, keunikan pengguna, batas kuota (&gt; 0)</li>
+                    <li>Logika REST API In-Memory & Validasi HTTP Status</li>
+                    <li>Batas Waktu Strict: {prob.timeLimit} Menit (Standar User Interview)</li>
                     <li className="text-zinc-700 font-medium">
-                      Bonus: Jelaskan Race Condition Postgres (SELECT FOR UPDATE, Unique Constraints, Atomic Updates)
+                      Bonus Arsitektur: {prob.bonusQuestion}
                     </li>
                   </ul>
                 </div>
+
               </div>
 
               {/* Card Footer CTA */}
