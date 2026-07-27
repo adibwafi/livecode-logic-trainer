@@ -29,24 +29,24 @@ export default function HomePage() {
     : PROBLEMS.filter((p) => p.role.toLowerCase().includes(selectedRole.toLowerCase()));
 
   return (
-    <div className="min-h-screen bg-zinc-950 text-zinc-100 font-sans selection:bg-zinc-800 selection:text-zinc-100">
+    <div className="min-h-screen bg-white text-zinc-900 font-sans selection:bg-zinc-200 selection:text-zinc-900">
       {/* Subtle Background Radial Accent */}
-      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-5xl h-96 bg-zinc-800/10 blur-[130px] pointer-events-none rounded-full" />
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-5xl h-96 bg-zinc-100/50 blur-[130px] pointer-events-none rounded-full" />
 
       {/* Navigation */}
-      <nav className="border-b border-zinc-800/60 bg-zinc-950/80 backdrop-blur-xl sticky top-0 z-40">
+      <nav className="border-b border-zinc-200 bg-white/80 backdrop-blur-xl sticky top-0 z-40">
         <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="p-2 rounded-xl bg-zinc-900 border border-zinc-800 text-zinc-100 shadow-sm">
+            <div className="p-2 rounded-xl bg-white border border-zinc-200 text-zinc-900 shadow-sm">
               <Code2 className="w-4 h-4 stroke-[2]" />
             </div>
-            <span className="font-bold text-base tracking-tight text-zinc-100">
-              LiveCode <span className="text-zinc-400 font-normal">{t('appSubtitle')}</span>
+            <span className="font-bold text-base tracking-tight text-zinc-900">
+              LiveCode <span className="text-zinc-500 font-normal">{t('appSubtitle')}</span>
             </span>
           </div>
 
           <div className="flex items-center gap-3 text-xs">
-            <span className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-zinc-900/80 border border-zinc-800 text-zinc-300">
+            <span className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-zinc-50 border border-zinc-200 text-zinc-600">
               <Sparkles className="w-3.5 h-3.5 text-zinc-400" />
               {t('navBadge')}
             </span>
@@ -56,19 +56,19 @@ export default function HomePage() {
 
       {/* Hero Section */}
       <header className="max-w-4xl mx-auto px-6 pt-20 pb-12 text-center space-y-6">
-        <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-zinc-900/90 border border-zinc-800 text-zinc-300 text-xs font-medium tracking-wide">
-          <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+        <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white border border-zinc-200 shadow-sm text-zinc-600 text-xs font-medium tracking-wide">
+          <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
           {t('heroBadge')}
         </div>
 
-        <h1 className="text-4xl md:text-6xl font-extrabold text-zinc-100 tracking-tight leading-[1.1]">
+        <h1 className="text-4xl md:text-6xl font-extrabold text-zinc-900 tracking-tight leading-[1.1]">
           {t('heroTitle1')} <br />
-          <span className="text-transparent bg-clip-text bg-gradient-to-r from-zinc-200 via-zinc-400 to-zinc-500">
+          <span className="text-transparent bg-clip-text bg-gradient-to-r from-zinc-900 via-zinc-700 to-zinc-500">
             {t('heroTitle2')}
           </span>
         </h1>
 
-        <p className="max-w-2xl mx-auto text-sm md:text-base text-zinc-400 leading-relaxed font-normal">
+        <p className="max-w-2xl mx-auto text-sm md:text-base text-zinc-600 leading-relaxed font-normal">
           {t('heroDesc')}
         </p>
       </header>
@@ -161,32 +161,32 @@ export default function HomePage() {
       </section>
 
       {/* Minimal Feature Highlights */}
-      <section className="border-t border-zinc-800/60 bg-zinc-950/60 py-16">
+      <section className="border-t border-zinc-200 bg-zinc-50/50 py-16">
         <div className="max-w-6xl mx-auto px-6">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 text-xs">
             <div className="space-y-2">
-              <div className="font-semibold text-zinc-100 text-sm flex items-center gap-2">
-                <Terminal className="w-4 h-4 text-zinc-400" /> {t('featureEditor')}
+              <div className="font-semibold text-zinc-900 text-sm flex items-center gap-2">
+                <Terminal className="w-4 h-4 text-zinc-500" /> {t('featureEditor')}
               </div>
-              <p className="text-zinc-400 leading-relaxed font-normal">
+              <p className="text-zinc-600 leading-relaxed font-normal">
                 {t('featureEditorDesc')}
               </p>
             </div>
 
             <div className="space-y-2">
-              <div className="font-semibold text-zinc-100 text-sm flex items-center gap-2">
-                <Clock className="w-4 h-4 text-zinc-400" /> {t('featureTimer')}
+              <div className="font-semibold text-zinc-900 text-sm flex items-center gap-2">
+                <Clock className="w-4 h-4 text-zinc-500" /> {t('featureTimer')}
               </div>
-              <p className="text-zinc-400 leading-relaxed font-normal">
+              <p className="text-zinc-600 leading-relaxed font-normal">
                 {t('featureTimerDesc')}
               </p>
             </div>
 
             <div className="space-y-2">
-              <div className="font-semibold text-zinc-100 text-sm flex items-center gap-2">
-                <BrainCircuit className="w-4 h-4 text-zinc-400" /> {t('featureAI')}
+              <div className="font-semibold text-zinc-900 text-sm flex items-center gap-2">
+                <BrainCircuit className="w-4 h-4 text-zinc-500" /> {t('featureAI')}
               </div>
-              <p className="text-zinc-400 leading-relaxed font-normal">
+              <p className="text-zinc-600 leading-relaxed font-normal">
                 {t('featureAIDesc')}
               </p>
             </div>

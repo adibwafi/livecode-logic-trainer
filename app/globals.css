@@ -2,8 +2,8 @@
 
 @layer base {
   body {
-    background-color: #09090b;
-    color: #f4f4f5;
+    background-color: #ffffff;
+    color: #09090b;
     font-feature-settings: "cv02", "cv03", "cv04", "cv11";
   }
 }
