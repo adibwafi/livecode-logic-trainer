@@ -695,5 +695,555 @@ app.post('/orders/reserve', (req, res) => {
 
 module.exports = app;`,
     testCases: []
+  },
+  {
+    id: "auth-session-manager",
+    title: "JWT Token Refresh & Auto-Logout State Engine",
+    role: "Frontend Engineer",
+    level: "Mid-Level",
+    timeLimit: 30,
+    category: "Frontend State & Auth Token Rotation",
+    description: `## 1. Studi Kasus
+Dalam aplikasi Single Page Application (SPA), ketika access token kadaluarsa (HTTP 401), sistem harus secara otomatis mencoba memperbarui token via endpoint refresh token sebelum mengulangi request awal. Jika refresh token juga kadaluarsa atau tidak valid, sistem harus melakukan auto-logout dan membersihkan state sesi.
+
+Tugas Anda adalah membuat middleware/handler Express untuk endpoint:
+\`\`\`http
+POST /auth/refresh
+\`\`\`
+
+---
+
+## 2. Spesifikasi Input & Output
+
+### Request Body:
+\`\`\`json
+{
+  "refreshToken": "REFRESH_VALID_123"
+}
+\`\`\`
+
+### Response Berhasil (HTTP 200):
+\`\`\`json
+{
+  "accessToken": "NEW_ACCESS_TOKEN_999",
+  "expiresIn": 900
+}
+\`\`\`
+
+---
+
+## 3. Aturan & Requirement Validasi
+1. **Validasi Body**: Jika \`refreshToken\` tidak diisi → \`HTTP 400\` *"Refresh token is required"*.
+2. **Cek Validitas Refresh Token**:
+   - Token \`"REFRESH_EXPIRED"\` → \`HTTP 401\` *"Refresh token expired. Please login again."*
+   - Token selain \`"REFRESH_VALID_123"\` → \`HTTP 403\` *"Invalid refresh token"*.
+3. **Generate Token Baru**: Jika token valid, kembalikan \`HTTP 200\` dengan token baru \`"NEW_ACCESS_TOKEN_" + Date.now()\`.
+
+---
+
+## 4. Pertanyaan Bonus Konseptual 💡
+> **Mitigasi Serangan XSS vs CSRF pada Penyimpanan JWT**
+> *Di bagian komentar kode solusi Anda, jelaskan:*
+> - Risiko menyimpan JWT di \`localStorage\` / \`sessionStorage\` (Vulnerable terhadap XSS).
+> - Keunggulan \`HttpOnly\`, \`Secure\`, dan \`SameSite=Strict\` Cookie untuk mencegah CSRF & XSS.
+`,
+    starterCode: `const express = require('express');
+const app = express();
+app.use(express.json());
+
+app.post('/auth/refresh', (req, res) => {
+  const { refreshToken } = req.body;
+
+  // TODO: Implementasi Handler Token Refresh
+  // 1. Validasi keberadaan refreshToken (HTTP 400 jika tidak ada)
+  // 2. Cek token kadaluarsa "REFRESH_EXPIRED" -> HTTP 401
+  // 3. Cek token tidak valid (bukan "REFRESH_VALID_123") -> HTTP 403
+  // 4. Kembalikan token baru (HTTP 200)
+
+  return res.status(500).json({ message: "Belum diimplementasikan" });
+});
+
+/*
+ * JAWABAN PERTANYAAN BONUS:
+ * Jelaskan XSS vs CSRF pada penyimpanan JWT di bawah ini:
+ *
+ * 1. LocalStorage vs XSS:
+ *
+ * 2. HttpOnly Cookie & SameSite vs CSRF:
+ */
+
+module.exports = app;
+`,
+    bonusQuestion: "Jelaskan mitigasi serangan XSS vs CSRF pada penyimpanan JWT (HttpOnly Cookie vs Memory/LocalStorage + SameSite flag).",
+    idealSolution: `const express = require('express');
+const app = express();
+app.use(express.json());
+
+app.post('/auth/refresh', (req, res) => {
+  const { refreshToken } = req.body;
+
+  if (!refreshToken) {
+    return res.status(400).json({ message: "Refresh token is required" });
+  }
+
+  if (refreshToken === "REFRESH_EXPIRED") {
+    return res.status(401).json({ message: "Refresh token expired. Please login again." });
+  }
+
+  if (refreshToken !== "REFRESH_VALID_123") {
+    return res.status(403).json({ message: "Invalid refresh token" });
+  }
+
+  return res.status(200).json({
+    accessToken: "NEW_ACCESS_TOKEN_" + Date.now(),
+    expiresIn: 900
+  });
+});
+
+/*
+ * JAWABAN BONUS - XSS VS CSRF JWT STORAGE:
+ *
+ * 1. LOCALSTORAGE & XSS:
+ *    Menyimpan JWT di LocalStorage sangat rentan terhadap Cross-Site Scripting (XSS). Jika penyerang berhasil menyuntikkan skrip JS (misal via paket npm yang terinfeksi atau input yang tidak disanitasi), skrip dapat membaca localStorage.getItem('token') dan mengirimnya ke server penyerang.
+ *
+ * 2. HTTPONLY COOKIE & SAMESITE:
+ *    - HttpOnly: Mencegah JavaScript browser membaca cookie token, sepenuhnya menutup celah pencurian token via XSS.
+ *    - SameSite=Strict / Lax: Memastikan cookie tidak ikut dikirim saat terjadi cross-site request dari website lain, mencegah Cross-Site Request Forgery (CSRF).
+ */
+
+module.exports = app;`,
+    testCases: []
+  },
+  {
+    id: "idempotent-payment-webhook",
+    title: "Payment Gateway Idempotent Webhook Handler",
+    role: "Backend Engineer",
+    level: "Mid-Level",
+    timeLimit: 30,
+    category: "Webhooks & Idempotency",
+    description: `## 1. Studi Kasus
+Payment gateway mengirimkan webhook event (\`payment.success\`) untuk memperbarui status transaksi di database Anda. Karena kegagalan jaringan, payment gateway sering melakukan retry webhook yang sama berkali-kali. API Anda harus menjamin **Idempotency** (event ID yang sama tidak boleh diproses 2 kali) dan memverifikasi **Signature Webhook**.
+
+Endpoint:
+\`\`\`http
+POST /webhook/payment
+\`\`\`
+
+---
+
+## 2. Spesifikasi Input & Output
+
+### Header:
+\`\`\`http
+x-signature: VALID_SIGNATURE_KEY
+\`\`\`
+
+### Request Body:
+\`\`\`json
+{
+  "eventId": "EVT_998811",
+  "orderId": "ORD_1001",
+  "status": "SUCCESS",
+  "amount": 250000
+}
+\`\`\`
+
+---
+
+## 3. Data Awal In-Memory
+\`\`\`javascript
+const processedEventIds = new Set();
+const orders = [
+  { orderId: "ORD_1001", status: "PENDING_PAYMENT", amount: 250000 }
+];
+\`\`\`
+
+---
+
+## 4. Aturan Validasi & Requirement
+1. **Verifikasi Signature**: Jika header \`x-signature\` !== \`"VALID_SIGNATURE_KEY"\` → \`HTTP 401\` *"Unauthorized webhook signature"*.
+2. **Validasi Payload**: Jika \`eventId\`, \`orderId\`, atau \`status\` kosong → \`HTTP 400\` *"Invalid webhook payload"*.
+3. **Cek Duplikasi Event (Idempotency)**: Jika \`processedEventIds.has(eventId)\` → \`HTTP 200\` *"Event already processed"*. (Penting: Tetap kembalikan HTTP 200 agar payment gateway tidak retry terus menerus!).
+4. **Update Status Order**: Cari order berdasarkan \`orderId\`. Ubah \`order.status = status\` dan masukkan \`eventId\` ke \`processedEventIds\`. Kembalikan \`HTTP 200\` *"Order updated successfully"*.
+
+---
+
+## 5. Pertanyaan Bonus Konseptual 💡
+> **Strategi Webhook Dead Letter Queue (DLQ) & Exponential Backoff**
+> *Di bagian komentar kode solusi Anda, jelaskan penanganan kegagalan webhook pihak ketiga menggunakan Message Queue (BullMQ/Kafka), Dead Letter Queue (DLQ), dan Retry backoff (1s, 5s, 30s, 5m).*
+`,
+    starterCode: `const express = require('express');
+const app = express();
+app.use(express.json());
+
+const processedEventIds = new Set();
+const orders = [
+  { orderId: "ORD_1001", status: "PENDING_PAYMENT", amount: 250000 }
+];
+
+app.post('/webhook/payment', (req, res) => {
+  const signature = req.headers['x-signature'];
+  const { eventId, orderId, status, amount } = req.body;
+
+  // TODO: Implementasi Webhook Handler
+  // 1. Verifikasi header x-signature (HTTP 401 jika salah)
+  // 2. Validasi kelengkapan payload (eventId, orderId, status) -> HTTP 400
+  // 3. Cek apakah eventId sudah pernah diproses -> HTTP 200 (Idempotent response)
+  // 4. Update status order dan catat eventId -> HTTP 200
+
+  return res.status(500).json({ message: "Belum diimplementasikan" });
+});
+
+/*
+ * JAWABAN PERTANYAAN BONUS:
+ * Jelaskan Webhook DLQ & Retry Backoff di bawah ini:
+ *
+ * 1. Exponential Backoff Retry:
+ *
+ * 2. Dead Letter Queue (DLQ) & Manual Alerting:
+ */
+
+module.exports = app;
+`,
+    bonusQuestion: "Jelaskan strategi Webhook Dead Letter Queue (DLQ) & Exponential Backoff Retry saat server penerima mengalami downtime.",
+    idealSolution: `const express = require('express');
+const app = express();
+app.use(express.json());
+
+const processedEventIds = new Set();
+const orders = [
+  { orderId: "ORD_1001", status: "PENDING_PAYMENT", amount: 250000 }
+];
+
+app.post('/webhook/payment', (req, res) => {
+  const signature = req.headers['x-signature'];
+  if (signature !== "VALID_SIGNATURE_KEY") {
+    return res.status(401).json({ message: "Unauthorized webhook signature" });
+  }
+
+  const { eventId, orderId, status } = req.body;
+  if (!eventId || !orderId || !status) {
+    return res.status(400).json({ message: "Invalid webhook payload" });
+  }
+
+  if (processedEventIds.has(eventId)) {
+    return res.status(200).json({ message: "Event already processed" });
+  }
+
+  const order = orders.find(o => o.orderId === orderId);
+  if (order) {
+    order.status = status;
+  }
+
+  processedEventIds.add(eventId);
+  return res.status(200).json({ message: "Order updated successfully" });
+});
+
+/*
+ * JAWABAN BONUS - WEBHOOK DLQ & RETRY BACKOFF:
+ *
+ * 1. EXPONENTIAL BACKOFF RETRY:
+ *    Saat mengirim webhook ke server merchant yang gagal (HTTP 5xx / Timeout), jangan langsung menyerah. Lakukan percobaan ulang secara bertahap: misal retry 1 (setelah 5s), retry 2 (setelah 30s), retry 3 (setelah 5 menit), retry 4 (setelah 1 jam).
+ *
+ * 2. DEAD LETTER QUEUE (DLQ):
+ *    Jika setelah N kali percobaan webhook tetap gagal, pindahkan message ke Dead Letter Queue (DLQ). Tim engineering dapat menganalisis log error, memperbaiki bug/downtime server, lalu melakukan "replay" message dari DLQ tanpa merusak urutan event lain.
+ */
+
+module.exports = app;`,
+    testCases: []
+  },
+  {
+    id: "notification-batch-dispatcher",
+    title: "Resilient Notification Dispatcher with Provider Fallback",
+    role: "Full Stack Engineer",
+    level: "Mid-Level",
+    timeLimit: 30,
+    category: "Resilient Microservices & Fallback Logic",
+    description: `## 1. Studi Kasus
+Dalam sistem pengiriman email transaksi (OTP / Invoice), keandalan layanan adalah hal utama. Aplikasi harus mencoba mengirimkan email via **Primary Provider (SendGrid)**. Jika SendGrid mengalami error (misal maintenance/downtime), sistem harus **otomatis fallback ke Secondary Provider (Mailgun)** secara transparan.
+
+Endpoint:
+\`\`\`http
+POST /notifications/send
+\`\`\`
+
+---
+
+## 2. Spesifikasi Input & Output
+
+### Request Body:
+\`\`\`json
+{
+  "to": "user@example.com",
+  "subject": "Kode OTP Anda",
+  "body": "Kode OTP: 492019",
+  "forcePrimaryError": false
+}
+\`\`\`
+
+### Response Berhasil (HTTP 200):
+\`\`\`json
+{
+  "status": "SENT",
+  "provider": "SendGrid",
+  "messageId": "MSG_SG_1002"
+}
+\`\`\`
+
+---
+
+## 3. Requirement & Aturan Validasi
+1. **Validasi Payload**: Jika \`to\`, \`subject\`, atau \`body\` kosong → \`HTTP 400\` *"Missing required email fields"*.
+2. **Logika Dispatch Primary (SendGrid)**:
+   - Jika \`forcePrimaryError === true\` (simulasi SendGrid down), gagal dengan error 500 dan masuk ke fallback.
+   - Jika normal, kirim via SendGrid → \`HTTP 200\` dengan \`{ status: "SENT", provider: "SendGrid", messageId: "SG_" + Date.now() }\`.
+3. **Logika Fallback Secondary (Mailgun)**:
+   - Jika Primary gagal, eksekusi pengiriman via Mailgun → \`HTTP 200\` dengan \`{ status: "SENT", provider: "Mailgun", messageId: "MG_" + Date.now() }\`.
+   - Jika kedua provider dipaksa gagal (\`forcePrimaryError === true\` & \`forceSecondaryError === true\`), kembalikan \`HTTP 503\` *"All email providers unavailable"*.
+
+---
+
+## 4. Pertanyaan Bonus Konseptual 💡
+> **Pola Circuit Breaker pada Microservices**
+> *Di bagian komentar kode solusi Anda, jelaskan 3 status Circuit Breaker (CLOSED, OPEN, HALF-OPEN) untuk mengisolasi kegagalan service dependen.*
+`,
+    starterCode: `const express = require('express');
+const app = express();
+app.use(express.json());
+
+app.post('/notifications/send', (req, res) => {
+  const { to, subject, body, forcePrimaryError, forceSecondaryError } = req.body;
+
+  // TODO: Implementasi Dispatcher dengan Fallback
+  // 1. Validasi field wajib (to, subject, body) -> HTTP 400
+  // 2. Coba kirim via SendGrid (jika tidak forcePrimaryError)
+  // 3. Jika SendGrid gagal, coba kirim via Mailgun (jika tidak forceSecondaryError)
+  // 4. Jika kedua provider gagal -> HTTP 503
+
+  return res.status(500).json({ message: "Belum diimplementasikan" });
+});
+
+/*
+ * JAWABAN PERTANYAAN BONUS:
+ * Jelaskan status Circuit Breaker di bawah ini:
+ *
+ * 1. CLOSED:
+ *
+ * 2. OPEN:
+ *
+ * 3. HALF-OPEN:
+ */
+
+module.exports = app;
+`,
+    bonusQuestion: "Jelaskan pola Circuit Breaker (CLOSED, OPEN, HALF-OPEN) untuk mencegah cascading failure pada microservices dependensi pihak ketiga.",
+    idealSolution: `const express = require('express');
+const app = express();
+app.use(express.json());
+
+app.post('/notifications/send', (req, res) => {
+  const { to, subject, body, forcePrimaryError, forceSecondaryError } = req.body;
+
+  if (!to || !subject || !body) {
+    return res.status(400).json({ message: "Missing required email fields" });
+  }
+
+  // Attempt Primary Provider (SendGrid)
+  if (!forcePrimaryError) {
+    return res.status(200).json({
+      status: "SENT",
+      provider: "SendGrid",
+      messageId: "SG_" + Date.now()
+    });
+  }
+
+  // Fallback to Secondary Provider (Mailgun)
+  if (!forceSecondaryError) {
+    return res.status(200).json({
+      status: "SENT",
+      provider: "Mailgun",
+      messageId: "MG_" + Date.now()
+    });
+  }
+
+  return res.status(503).json({ message: "All email providers unavailable" });
+});
+
+/*
+ * JAWABAN BONUS - CIRCUIT BREAKER PATTERN:
+ *
+ * 1. CLOSED State (Normal Operation):
+ *    Semua request dikirimkan langsung ke service utama. Kegagalan diukur secara statistik. Jika persentase failure melebihi ambang batas (threshold, misal 50%), state berubah menjadi OPEN.
+ *
+ * 2. OPEN State (Trip / Fail Fast):
+ *    Request ke service utama langsung ditolak secara instan tanpa menunggu timeout, sehingga menghemat daya komputasi dan mencegah cascading failure.
+ *
+ * 3. HALF-OPEN State (Trial & Recovery):
+ *    Setelah jeda waktu tertentu (cooldown period, misal 30 detik), Circuit Breaker mengizinkan sebagian kecil request lalu-lalang untuk menguji kesehatan service utama. Jika berhasil, state kembali ke CLOSED. Jika masih gagal, kembali ke OPEN.
+ */
+
+module.exports = app;`,
+    testCases: []
+  },
+  {
+    id: "order-state-machine-validator",
+    title: "Order Lifecycle State Machine & Test Suite",
+    role: "QA Engineer",
+    level: "Mid-Level",
+    timeLimit: 30,
+    category: "API Automation & State Machine Testing",
+    description: `## 1. Studi Kasus
+Dalam sistem e-commerce, status pesanan mengikuti diagram Finite State Machine (FSM) yang ketat. Sebagai QA Engineer / Backend Test Engineer, Anda bertugas membuat API validator transition status order dan menangani skenario illegal transition.
+
+Endpoint:
+\`\`\`http
+POST /orders/transition
+\`\`\`
+
+---
+
+## 2. Spesifikasi State Machine
+Status yang valid:
+- \`CREATED\` → transisi ke: \`PAID\` atau \`CANCELLED\`
+- \`PAID\` → transisi ke: \`PROCESSING\` atau \`CANCELLED\`
+- \`PROCESSING\` → transisi ke: \`SHIPPED\`
+- \`SHIPPED\` → transisi ke: \`DELIVERED\`
+- \`DELIVERED\` / \`CANCELLED\` → Terminal state (tidak bisa transisi lagi ke mana pun).
+
+---
+
+## 3. Spesifikasi Input & Output
+
+### Request Body:
+\`\`\`json
+{
+  "currentStatus": "PAID",
+  "targetStatus": "PROCESSING"
+}
+\`\`\`
+
+### Response Berhasil (HTTP 200):
+\`\`\`json
+{
+  "allowed": true,
+  "message": "Transition from PAID to PROCESSING is valid"
+}
+\`\`\`
+
+### Response Transisi Ilegal (HTTP 400):
+\`\`\`json
+{
+  "allowed": false,
+  "message": "Illegal transition from CANCELLED to SHIPPED"
+}
+\`\`\`
+
+---
+
+## 4. Aturan Validasi
+1. **Validasi Body**: Jika \`currentStatus\` atau \`targetStatus\` kosong → \`HTTP 400\` *"currentStatus and targetStatus are required"*.
+2. **Validasi Status Dikenal**: Jika status tidak ada di FSM → \`HTTP 400\` *"Unknown status provided"*.
+3. **Validasi Transisi**: Cek apakah transisi dari \`currentStatus\` ke \`targetStatus\` diizinkan menurut aturan FSM.
+   - Jika Valid → \`HTTP 200\` dengan \`allowed: true\`.
+   - Jika Tidak Valid (Illegal Transition) → \`HTTP 400\` dengan \`allowed: false\`.
+
+---
+
+## 5. Pertanyaan Bonus Konseptual 💡
+> **Integration Testing vs Contract Testing (Pact)**
+> *Di bagian komentar kode solusi Anda, jelaskan perbedaan strategi Integration Testing vs Consumer-Driven Contract Testing (Pact) dalam menguji interaksi antar microservice.*
+`,
+    starterCode: `const express = require('express');
+const app = express();
+app.use(express.json());
+
+const ALLOWED_TRANSITIONS = {
+  CREATED: ["PAID", "CANCELLED"],
+  PAID: ["PROCESSING", "CANCELLED"],
+  PROCESSING: ["SHIPPED"],
+  SHIPPED: ["DELIVERED"],
+  DELIVERED: [],
+  CANCELLED: []
+};
+
+app.post('/orders/transition', (req, res) => {
+  const { currentStatus, targetStatus } = req.body;
+
+  // TODO: Implementasi FSM Validator
+  // 1. Validasi kelengkapan body (HTTP 400)
+  // 2. Cek apakah status dikenali (HTTP 400)
+  // 3. Cek apakah targetStatus ada di array ALLOWED_TRANSITIONS[currentStatus]
+  // 4. Jika valid -> HTTP 200; Jika ilegal -> HTTP 400
+
+  return res.status(500).json({ message: "Belum diimplementasikan" });
+});
+
+/*
+ * JAWABAN PERTANYAAN BONUS:
+ * Jelaskan Contract Testing (Pact) vs Integration Testing di bawah ini:
+ *
+ * 1. Integration Testing:
+ *
+ * 2. Consumer-Driven Contract Testing (Pact):
+ */
+
+module.exports = app;
+`,
+    bonusQuestion: "Jelaskan strategi Integration Testing vs End-to-End (E2E) Contract Testing dengan Pact pada arsitektur microservices.",
+    idealSolution: `const express = require('express');
+const app = express();
+app.use(express.json());
+
+const ALLOWED_TRANSITIONS = {
+  CREATED: ["PAID", "CANCELLED"],
+  PAID: ["PROCESSING", "CANCELLED"],
+  PROCESSING: ["SHIPPED"],
+  SHIPPED: ["DELIVERED"],
+  DELIVERED: [],
+  CANCELLED: []
+};
+
+app.post('/orders/transition', (req, res) => {
+  const { currentStatus, targetStatus } = req.body;
+
+  if (!currentStatus || !targetStatus) {
+    return res.status(400).json({ message: "currentStatus and targetStatus are required" });
+  }
+
+  if (!ALLOWED_TRANSITIONS[currentStatus] || !ALLOWED_TRANSITIONS[targetStatus] && targetStatus !== "CANCELLED" && targetStatus !== "PAID" && targetStatus !== "PROCESSING" && targetStatus !== "SHIPPED" && targetStatus !== "DELIVERED") {
+    return res.status(400).json({ message: "Unknown status provided" });
+  }
+
+  const validNextStates = ALLOWED_TRANSITIONS[currentStatus] || [];
+  const isAllowed = validNextStates.includes(targetStatus);
+
+  if (isAllowed) {
+    return res.status(200).json({
+      allowed: true,
+      message: "Transition from " + currentStatus + " to " + targetStatus + " is valid"
+    });
+  }
+
+  return res.status(400).json({
+    allowed: false,
+    message: "Illegal transition from " + currentStatus + " to " + targetStatus
+  });
+});
+
+/*
+ * JAWABAN BONUS - CONTRACT TESTING VS INTEGRATION TESTING:
+ *
+ * 1. INTEGRATION TESTING:
+ *    Menguji beberapa service nyata sekaligus secara langsung. Seringkali lambat, sulit dikonfigurasi di CI/CD, dan rentan terhadap flaky tests jika salah satu service sedang down atau database kotor.
+ *
+ * 2. CONSUMER-DRIVEN CONTRACT TESTING (PACT):
+ *    - Consumer (Frontend/Service A) mendefinisikan ekspektasi request/response dalam file "Contract" (Pact JSON).
+ *    - Provider (Backend/Service B) menguji kodenya secara mandiri terhadap Contract tanpa perlu menjalankan Consumer secara nyata.
+ *    - Hasilnya: Eksekusi tes sangat cepat O(ms), memberikan jaminan tidak adanya breaking change API sebelum deploy ke production.
+ */
+
+module.exports = app;`,
+    testCases: []
   }
 ];
+

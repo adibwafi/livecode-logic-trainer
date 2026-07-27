@@ -234,6 +234,133 @@ export function runLocalTests(userCode: string): TestRunResult {
       }
     }
 
+    // Evaluate JWT Token Refresh (/auth/refresh)
+    if (postRoutes['/auth/refresh']) {
+      {
+        const r1 = simulateRequest('/auth/refresh', {});
+        const passed = r1.statusCode === 400;
+        results.push({
+          id: 'tc_auth_missing',
+          name: 'Missing Refresh Token Check (HTTP 400)',
+          passed,
+          actualStatus: r1.statusCode,
+          error: passed ? undefined : `Expected HTTP 400, got ${r1.statusCode}`
+        });
+      }
+      {
+        const r2 = simulateRequest('/auth/refresh', { refreshToken: 'REFRESH_EXPIRED' });
+        const passed = r2.statusCode === 401;
+        results.push({
+          id: 'tc_auth_expired',
+          name: 'Expired Refresh Token Check (HTTP 401)',
+          passed,
+          actualStatus: r2.statusCode,
+          error: passed ? undefined : `Expected HTTP 401, got ${r2.statusCode}`
+        });
+      }
+      {
+        const r3 = simulateRequest('/auth/refresh', { refreshToken: 'REFRESH_VALID_123' });
+        const passed = r3.statusCode === 200 && Boolean(r3.responseBody?.accessToken);
+        results.push({
+          id: 'tc_auth_success',
+          name: 'Valid Refresh Token Token Renewal (HTTP 200)',
+          passed,
+          actualStatus: r3.statusCode,
+          error: passed ? undefined : `Expected HTTP 200 with new accessToken, got ${r3.statusCode}`
+        });
+      }
+    }
+
+    // Evaluate Idempotent Webhook (/webhook/payment)
+    if (postRoutes['/webhook/payment']) {
+      {
+        const r1 = simulateRequest('/webhook/payment', { eventId: 'E1', orderId: 'O1', status: 'SUCCESS' }, { 'x-signature': 'WRONG' });
+        const passed = r1.statusCode === 401;
+        results.push({
+          id: 'tc_webhook_sig',
+          name: 'Signature Verification Check (HTTP 401)',
+          passed,
+          actualStatus: r1.statusCode,
+          error: passed ? undefined : `Expected HTTP 401, got ${r1.statusCode}`
+        });
+      }
+      {
+        const r2 = simulateRequest('/webhook/payment', { eventId: 'EVT_998811', orderId: 'ORD_1001', status: 'SUCCESS' }, { 'x-signature': 'VALID_SIGNATURE_KEY' });
+        const passed = r2.statusCode === 200;
+        results.push({
+          id: 'tc_webhook_success',
+          name: 'Valid Webhook Order Update (HTTP 200)',
+          passed,
+          actualStatus: r2.statusCode,
+          error: passed ? undefined : `Expected HTTP 200, got ${r2.statusCode}`
+        });
+      }
+      {
+        const r3 = simulateRequest('/webhook/payment', { eventId: 'EVT_998811', orderId: 'ORD_1001', status: 'SUCCESS' }, { 'x-signature': 'VALID_SIGNATURE_KEY' });
+        const passed = r3.statusCode === 200;
+        results.push({
+          id: 'tc_webhook_idempotent',
+          name: 'Duplicate Event Idempotency Check (HTTP 200)',
+          passed,
+          actualStatus: r3.statusCode,
+          error: passed ? undefined : `Expected HTTP 200 for duplicated event, got ${r3.statusCode}`
+        });
+      }
+    }
+
+    // Evaluate Resilient Notification Dispatcher (/notifications/send)
+    if (postRoutes['/notifications/send']) {
+      {
+        const r1 = simulateRequest('/notifications/send', { to: 'a@b.com', subject: 'Hi', body: 'Test' });
+        const passed = r1.statusCode === 200 && r1.responseBody?.provider === 'SendGrid';
+        results.push({
+          id: 'tc_notify_primary',
+          name: 'Primary Provider Dispatch (SendGrid -> HTTP 200)',
+          passed,
+          actualStatus: r1.statusCode,
+          error: passed ? undefined : `Expected SendGrid dispatch HTTP 200, got ${r1.statusCode}`
+        });
+      }
+      {
+        const r2 = simulateRequest('/notifications/send', { to: 'a@b.com', subject: 'Hi', body: 'Test', forcePrimaryError: true });
+        const passed = r2.statusCode === 200 && r2.responseBody?.provider === 'Mailgun';
+        results.push({
+          id: 'tc_notify_fallback',
+          name: 'Secondary Provider Fallback Dispatch (Mailgun -> HTTP 200)',
+          passed,
+          actualStatus: r2.statusCode,
+          error: passed ? undefined : `Expected Mailgun fallback HTTP 200, got ${r2.statusCode}`
+        });
+      }
+    }
+
+    // Evaluate Order State Machine (/orders/transition)
+    if (postRoutes['/orders/transition']) {
+      {
+        const r1 = simulateRequest('/orders/transition', { currentStatus: 'PAID', targetStatus: 'PROCESSING' });
+        const passed = r1.statusCode === 200 && r1.responseBody?.allowed === true;
+        results.push({
+          id: 'tc_fsm_valid',
+          name: 'Valid FSM State Transition (PAID -> PROCESSING -> HTTP 200)',
+          passed,
+          actualStatus: r1.statusCode,
+          error: passed ? undefined : `Expected HTTP 200 with allowed: true, got ${r1.statusCode}`
+        });
+      }
+      {
+        const r2 = simulateRequest('/orders/transition', { currentStatus: 'CANCELLED', targetStatus: 'SHIPPED' });
+        const passed = r2.statusCode === 400 && r2.responseBody?.allowed === false;
+        results.push({
+          id: 'tc_fsm_illegal',
+          name: 'Illegal FSM State Transition Protection (CANCELLED -> SHIPPED -> HTTP 400)',
+          passed,
+          actualStatus: r2.statusCode,
+          error: passed ? undefined : `Expected HTTP 400 with allowed: false, got ${r2.statusCode}`
+        });
+      }
+    }
+
+
     if (results.length === 0) {
       results.push({
         id: 'tc_route_generic',

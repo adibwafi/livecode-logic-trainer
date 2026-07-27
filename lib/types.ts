@@ -40,6 +40,15 @@ export interface TestRunResult {
   logs: string[];
 }
 
+export interface Achievement {
+  id: string;
+  title: string;
+  description: string;
+  icon: string;
+}
+
+export type RecruiterPersona = 'indo-tech-lead' | 'faang-interviewer' | 'yc-founder';
+
 export interface AssessmentResult {
   score: number; // 0 - 100
   status: 'PASS' | 'PARTIAL' | 'FAIL';
@@ -50,4 +59,6 @@ export interface AssessmentResult {
   edgeCasesMissed: string[];
   bonusEvaluation: string;
   idealSolution: string;
+  achievements?: Achievement[];
 }
+
