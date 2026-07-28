@@ -156,7 +156,7 @@ export default function ProblemSessionPage() {
         </div>
 
         {/* Right Pane: Code Editor + Console (58% width) */}
-        <div className="flex-1 h-full flex flex-col overflow-hidden bg-white">
+        <div className="flex-1 h-full flex flex-col overflow-hidden bg-[#1e1e1e]">
           <div className="flex-1 overflow-hidden">
             <EditorPanel
               code={code}
