@@ -360,6 +360,143 @@ export function runLocalTests(userCode: string): TestRunResult {
       }
     }
 
+    // Evaluate User Registration Validator (/users/register)
+    if (postRoutes['/users/register']) {
+      {
+        const r1 = simulateRequest('/users/register', {});
+        const passed = r1.statusCode === 400;
+        results.push({
+          id: 'tc_reg_missing',
+          name: 'Missing Registration Fields Check (HTTP 400)',
+          passed,
+          actualStatus: r1.statusCode,
+          error: passed ? undefined : `Expected HTTP 400, got ${r1.statusCode}`
+        });
+      }
+      {
+        const r2 = simulateRequest('/users/register', { email: 'invalid', password: 'weak', age: 20 });
+        const passed = r2.statusCode === 400;
+        results.push({
+          id: 'tc_reg_complexity',
+          name: 'Email Format & Password Complexity Check (HTTP 400)',
+          passed,
+          actualStatus: r2.statusCode,
+          error: passed ? undefined : `Expected HTTP 400, got ${r2.statusCode}`
+        });
+      }
+      {
+        const r3 = simulateRequest('/users/register', { email: 'newuser@example.com', password: 'Password123!', age: 20 });
+        const passed = r3.statusCode === 201;
+        results.push({
+          id: 'tc_reg_success',
+          name: 'Valid User Registration (HTTP 201)',
+          passed,
+          actualStatus: r3.statusCode,
+          error: passed ? undefined : `Expected HTTP 201, got ${r3.statusCode}`
+        });
+      }
+      {
+        const r4 = simulateRequest('/users/register', { email: 'existing@example.com', password: 'Password123!', age: 25 });
+        const passed = r4.statusCode === 409;
+        results.push({
+          id: 'tc_reg_duplicate',
+          name: 'Duplicate Email Rejection (HTTP 409)',
+          passed,
+          actualStatus: r4.statusCode,
+          error: passed ? undefined : `Expected HTTP 409, got ${r4.statusCode}`
+        });
+      }
+    }
+
+    // Evaluate Products Search & Pagination (/api/products/search)
+    if (postRoutes['/api/products/search']) {
+      {
+        const r1 = simulateRequest('/api/products/search', { page: 0, limit: -5 });
+        const passed = r1.statusCode === 400;
+        results.push({
+          id: 'tc_search_invalid_page',
+          name: 'Invalid Pagination Parameters Check (HTTP 400)',
+          passed,
+          actualStatus: r1.statusCode,
+          error: passed ? undefined : `Expected HTTP 400, got ${r1.statusCode}`
+        });
+      }
+      {
+        const r2 = simulateRequest('/api/products/search', { query: 'phone', category: 'ELECTRONICS', page: 1, limit: 2 });
+        const passed = r2.statusCode === 200 && Array.isArray(r2.responseBody?.data) && Boolean(r2.responseBody?.pagination);
+        results.push({
+          id: 'tc_search_success',
+          name: 'Filtered Data & Pagination Metadata Response (HTTP 200)',
+          passed,
+          actualStatus: r2.statusCode,
+          error: passed ? undefined : `Expected HTTP 200 with data array and pagination metadata, got ${r2.statusCode}`
+        });
+      }
+    }
+
+    // Evaluate Payload Schema Validator (/test/validate-payload)
+    if (postRoutes['/test/validate-payload']) {
+      {
+        const r1 = simulateRequest('/test/validate-payload', { username: 'a', email: 'bad', role: 'INVALID', tags: [] });
+        const passed = r1.statusCode === 400 && r1.responseBody?.valid === false;
+        results.push({
+          id: 'tc_schema_invalid',
+          name: 'Invalid Payload Schema Rejection (HTTP 400)',
+          passed,
+          actualStatus: r1.statusCode,
+          error: passed ? undefined : `Expected HTTP 400 with valid: false, got ${r1.statusCode}`
+        });
+      }
+      {
+        const r2 = simulateRequest('/test/validate-payload', { username: 'dev_alex', email: 'alex@dev.com', role: 'ADMIN', tags: ['js', 'ts'] });
+        const passed = r2.statusCode === 200 && r2.responseBody?.valid === true;
+        results.push({
+          id: 'tc_schema_valid',
+          name: 'Valid Payload Schema Verification (HTTP 200)',
+          passed,
+          actualStatus: r2.statusCode,
+          error: passed ? undefined : `Expected HTTP 200 with valid: true, got ${r2.statusCode}`
+        });
+      }
+    }
+
+    // Evaluate Multi-Tenant Feature Flag (/features/evaluate)
+    if (postRoutes['/features/evaluate']) {
+      {
+        const r1 = simulateRequest('/features/evaluate', {});
+        const passed = r1.statusCode === 400;
+        results.push({
+          id: 'tc_flag_missing_params',
+          name: 'Missing Parameters Check (HTTP 400)',
+          passed,
+          actualStatus: r1.statusCode,
+          error: passed ? undefined : `Expected HTTP 400, got ${r1.statusCode}`
+        });
+      }
+      {
+        const r2 = simulateRequest('/features/evaluate', { tenantId: 't1', userId: 'u1', flagKey: 'UNKNOWN_FLAG' });
+        const passed = r2.statusCode === 404;
+        results.push({
+          id: 'tc_flag_not_found',
+          name: 'Non-existent Feature Flag Check (HTTP 404)',
+          passed,
+          actualStatus: r2.statusCode,
+          error: passed ? undefined : `Expected HTTP 404, got ${r2.statusCode}`
+        });
+      }
+      {
+        const r3 = simulateRequest('/features/evaluate', { tenantId: 'tenant_acme', userId: 'user_42', flagKey: 'new_checkout_v2' });
+        const passed = r3.statusCode === 200 && typeof r3.responseBody?.enabled === 'boolean' && Boolean(r3.responseBody?.reason);
+        results.push({
+          id: 'tc_flag_evaluation_success',
+          name: 'Feature Flag Tenant Override & Rollout Evaluation (HTTP 200)',
+          passed,
+          actualStatus: r3.statusCode,
+          error: passed ? undefined : `Expected HTTP 200 with enabled boolean and reason, got ${r3.statusCode}`
+        });
+      }
+    }
+
 
     if (results.length === 0) {
       results.push({
