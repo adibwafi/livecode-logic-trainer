@@ -7,19 +7,21 @@
 
 ### Complete Tech Stack & Key Configurations
 - **Framework**: Next.js 16 (App Router, Turbopack, React 19).
-- **Styling**: Tailwind CSS v4 (`@import "tailwindcss"` in `globals.css`) with **Sana Labs Cinematic Obsidian Design System** — see §Design System below.
-- **Code Editor**: `@monaco-editor/react` (VS Dark theme, JS syntax highlighting, `fontLigatures`, `cursorBlinking: smooth`, `smoothScrolling`).
-- **Markdown Rendering**: `react-markdown` with GFM support.
+### Complete Tech Stack & Key Configurations
+- **Framework**: Next.js 16 (App Router, Turbopack, React 19).
+- **Styling**: Tailwind CSS v4 (`@import "tailwindcss"` in `globals.css`) with **Sana Labs Pure White Light Design System** — see §Design System below.
+- **Code Editor**: `@monaco-editor/react` (`vs` light theme, JS syntax highlighting, `fontLigatures`, `cursorBlinking: smooth`, `smoothScrolling`).
+- **Markdown Rendering**: `react-markdown` with GFM support (`prose-zinc`).
 - **AI Assessment Engine**: `groq-sdk` calling model `llama-3.3-70b-versatile` with `response_format: { type: "json_object" }`.
 - **Audio Synthesizer Engine**: Web Audio API oscillator/gain node synth (`lib/soundFX.ts`) for offline, zero-dependency sound cues.
-- **SEO & Production Readiness**: Complete Next.js 16 Metadata (`title`, `description`, `keywords`, `openGraph`, `twitter`, `icons`) and separate `Viewport` configuration (`themeColor: "#09090b"`).
+- **SEO & Production Readiness**: Complete Next.js 16 Metadata (`title`, `description`, `keywords`, `openGraph`, `twitter`, `icons`) and separate `Viewport` configuration (`themeColor: "#ffffff"`).
 - **Database / Storage**: **NONE (Strictly In-Memory)**. Seed data and session states use JavaScript objects/arrays.
 - **Visual FX**: `canvas-confetti` on successful assessment pass (violet/emerald palette).
 - **Environment Config**: `GROQ_API_KEY` defined in `.env.local` (ignored by git).
 
 ---
 
-## 2. DESIGN SYSTEM — SANA LABS CINEMATIC OBSIDIAN
+## 2. DESIGN SYSTEM — SANA LABS PURE WHITE LIGHT
 
 ### Motion Tokens (defined in `app/globals.css`)
 ```css
@@ -34,20 +36,20 @@
 
 ### Color System
 ```
---bg-base:     #09090b   (deepest obsidian — body & nav backgrounds)
---bg-surface:  #0c0c0f   (panel surfaces — ProblemPanel, ConsolePanel)
---bg-elevated: #111114   (elevated cards)
---border-subtle: rgba(255,255,255,0.06)
---border-mid:    rgba(255,255,255,0.10)
---border-strong: rgba(255,255,255,0.16)
+--bg-base:     #ffffff   (pristine white — body & nav backgrounds)
+--bg-surface:  #fafafa   (panel surfaces — ProblemPanel, ConsolePanel)
+--bg-elevated: #f4f4f5   (elevated cards)
+--border-subtle: rgba(0,0,0,0.06)
+--border-mid:    rgba(0,0,0,0.10)
+--border-strong: rgba(0,0,0,0.18)
 ```
 
 ### Glow Accent Variables
 ```
---glow-emerald: rgba(52,211,153,0.18)    -- success states
---glow-violet:  rgba(139,92,246,0.18)    -- hero accents, active filters
---glow-amber:   rgba(251,191,36,0.18)    -- warning timer, bonus tabs
---glow-rose:    rgba(251,113,133,0.25)   -- error/fail states
+--glow-emerald: rgba(16,185,129,0.15)    -- success states
+--glow-violet:  rgba(139,92,246,0.15)    -- hero accents, active filters
+--glow-amber:   rgba(245,158,11,0.15)    -- warning timer, bonus tabs
+--glow-rose:    rgba(244,63,94,0.18)     -- error/fail states
 ```
 
 ### Utility Classes

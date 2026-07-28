@@ -71,31 +71,28 @@ export default function RecruiterMoodMeter({
 
   return (
     <div
-      className="flex items-center gap-3 rounded-full px-3.5 py-1.5 text-xs font-sans"
+      className="flex items-center gap-3 rounded-full px-3.5 py-1.5 text-xs font-sans bg-white border border-zinc-200 shadow-xs"
       style={{
-        background: 'rgba(255,255,255,0.04)',
-        border: '1px solid rgba(255,255,255,0.08)',
         backdropFilter: 'blur(16px)',
         WebkitBackdropFilter: 'blur(16px)',
-        boxShadow: '0 1px 0 rgba(255,255,255,0.04) inset',
       }}
     >
       {/* Persona Selector */}
-      <div className="flex items-center gap-1.5 border-r border-white/[0.08] pr-3">
+      <div className="flex items-center gap-1.5 border-r border-zinc-200 pr-3">
         <span
           className="text-base leading-none"
-          style={{ filter: 'drop-shadow(0 0 6px rgba(255,255,255,0.2))' }}
+          style={{ filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.1))' }}
         >
           {activePersona.avatar}
         </span>
         <select
           value={persona}
           onChange={(e) => onPersonaChange(e.target.value as RecruiterPersona)}
-          className="bg-transparent text-zinc-300 font-medium focus:outline-none cursor-pointer hover:text-white text-xs transition-colors"
-          style={{ colorScheme: 'dark' }}
+          className="bg-transparent text-zinc-800 font-semibold focus:outline-none cursor-pointer hover:text-zinc-900 text-xs transition-colors"
+          style={{ colorScheme: 'light' }}
         >
           {personas.map((p) => (
-            <option key={p.id} value={p.id} className="bg-zinc-900 text-zinc-200">
+            <option key={p.id} value={p.id} className="bg-white text-zinc-800">
               {p.name}
             </option>
           ))}
@@ -105,11 +102,11 @@ export default function RecruiterMoodMeter({
       {/* Live Commentary — fades on change via key */}
       <div
         key={commentaryKey}
-        className="flex items-center gap-2 text-zinc-300 max-w-xs md:max-w-md truncate animate-fade-in"
+        className="flex items-center gap-2 text-zinc-700 max-w-xs md:max-w-md truncate animate-fade-in"
         style={{ animationDuration: '300ms' }}
       >
-        <MessageSquareQuote className="w-3.5 h-3.5 text-amber-400 shrink-0" />
-        <span className="truncate text-[11px] font-medium text-zinc-300">
+        <MessageSquareQuote className="w-3.5 h-3.5 text-amber-600 shrink-0" />
+        <span className="truncate text-[11px] font-medium text-zinc-700">
           &ldquo;{commentary}&rdquo;
         </span>
       </div>

@@ -61,28 +61,28 @@ export default function TimerBar({
   // Compute dynamic classes and styles for cinematic state transitions
   const stateStyles = isLowTime
     ? {
-        background: 'rgba(127, 29, 29, 0.35)',
-        border: '1px solid rgba(239, 68, 68, 0.45)',
-        color: 'rgb(252, 165, 165)',
+        background: 'rgba(254, 242, 242, 0.95)',
+        border: '1px solid rgba(248, 113, 113, 0.6)',
+        color: 'rgb(185, 28, 28)',
         animation: 'dangerPulse 1.5s cubic-bezier(0.4,0,0.2,1) infinite',
       }
     : isWarningTime
     ? {
-        background: 'rgba(120, 53, 15, 0.30)',
-        border: '1px solid rgba(245, 158, 11, 0.40)',
-        color: 'rgb(252, 211, 77)',
-        boxShadow: '0 0 0 1px rgba(245,158,11,0.25), 0 0 16px rgba(245,158,11,0.15)',
+        background: 'rgba(255, 251, 235, 0.95)',
+        border: '1px solid rgba(251, 191, 36, 0.6)',
+        color: 'rgb(180, 83, 9)',
+        boxShadow: '0 0 0 1px rgba(245,158,11,0.2), 0 2px 10px rgba(245,158,11,0.1)',
       }
     : {
-        background: 'rgba(255,255,255,0.04)',
-        border: '1px solid rgba(255,255,255,0.09)',
-        color: 'rgb(228, 228, 231)',
-        boxShadow: '0 0 0 1px rgba(255,255,255,0.04) inset',
+        background: 'rgba(244, 244, 245, 0.9)',
+        border: '1px solid rgba(228, 228, 231, 1)',
+        color: 'rgb(39, 39, 42)',
+        boxShadow: '0 1px 2px rgba(0,0,0,0.03)',
       };
 
   return (
     <div
-      className="flex items-center gap-2.5 px-3 py-1.5 rounded-full text-xs font-mono backdrop-blur-sm"
+      className="flex items-center gap-2.5 px-3 py-1.5 rounded-full text-xs font-mono backdrop-blur-sm shadow-xs"
       style={{
         ...stateStyles,
         transition: 'background 400ms cubic-bezier(0.16,1,0.3,1), border-color 400ms cubic-bezier(0.16,1,0.3,1), box-shadow 400ms cubic-bezier(0.16,1,0.3,1), color 400ms cubic-bezier(0.16,1,0.3,1)',
@@ -90,14 +90,14 @@ export default function TimerBar({
     >
       <Clock
         className="w-3.5 h-3.5"
-        style={{ color: isLowTime ? 'rgb(248, 113, 113)' : isWarningTime ? 'rgb(251, 191, 36)' : 'rgb(113, 113, 122)' }}
+        style={{ color: isLowTime ? 'rgb(220, 38, 38)' : isWarningTime ? 'rgb(217, 119, 6)' : 'rgb(113, 113, 122)' }}
       />
       <span className="font-semibold tracking-wider">{formattedTime}</span>
 
       {isLowTime && (
         <span
           className="flex items-center gap-1 text-[10px] font-sans font-medium px-1.5 py-0.5 rounded-full animate-scale-in"
-          style={{ background: 'rgba(239,68,68,0.18)', color: 'rgb(252,165,165)' }}
+          style={{ background: 'rgba(254,226,226,1)', color: 'rgb(185,28,28)' }}
         >
           <AlertTriangle className="w-3 h-3" /> {t('timeWarning')}
         </span>
@@ -105,7 +105,7 @@ export default function TimerBar({
 
       <button
         onClick={onTogglePause}
-        className="ml-0.5 p-1 rounded-full text-zinc-400 hover:text-zinc-100 btn-glass"
+        className="ml-0.5 p-1 rounded-full text-zinc-500 hover:text-zinc-900 btn-glass"
         style={{ transition: 'background 150ms cubic-bezier(0.16,1,0.3,1), color 150ms cubic-bezier(0.16,1,0.3,1)' }}
         title={isPaused ? t('resumeTimer') : t('pauseTimer')}
       >

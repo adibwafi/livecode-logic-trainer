@@ -131,7 +131,7 @@ export default function ProblemSessionPage() {
   );
 
   return (
-    <div className="flex flex-col h-screen w-screen bg-zinc-950 text-zinc-100 overflow-hidden font-sans selection:bg-zinc-800 selection:text-zinc-100">
+    <div className="flex flex-col h-screen w-screen bg-zinc-50 text-zinc-900 overflow-hidden font-sans selection:bg-violet-100 selection:text-zinc-900">
       {/* Session Top Bar Header */}
       <SessionHeader
         problem={problem}
@@ -151,12 +151,12 @@ export default function ProblemSessionPage() {
       {/* Main Split-Pane Layout */}
       <div className="flex-1 flex overflow-hidden">
         {/* Left Pane: Markdown Problem Description (40% width) */}
-        <div className="w-[42%] min-w-[320px] max-w-[600px] h-full flex flex-col border-r border-zinc-800/80">
+        <div className="w-[42%] min-w-[320px] max-w-[600px] h-full flex flex-col border-r border-zinc-200">
           <ProblemPanel problem={problem} />
         </div>
 
         {/* Right Pane: Code Editor + Console (58% width) */}
-        <div className="flex-1 h-full flex flex-col overflow-hidden bg-zinc-950">
+        <div className="flex-1 h-full flex flex-col overflow-hidden bg-white">
           <div className="flex-1 overflow-hidden">
             <EditorPanel
               code={code}
