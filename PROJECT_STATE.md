@@ -12,6 +12,7 @@
 - **Markdown Rendering**: `react-markdown` with GFM support.
 - **AI Assessment Engine**: `groq-sdk` calling model `llama-3.3-70b-versatile` with `response_format: { type: "json_object" }`.
 - **Audio Synthesizer Engine**: Web Audio API oscillator/gain node synth (`lib/soundFX.ts`) for offline, zero-dependency sound cues.
+- **SEO & Production Readiness**: Complete Next.js 16 Metadata (`title`, `description`, `keywords`, `openGraph`, `twitter`, `icons`) and separate `Viewport` configuration (`themeColor: "#09090b"`).
 - **Database / Storage**: **NONE (Strictly In-Memory)**. Seed data and session states use JavaScript objects/arrays.
 - **Visual FX**: `canvas-confetti` on successful assessment pass.
 - **Environment Config**: `GROQ_API_KEY` defined in `.env.local` (ignored by git).
@@ -25,7 +26,7 @@
 livecode-logic-trainer/
 ├── app/                            # Next.js App Router root
 │   ├── page.tsx                    # Landing page, role filter, problem cards & gamification banner
-│   ├── layout.tsx                  # Root HTML layout & font configuration
+│   ├── layout.tsx                  # Root HTML layout, SEO metadata, OpenGraph & themeColor
 │   ├── globals.css                 # Tailwind CSS v4 directives, obsidian theme & custom scrollbars
 │   ├── session/[problemId]/
 │   │   └── page.tsx                # Interactive split-pane live coding session (30-min limit)
@@ -42,9 +43,9 @@ livecode-logic-trainer/
 │   └── ResultsModal.tsx            # Assessment modal: Score, badges, errors, best practices, ideal code
 ├── lib/                            # Core Logic & Utilities
 │   ├── types.ts                    # TypeScript interfaces (Problem, AssessmentResult, Achievement, Persona)
-│   ├── problems.ts                 # 8 In-memory problem seed definitions (Backend, Frontend, Full Stack, QA)
+│   ├── problems.ts                 # 12 In-memory problem seed definitions (Junior & Mid-Level across 4 roles)
 │   ├── soundFX.ts                  # Web Audio API synthesizer for test run, chime, error & fanfare cues
-│   └── evaluator.ts                # Isolated JS function sandbox & test execution runner
+│   └── evaluator.ts                # Isolated JS function sandbox & dynamic unit test assertion runner
 ├── .env.local                      # Secret keys (GROQ_API_KEY - Git Ignored)
 ├── .env.local.example              # Key template for development
 ├── README.md                       # Developer documentation & quickstart
@@ -59,28 +60,32 @@ livecode-logic-trainer/
 - **Decoupled Timer State Management**: `TimerBar.tsx` uses decoupled ref callbacks and standalone `useEffect` listeners to eliminate React 19 `setState`-in-render warnings.
 - **Dual-Engine Evaluation Strategy**:
   1. *Primary Engine*: Groq API (`llama-3.3-70b-versatile`) producing strict structured JSON evaluations.
-  2. *Fallback / Auxiliary Engine*: `lib/evaluator.ts` running mocked Express `req`/`res` contexts via JavaScript `Function` constructor execution for zero-latency local feedback.
+  2. *Fallback / Auxiliary Engine*: `lib/evaluator.ts` running mocked Express `req`/`res` contexts via JavaScript `Function` constructor execution for zero-latency local feedback across all 12 problem endpoints.
 
 ---
 
 ## 3. CURRENT IMPLEMENTATION STATE & DATA FLOW
 
 ### Built Modules & Active Features
-1. **Landing / Problem Discovery (`app/page.tsx`)**: Filterable catalog of **8 Mid-Level problems** across Backend, Frontend, Full Stack, and QA roles with Sana Labs obsidian design and gamification feature highlights.
+1. **Landing / Problem Discovery (`app/page.tsx`)**: Filterable catalog of **12 problems** (Junior & Mid-Level) across Backend, Frontend, Full Stack, and QA roles with Sana Labs obsidian design and gamification feature highlights.
 2. **Problem Seed Catalog (`lib/problems.ts`)**:
-   - `voucher-redemption`: E-commerce Voucher Redemption API (Backend, 30m)
-   - `rate-limiter-middleware`: In-Memory Sliding Window Rate Limiter (Backend, 30m)
-   - `cart-checkout-engine`: E-commerce Cart Checkout & Tax Engine (Full Stack, 30m)
-   - `order-inventory-reservation`: Flash Sale Inventory Stock Reservation (Backend, 30m)
-   - `auth-session-manager`: JWT Token Refresh & Auto-Logout State Engine (Frontend, 30m)
-   - `idempotent-payment-webhook`: Payment Gateway Idempotent Webhook Handler (Backend, 30m)
-   - `notification-batch-dispatcher`: Resilient Notification Dispatcher with Fallback (Full Stack, 30m)
-   - `order-state-machine-validator`: Order Lifecycle State Machine & Test Suite (QA, 30m)
+   - `voucher-redemption`: E-commerce Voucher Redemption API (Backend • Mid-Level • 30m)
+   - `rate-limiter-middleware`: In-Memory Sliding Window Rate Limiter (Backend • Mid-Level • 30m)
+   - `cart-checkout-engine`: E-commerce Cart Checkout & Tax Engine (Full Stack • Mid-Level • 30m)
+   - `order-inventory-reservation`: Flash Sale Inventory Stock Reservation (Backend • Mid-Level • 30m)
+   - `auth-session-manager`: JWT Token Refresh & Auto-Logout State Engine (Frontend • Mid-Level • 30m)
+   - `idempotent-payment-webhook`: Payment Gateway Idempotent Webhook Handler (Backend • Mid-Level • 30m)
+   - `notification-batch-dispatcher`: Resilient Notification Dispatcher with Fallback (Full Stack • Mid-Level • 30m)
+   - `order-state-machine-validator`: Order Lifecycle State Machine & Test Suite (QA • Mid-Level • 30m)
+   - `user-registration-validator`: User Registration & Password Complexity Validator (Backend • Junior • 30m)
+   - `pagination-search-filter`: API Data Filtering & Pagination Engine (Frontend • Junior • 30m)
+   - `api-payload-schema-validator`: API Payload Schema & Type Assertion Engine (QA • Junior • 30m)
+   - `multi-tenant-feature-flag`: Multi-Tenant Feature Flag & Percentage Rollout Engine (Full Stack • Mid-Level • 30m)
 3. **Interactive Live Session (`app/session/[problemId]/page.tsx`)**:
    - Synchronized **30-minute** countdown timer with low-time visual warnings.
    - Recruiter Mood Meter HUD with speech bubbles and persona switcher.
    - Live Monaco code editor supporting standard JS / Express syntax.
-4. **Local Test Runner & Audio FX (`components/ConsolePanel.tsx`, `lib/evaluator.ts`, `lib/soundFX.ts`)**: Runs mock payload assertions with sound effects.
+4. **Local Test Runner & Audio FX (`components/ConsolePanel.tsx`, `lib/evaluator.ts`, `lib/soundFX.ts`)**: Runs mock payload assertions with sound effects across all 12 problem endpoints.
 5. **AI Assessment Route & Badges (`app/api/assess/route.ts` & `components/ResultsModal.tsx`)**: Receives code, executes tests, calls Groq LLM, calculates achievement badges, and triggers celebratory confetti and fanfare audio on PASS.
 
 ---
@@ -108,4 +113,3 @@ livecode-logic-trainer/
 4. **Build Component / UI**: Add modular UI components in `components/` using Sana Labs minimalist styling.
 5. **Verify Build**: Run `npm run build` to verify zero TypeScript or Turbopack errors.
 6. **Git Commit**: Commit logical increments in English with descriptive message prefixes (`feat:`, `fix:`, `docs:`).
-
