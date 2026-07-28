@@ -9,22 +9,37 @@ An interactive, timed web application designed for live-code technical interview
 
 ---
 
+## 🎨 Design System — Sana Labs Cinematic Obsidian
+
+The UI is built on a **cinematic dark-mode design language** inspired by Sana Labs' fluid visual identity:
+
+- **Obsidian Backgrounds**: Deep `#09090b` base with `#0c0c0f` surface panels
+- **Spring Easing**: `cubic-bezier(0.16, 1, 0.3, 1)` — the same spring curve used by GSAP — on all interactive transitions, modal entrances, and state changes
+- **Glassmorphism**: `backdrop-blur(16–28px)` panels with hairline `rgba(255,255,255,0.06–0.10)` borders
+- **Color-Keyed Glow Auras**: Emerald (success), violet (active/accent), amber (warning), rose (error/fail)
+- **Micro-interactions**: hover-lift, btn-glass spring scale, staggered badge entrance animations
+- **Cinematic Keyframes**: `slideUpFade`, `scaleIn`, `dangerPulse` (timer breathing glow), `textShimmer`, `glowPulse` (ambient orbs)
+
+---
+
 ## ⚡ Core Features
 
-- **Split-Pane IDE UI**: Left panel for problem specifications & bonus architecture prompts (`react-markdown`); right panel for live coding with **Monaco Editor** (`vs-dark` theme, JavaScript syntax highlighting, line numbers, auto-formatting).
-- **Strict 30-Minute Countdown Timer**: Enforces 30-minute time limits based on standard recruiter user interview constraints. Automatically locks editor to Read-Only and submits code when time reaches `00:00`.
+- **Split-Pane IDE UI**: Left dark panel for problem specifications & bonus architecture prompts (`react-markdown` with `prose-invert`); right panel for live coding with **Monaco Editor** (`vs-dark` theme, font ligatures, smooth caret, `scrolling smooth`).
+- **Strict 30-Minute Countdown Timer**: Enforces 30-minute time limits. Color-keyed glow aura transitions: normal glass → amber warning glow → rose `dangerPulse` breathing animation at < 5 minutes. Automatically locks editor to Read-Only and submits code when time reaches `00:00`.
 - **Recruiter Persona HUD & Live Speech**:
   - ☕ **Indo Tech Lead** (*Mas Mas Tech Lead Ramah*): Relaxed, encouraging feedback in Bahasa Indonesia.
   - 🧐 **Global FAANG Interviewer**: Strict focus on edge cases, boundary conditions, and algorithmic efficiency.
   - 🚀 **YC Startup Founder**: High-speed execution focus ("Ship fast, test quick!").
+  - Commentary fades in smoothly via `animate-fade-in` keyed on content change.
 - **Web Audio FX Engine**: Offline, zero-dependency Web Audio synthesizers for test run clicks, success major chimes, failure double tones, and victory fanfares (with Mute/Unmute toggle).
-- **Achievement Badges System**: Unlockable post-assessment badges (`⚡ Speed Demon`, `🛡️ Zero Bug Ninja`, `🧠 Architecture Guru`, `🔥 Clutch Master`).
+- **Achievement Badges System**: Unlockable post-assessment badges (`⚡ Speed Demon`, `🛡️ Zero Bug Ninja`, `🧠 Architecture Guru`, `🔥 Clutch Master`) with staggered entrance animations in the Results Modal.
 - **Local Unit Test Console**: Execute isolated unit test cases against your Monaco code in real-time before final submission across all 12 problem endpoints.
 - **Groq LLM Assessment Engine**: Evaluates code submissions using `llama-3.3-70b-versatile` for:
   - Logic correctness & unhandled edge cases
   - Engineering best practices (modularity, status codes `200`, `201`, `400`, `404`, `409`, `429`, `503`)
-  - Conceptual bonus question evaluation (Argon2/bcrypt Password Hashing, Debouncing vs Throttling, QA EP & BVA, Multi-Tenant Feature Flags, PostgreSQL Race Conditions, Redis Rate Limiting, Idempotency, JWT Security, Webhook DLQ, Circuit Breakers, Pact Contract Testing).
-  - Production-grade ideal solution generation.
+  - Conceptual bonus question evaluation (Argon2/bcrypt, Debouncing vs Throttling, QA EP & BVA, Feature Flags, PostgreSQL Race Conditions, Redis Rate Limiting, Idempotency, JWT Security, Webhook DLQ, Circuit Breakers, Pact Contract Testing)
+  - Production-grade ideal solution generation
+- **Results Modal**: Status-keyed glow ring (emerald/amber/rose), color-coded score with text-shadow glow, confetti (violet/emerald palette), glass tab navigation, staggered achievement badge entrance.
 
 ---
 
@@ -50,7 +65,7 @@ An interactive, timed web application designed for live-code technical interview
 4. **Multi-Tenant Feature Flag & Percentage Rollout Engine** (`Full Stack Engineer` • `Mid-Level` • 30 mins)
    - Endpoint: `POST /features/evaluate`
    - Key Logic: Tenant override lookup, global feature toggle evaluation, hash-based user percentage rollout.
-   - Bonus: Distributed Feature Flag Management (LaunchDarkly, Unleash, Redis caching, sub-millisecond latency).
+   - Bonus: Distributed Feature Flag Management (LaunchDarkly, Unleash, Redis caching).
 
 5. **E-commerce Voucher Redemption API** (`Backend Engineer` • `Mid-Level` • 30 mins)
    - Endpoint: `POST /redeem`
@@ -139,29 +154,29 @@ An interactive, timed web application designed for live-code technical interview
 ```
 livecode-logic-trainer/
 ├── app/
-│   ├── page.tsx                    # Landing page, role filter & problem cards
+│   ├── page.tsx                    # Landing page, role filter & glassmorphism problem cards
 │   ├── layout.tsx                  # Root HTML layout, SEO metadata, OpenGraph & themeColor
-│   ├── globals.css                 # Tailwind CSS v4 directives & custom scrollbars
+│   ├── globals.css                 # Tailwind CSS v4 + Sana Labs motion tokens & utility classes
 │   ├── session/[problemId]/
 │   │   └── page.tsx                # Split-pane interactive session page
 │   └── api/
 │       └── assess/
 │           └── route.ts            # POST /api/assess (Groq LLM & Evaluator API)
 ├── components/
-│   ├── SessionHeader.tsx           # Title, recruiter HUD, timer bar & audio toggle
-│   ├── RecruiterMoodMeter.tsx      # Recruiter HUD widget & persona speech bubbles
-│   ├── TimerBar.tsx                # Countdown timer with warning states (30m max)
-│   ├── ProblemPanel.tsx            # Markdown problem description & bonus tabs
-│   ├── EditorPanel.tsx             # Monaco Editor client wrapper
+│   ├── SessionHeader.tsx           # Glass nav, recruiter HUD, timer & audio toggle
+│   ├── RecruiterMoodMeter.tsx      # Glass HUD pill, persona selector, animated commentary
+│   ├── TimerBar.tsx                # Countdown timer with color-keyed glow aura states
+│   ├── ProblemPanel.tsx            # Dark obsidian problem description & tabbed bonus/hints
+│   ├── EditorPanel.tsx             # Monaco Editor with glass toolbar & spring interactions
 │   ├── ConsolePanel.tsx            # Local isolated test runner drawer
-│   └── ResultsModal.tsx            # AI assessment report & achievement badges modal
+│   └── ResultsModal.tsx            # Status-keyed glow modal, staggered achievement badges
 ├── lib/
 │   ├── types.ts                    # TypeScript interface definitions
 │   ├── problems.ts                 # 12 In-memory problem seed definitions
 │   ├── soundFX.ts                  # Web Audio API sound synthesizer
 │   └── evaluator.ts                # Isolated JS unit test runner
 ├── .env.local.example              # Environment variables template
-└── PROJECT_STATE.md                # Single Source of Truth architectural spec
+└── PROJECT_STATE.md                # Single Source of Truth architectural spec (w/ design system)
 ```
 
 ---
