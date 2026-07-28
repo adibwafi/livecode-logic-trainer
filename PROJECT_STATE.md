@@ -10,7 +10,7 @@
 ### Complete Tech Stack & Key Configurations
 - **Framework**: Next.js 16 (App Router, Turbopack, React 19).
 - **Styling**: Tailwind CSS v4 (`@import "tailwindcss"` in `globals.css`) with **Sana Labs Pure White Light Design System** — see §Design System below.
-- **Code Editor**: `@monaco-editor/react` (`vs` light theme, JS syntax highlighting, `fontLigatures`, `cursorBlinking: smooth`, `smoothScrolling`).
+- **Code Editor**: `@monaco-editor/react` (`antigravity-dark` obsidian theme based on `vs-dark`, JS syntax highlighting, `fontLigatures`, `cursorBlinking: smooth`, `smoothScrolling`).
 - **Markdown Rendering**: `react-markdown` with GFM support (`prose-zinc`).
 - **AI Assessment Engine**: `groq-sdk` calling model `llama-3.3-70b-versatile` with `response_format: { type: "json_object" }`.
 - **Audio Synthesizer Engine**: Web Audio API oscillator/gain node synth (`lib/soundFX.ts`) for offline, zero-dependency sound cues.
