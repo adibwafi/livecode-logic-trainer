@@ -39,6 +39,7 @@ The UI is built on a **cinematic dark-mode design language** inspired by Sana La
   - Engineering best practices (modularity, status codes `200`, `201`, `400`, `404`, `409`, `429`, `503`)
   - Conceptual bonus question evaluation (Argon2/bcrypt, Debouncing vs Throttling, QA EP & BVA, Feature Flags, PostgreSQL Race Conditions, Redis Rate Limiting, Idempotency, JWT Security, Webhook DLQ, Circuit Breakers, Pact Contract Testing)
   - Production-grade ideal solution generation
+- **Vercel Telemetry & Speed Insights**: Integrated `@vercel/analytics` and `@vercel/speed-insights` for real-time web performance metrics and user traffic monitoring.
 - **Results Modal**: Status-keyed glow ring (emerald/amber/rose), color-coded score with text-shadow glow, confetti (violet/emerald palette), glass tab navigation, staggered achievement badge entrance.
 
 ---

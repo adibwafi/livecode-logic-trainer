@@ -9,6 +9,7 @@
 - **Framework**: Next.js 16 (App Router, Turbopack, React 19).
 ### Complete Tech Stack & Key Configurations
 - **Framework**: Next.js 16 (App Router, Turbopack, React 19).
+- **Telemetry & Analytics**: `@vercel/speed-insights` & `@vercel/analytics` integrated into `app/layout.tsx`.
 - **Styling**: Tailwind CSS v4 (`@import "tailwindcss"` in `globals.css`) with **Sana Labs Pure White Light Design System** — see §Design System below.
 - **Code Editor**: `@monaco-editor/react` (`antigravity-dark` obsidian theme based on `vs-dark`, JS syntax highlighting, `fontLigatures`, `cursorBlinking: smooth`, `smoothScrolling`).
 - **Markdown Rendering**: `react-markdown` with GFM support (`prose-zinc`).
@@ -156,6 +157,7 @@ livecode-logic-trainer/
    - Live Monaco code editor with glass toolbar, smooth caret animation, and font ligatures.
 4. **Local Test Runner & Audio FX**: Runs mock payload assertions with sound effects across all 12 problem endpoints.
 5. **AI Assessment Route & Badges**: Receives code, executes tests, calls Groq LLM, calculates achievement badges, triggers celebratory confetti (violet/emerald palette) and fanfare audio on PASS. Results modal features status-keyed glow ring and staggered badge entrance animations.
+6. **Vercel Telemetry & Performance Monitoring**: `@vercel/analytics` and `@vercel/speed-insights` integrated into root layout for Web Vitals and user interaction metrics tracking.
 
 ---
 
