@@ -1244,6 +1244,714 @@ app.post('/orders/transition', (req, res) => {
 
 module.exports = app;`,
     testCases: []
+  },
+  {
+    id: "user-registration-validator",
+    title: "User Registration & Password Complexity Validator",
+    role: "Backend Engineer",
+    level: "Junior",
+    timeLimit: 30,
+    category: "Form Validation & Data Sanitization",
+    description: `## 1. Studi Kasus
+Fitur pendaftaran pengguna baru (*User Registration*) membutuhkan validasi data input yang ketat pada layer backend sebelum data disimpan ke basis data. Anda diminta membuat logika endpoint REST API Express.js untuk:
+
+\`\`\`http
+POST /users/register
+\`\`\`
+
+---
+
+## 2. Spesifikasi Input & Output
+
+### Request Body:
+\`\`\`json
+{
+  "email": "user@example.com",
+  "password": "Password123!",
+  "age": 20
+}
+\`\`\`
+
+### Response Berhasil (HTTP 201):
+\`\`\`json
+{
+  "message": "User registered successfully",
+  "userId": "USR_101"
+}
+\`\`\`
+
+---
+
+## 3. Data Awal In-Memory
+\`\`\`javascript
+const registeredUsers = [
+  { id: "USR_100", email: "existing@example.com", age: 25 }
+];
+\`\`\`
+
+---
+
+## 4. Requirement & Aturan Validasi
+1. **Validasi Field Wajib**: Jika \`email\`, \`password\`, atau \`age\` tidak diisi → \`HTTP 400\` dengan pesan *"Missing required registration fields"*.
+2. **Validasi Format Email**: Harus mengandung karakter \`@\` dan \`.\` → \`HTTP 400\` dengan pesan *"Invalid email format"*.
+3. **Validasi Kompleksitas Password**:
+   - Panjang minimal **8 karakter**.
+   - Harus memiliki minimal **1 huruf kapital (A-Z)**.
+   - Harus memiliki minimal **1 angka (0-9)**.
+   - Jika tidak memenuhi → \`HTTP 400\` dengan pesan *"Password does not meet complexity requirements"*.
+4. **Validasi Usia Minimum**: User harus berusia minimal **18 tahun** (\`age >= 18\`) → \`HTTP 400\` dengan pesan *"User must be at least 18 years old"*.
+5. **Cek Email Duplikat**: Jika email sudah ada di \`registeredUsers\` → \`HTTP 409\` dengan pesan *"Email already registered"*.
+6. **Registrasi Berhasil**: Tambahkan data user ke array \`registeredUsers\` dan kembalikan \`HTTP 201\` dengan \`userId\` baru (*"USR_" + Date.now()*).
+
+---
+
+## 5. Pertanyaan Bonus Konseptual 💡
+> **Keamanan Password: Hashing & Salt Rounds**
+> *Di bagian komentar kode solusi Anda, jelaskan:*
+> - Mengapa password TIDAK BOLEH disimpan dalam bentuk plaintext di database.
+> - Perbedaan algoritma hashing **Argon2 / bcrypt** dibanding MD5/SHA-256.
+> - Peran **Salt** dan **Cost Factor (Salt Rounds)** dalam mencegah Rainbow Table Attack.
+`,
+    starterCode: `const express = require('express');
+const app = express();
+app.use(express.json());
+
+const registeredUsers = [
+  { id: "USR_100", email: "existing@example.com", age: 25 }
+];
+
+app.post('/users/register', (req, res) => {
+  const { email, password, age } = req.body;
+
+  // TODO: Implementasi Validasi Registrasi User
+  // 1. Validasi field kelengkapan payload (email, password, age) -> HTTP 400
+  // 2. Validasi format email (mengandung '@' dan '.') -> HTTP 400
+  // 3. Validasi password (min 8 char, 1 uppercase, 1 digit) -> HTTP 400
+  // 4. Validasi age >= 18 -> HTTP 400
+  // 5. Cek duplikasi email -> HTTP 409
+  // 6. Simpan user baru -> HTTP 201
+
+  return res.status(500).json({ message: "Belum diimplementasikan" });
+});
+
+/*
+ * JAWABAN PERTANYAAN BONUS (Password Hashing & Security):
+ *
+ * 1. Bahaya Plaintext Password:
+ *
+ * 2. Argon2 / bcrypt vs MD5/SHA-256:
+ *
+ * 3. Fungsi Salt & Salt Rounds (Cost Factor):
+ */
+
+module.exports = app;
+`,
+    bonusQuestion: "Jelaskan keamanan password (Argon2/bcrypt vs MD5, Salt, dan Salt Rounds) untuk mencegah Rainbow Table & Brute-Force Attacks.",
+    idealSolution: `const express = require('express');
+const app = express();
+app.use(express.json());
+
+const registeredUsers = [
+  { id: "USR_100", email: "existing@example.com", age: 25 }
+];
+
+app.post('/users/register', (req, res) => {
+  const { email, password, age } = req.body;
+
+  if (!email || !password || age === undefined || age === null) {
+    return res.status(400).json({ message: "Missing required registration fields" });
+  }
+
+  if (typeof email !== 'string' || !email.includes('@') || !email.includes('.')) {
+    return res.status(400).json({ message: "Invalid email format" });
+  }
+
+  const isPasswordValid =
+    typeof password === 'string' &&
+    password.length >= 8 &&
+    /[A-Z]/.test(password) &&
+    /[0-9]/.test(password);
+
+  if (!isPasswordValid) {
+    return res.status(400).json({ message: "Password does not meet complexity requirements" });
+  }
+
+  if (typeof age !== 'number' || age < 18) {
+    return res.status(400).json({ message: "User must be at least 18 years old" });
+  }
+
+  const existing = registeredUsers.find(u => u.email.toLowerCase() === email.toLowerCase());
+  if (existing) {
+    return res.status(409).json({ message: "Email already registered" });
+  }
+
+  const userId = "USR_" + Date.now();
+  registeredUsers.push({ id: userId, email, age });
+
+  return res.status(201).json({
+    message: "User registered successfully",
+    userId
+  });
+});
+
+/*
+ * JAWABAN BONUS - PASSWORD SECURITY & HASHING:
+ *
+ * 1. BAHAYA PLAINTEXT PASSWORD:
+ *    Jika database bocor (data breach), penyerang akan langsung mendapatkan password mentah milik user. Karena 80% user menggunakan password yang sama di banyak layanan, peretas bisa mengambil alih akun email, perbankan, dan sosial media korban (Credential Stuffing).
+ *
+ * 2. ARGON2 / BCRYPT VS MD5/SHA-256:
+ *    MD5 dan SHA-256 dirancang cepat O(1) untuk integritas file, sehingga GPU modern dapat menebak milyaran kombinasi hash per detik. Sebaliknya, bcrypt dan Argon2 adalah "slow hashing algorithms" yang sengaja mengonsumsi waktu CPU & memori (Memory-hard) untuk memperlambat serangan brute force.
+ *
+ * 3. SALT & COST FACTOR (SALT ROUNDS):
+ *    - Salt: String acak unik yang ditambahkan ke password sebelum di-hash, menggagalkan serangan Rainbow Table (tabel hash terkompilasi).
+ *    - Cost Factor (misal saltRounds = 10-12): Mengatur tingkat kesulitan perhitungan hash. Nilai 10 berarti ~100ms per hash, membuat GPU peretas kewalahan.
+ */
+
+module.exports = app;`,
+    testCases: []
+  },
+  {
+    id: "pagination-search-filter",
+    title: "API Data Filtering & Pagination Engine",
+    role: "Frontend Engineer",
+    level: "Junior",
+    timeLimit: 30,
+    category: "State Querying & Data Pagination",
+    description: `## 1. Studi Kasus
+Di aplikasi e-commerce modern, pencarian dan pemfilteran katalog produk dilakukan melalui API backend yang mendukung **filtering** dan **pagination** untuk menghemat penggunaan bandwidth data.
+
+Anda diminta membuat endpoint REST API Express.js untuk:
+\`\`\`http
+POST /api/products/search
+\`\`\`
+
+---
+
+## 2. Spesifikasi Input & Output
+
+### Request Body:
+\`\`\`json
+{
+  "query": "phone",
+  "category": "ELECTRONICS",
+  "page": 1,
+  "limit": 2
+}
+\`\`\`
+
+### Response Berhasil (HTTP 200):
+\`\`\`json
+{
+  "data": [
+    { "id": "P1", "name": "Smartphone X", "category": "ELECTRONICS", "price": 800 }
+  ],
+  "pagination": {
+    "page": 1,
+    "limit": 2,
+    "totalItems": 1,
+    "totalPages": 1
+  }
+}
+\`\`\`
+
+---
+
+## 3. Data Awal In-Memory
+\`\`\`javascript
+const catalog = [
+  { id: "P1", name: "Smartphone X", category: "ELECTRONICS", price: 800 },
+  { id: "P2", name: "Laptop Pro", category: "ELECTRONICS", price: 1500 },
+  { id: "P3", name: "Wireless Headphones", category: "ELECTRONICS", price: 200 },
+  { id: "P4", name: "Running Shoes", category: "FASHION", price: 120 },
+  { id: "P5", name: "Denim Jacket", category: "FASHION", price: 90 }
+];
+\`\`\`
+
+---
+
+## 4. Requirement & Aturan Validasi
+1. **Validasi Parameter Pagination**: \`page\` (default: 1) dan \`limit\` (default: 10). Jika \`page < 1\` atau \`limit < 1\` → \`HTTP 400\` *"Invalid pagination parameters"*.
+2. **Filtering Kategori**: Jika \`category\` diisi, filter produk yang memiliki \`product.category === category\` (exact match).
+3. **Filtering Keyword Search**: Jika \`query\` diisi, filter produk yang nama produknya mengandung substring \`query\` (case-insensitive search).
+4. **Kalkulasi Metadata Pagination**:
+   - \`totalItems\`: Jumlah total produk yang lolos filter.
+   - \`totalPages\`: \`Math.ceil(totalItems / limit)\` (jika totalItems 0, totalPages = 0).
+   - Slice data sesuai offset \`(page - 1) * limit\` hingga \`page * limit\`.
+5. **Kembalikan Response**: \`HTTP 200\` dengan objek \`{ data: [...], pagination: { page, limit, totalItems, totalPages } }\`.
+
+---
+
+## 5. Pertanyaan Bonus Konseptual 💡
+> **Debouncing vs Throttling pada Search Input Component**
+> *Di bagian komentar kode solusi Anda, jelaskan perbedaan teknik optimization frontend:*
+> - **Debouncing**: Penundaan eksekusi hingga user berhenti mengetik selama X ms (misal 300ms).
+> - **Throttling**: Pengaturan eksekusi fungsi maksimal 1 kali setiap X ms.
+> - Kapan waktu terbaik menggunakan Debouncing vs Throttling di aplikasi Web?
+`,
+    starterCode: `const express = require('express');
+const app = express();
+app.use(express.json());
+
+const catalog = [
+  { id: "P1", name: "Smartphone X", category: "ELECTRONICS", price: 800 },
+  { id: "P2", name: "Laptop Pro", category: "ELECTRONICS", price: 1500 },
+  { id: "P3", name: "Wireless Headphones", category: "ELECTRONICS", price: 200 },
+  { id: "P4", name: "Running Shoes", category: "FASHION", price: 120 },
+  { id: "P5", name: "Denim Jacket", category: "FASHION", price: 90 }
+];
+
+app.post('/api/products/search', (req, res) => {
+  const { query, category, page = 1, limit = 10 } = req.body;
+
+  // TODO: Implementasi Logika Filter & Pagination
+  // 1. Validasi page >= 1 dan limit >= 1 (HTTP 400 jika tidak valid)
+  // 2. Filter catalog berdasarkan category (jika ada) dan query substring (case-insensitive)
+  // 3. Hitung totalItems dan totalPages
+  // 4. Potong (slice) data sesuai page & limit
+  // 5. Kembalikan HTTP 200 dengan payload data dan pagination
+
+  return res.status(500).json({ message: "Belum diimplementasikan" });
+});
+
+/*
+ * JAWABAN PERTANYAAN BONUS (Debouncing vs Throttling):
+ *
+ * 1. Debouncing Definition & Mechanism:
+ *
+ * 2. Throttling Definition & Mechanism:
+ *
+ * 3. Best Use Cases for Debouncing vs Throttling:
+ */
+
+module.exports = app;
+`,
+    bonusQuestion: "Jelaskan teknik optimasi UI Debouncing vs Throttling pada input pencarian live search dan infinite scroll event handlers.",
+    idealSolution: `const express = require('express');
+const app = express();
+app.use(express.json());
+
+const catalog = [
+  { id: "P1", name: "Smartphone X", category: "ELECTRONICS", price: 800 },
+  { id: "P2", name: "Laptop Pro", category: "ELECTRONICS", price: 1500 },
+  { id: "P3", name: "Wireless Headphones", category: "ELECTRONICS", price: 200 },
+  { id: "P4", name: "Running Shoes", category: "FASHION", price: 120 },
+  { id: "P5", name: "Denim Jacket", category: "FASHION", price: 90 }
+];
+
+app.post('/api/products/search', (req, res) => {
+  const { query, category, page = 1, limit = 10 } = req.body;
+
+  const pageNum = Number(page);
+  const limitNum = Number(limit);
+
+  if (isNaN(pageNum) || isNaN(limitNum) || pageNum < 1 || limitNum < 1) {
+    return res.status(400).json({ message: "Invalid pagination parameters" });
+  }
+
+  let filtered = [...catalog];
+
+  if (category && typeof category === 'string') {
+    filtered = filtered.filter(p => p.category === category);
+  }
+
+  if (query && typeof query === 'string') {
+    const q = query.toLowerCase();
+    filtered = filtered.filter(p => p.name.toLowerCase().includes(q));
+  }
+
+  const totalItems = filtered.length;
+  const totalPages = totalItems === 0 ? 0 : Math.ceil(totalItems / limitNum);
+
+  const startIndex = (pageNum - 1) * limitNum;
+  const paginatedData = filtered.slice(startIndex, startIndex + limitNum);
+
+  return res.status(200).json({
+    data: paginatedData,
+    pagination: {
+      page: pageNum,
+      limit: limitNum,
+      totalItems,
+      totalPages
+    }
+  });
+});
+
+/*
+ * JAWABAN BONUS - DEBOUNCING VS THROTTLING:
+ *
+ * 1. DEBOUNCING:
+ *    Mencegah pemanggilan fungsi berulang kali sampai jeda waktu tertentu setelah event terakhir terjadi (misal 300ms). Setiap tombol ditekan, timer di-reset.
+ *    - Use Case: Live Search Input Bar, Auto-save form draft.
+ *
+ * 2. THROTTLING:
+ *    Memastikan fungsi hanya dijalankan maksimal 1 kali dalam interval waktu yang ditentukan (misal 100ms), mengabaikan panggilan di tengah jeda.
+ *    - Use Case: Window Resize Listener, Scroll Position Tracker (Infinite Scroll), Button Double Click Prevention.
+ */
+
+module.exports = app;`,
+    testCases: []
+  },
+  {
+    id: "api-payload-schema-validator",
+    title: "API Payload Schema & Type Assertion Engine",
+    role: "QA Engineer",
+    level: "Junior",
+    timeLimit: 30,
+    category: "API Automation & Schema Assertions",
+    description: `## 1. Studi Kasus
+Sebagai QA Automation Engineer atau Software Engineer in Test, Anda bertugas membuat API schema validator & test suite assertion untuk memvalidasi kontrak payload JSON (*request body*) sebelum diproses oleh downstream microservice.
+
+Endpoint:
+\`\`\`http
+POST /test/validate-payload
+\`\`\`
+
+---
+
+## 2. Spesifikasi Input & Output
+
+### Request Body Valid:
+\`\`\`json
+{
+  "username": "dev_alex",
+  "email": "alex@dev.com",
+  "role": "ADMIN",
+  "tags": ["js", "ts"]
+}
+\`\`\`
+
+### Response Berhasil (HTTP 200):
+\`\`\`json
+{
+  "valid": true,
+  "message": "Payload schema validation passed"
+}
+\`\`\`
+
+### Response Gagal Validasi (HTTP 400):
+\`\`\`json
+{
+  "valid": false,
+  "errors": [
+    "username must be 3-20 alphanumeric characters",
+    "role must be one of: ADMIN, USER, GUEST"
+  ]
+}
+\`\`\`
+
+---
+
+## 3. Aturan Schema & Validasi
+1. \`username\`: Harus bertipe string, panjang **3 hingga 20 karakter**, hanya boleh mengandung huruf, angka, dan underscore (\`^[a-zA-Z0-9_]{3,20}$\`).
+2. \`email\`: Harus bertipe string dan mengandung karakter \`@\` dan \`.\`.
+3. \`role\`: Harus bernilai salah satu dari enum berikut: \`"ADMIN"\`, \`"USER"\`, \`"GUEST"\`.
+4. \`tags\`: Harus bertipe array, tidak boleh kosong (\`length > 0\`), dan seluruh elemennya bertipe string non-kosong.
+5. Jika ada minimal 1 aturan yang melanggar → \`HTTP 400\` dengan \`{ valid: false, errors: [...] }\`.
+6. Jika semua aturan sesuai → \`HTTP 200\` dengan \`{ valid: true, message: "Payload schema validation passed" }\`.
+
+---
+
+## 5. Pertanyaan Bonus Konseptual 💡
+> **Metode Pengujian QA: Equivalence Partitioning & Boundary Value Analysis**
+> *Di bagian komentar kode solusi Anda, jelaskan:*
+> - **Equivalence Partitioning (EP)**: Pembagian input ke dalam kelas valid dan invalid.
+> - **Boundary Value Analysis (BVA)**: Pengujian nilai batas (misal untuk username min 3, max 20, nilai apa saja yang harus diuji: 2, 3, 4, 19, 20, 21).
+`,
+    starterCode: `const express = require('express');
+const app = express();
+app.use(express.json());
+
+const ALLOWED_ROLES = ["ADMIN", "USER", "GUEST"];
+
+app.post('/test/validate-payload', (req, res) => {
+  const { username, email, role, tags } = req.body;
+
+  // TODO: Implementasi Schema Validator
+  // 1. Inisialisasi array errors = []
+  // 2. Validasi username (string 3-20 char alphanumeric & _)
+  // 3. Validasi email (string dengan '@' dan '.')
+  // 4. Validasi role (harus salah satu dari ALLOWED_ROLES)
+  // 5. Validasi tags (array non-empty berisi string)
+  // 6. Jika errors.length > 0 -> HTTP 400 { valid: false, errors }
+  // 7. Jika valid -> HTTP 200 { valid: true, message: "Payload schema validation passed" }
+
+  return res.status(500).json({ message: "Belum diimplementasikan" });
+});
+
+/*
+ * JAWABAN PERTANYAAN BONUS (EP & BVA Testing Techniques):
+ *
+ * 1. Equivalence Partitioning (EP):
+ *
+ * 2. Boundary Value Analysis (BVA) pada String Length (3-20 char):
+ */
+
+module.exports = app;
+`,
+    bonusQuestion: "Jelaskan teknik pengujian QA Boundary Value Analysis (BVA) & Equivalence Partitioning (EP) untuk menguji skenario batas sistem.",
+    idealSolution: `const express = require('express');
+const app = express();
+app.use(express.json());
+
+const ALLOWED_ROLES = ["ADMIN", "USER", "GUEST"];
+
+app.post('/test/validate-payload', (req, res) => {
+  const { username, email, role, tags } = req.body;
+  const errors = [];
+
+  if (typeof username !== 'string' || !/^[a-zA-Z0-9_]{3,20}$/.test(username)) {
+    errors.push("username must be 3-20 alphanumeric characters");
+  }
+
+  if (typeof email !== 'string' || !email.includes('@') || !email.includes('.')) {
+    errors.push("email must be a valid email address");
+  }
+
+  if (!ALLOWED_ROLES.includes(role)) {
+    errors.push("role must be one of: ADMIN, USER, GUEST");
+  }
+
+  if (!Array.isArray(tags) || tags.length === 0 || !tags.every(t => typeof t === 'string' && t.trim().length > 0)) {
+    errors.push("tags must be a non-empty array of strings");
+  }
+
+  if (errors.length > 0) {
+    return res.status(400).json({ valid: false, errors });
+  }
+
+  return res.status(200).json({
+    valid: true,
+    message: "Payload schema validation passed"
+  });
+});
+
+/*
+ * JAWABAN BONUS - QA EP & BVA TEST TECHNIQUES:
+ *
+ * 1. EQUIVALENCE PARTITIONING (EP):
+ *    Membagi domain input ke dalam kelompok (partition) yang diperlakukan sama oleh sistem:
+ *    - Valid Partition: username "dev_alex" (harus lolos).
+ *    - Invalid Partition: username null, integer 12345, atau objek {} (harus ditolak).
+ *
+ * 2. BOUNDARY VALUE ANALYSIS (BVA):
+ *    Kesalahan terbanyak terjadi pada batas nilai. Untuk rentang 3 s.d 20 karakter:
+ *    - Test Case 1: Length = 2 (Min - 1) -> Invalid (Tolak)
+ *    - Test Case 2: Length = 3 (Min Boundary) -> Valid (Terima)
+ *    - Test Case 3: Length = 4 (Min + 1) -> Valid (Terima)
+ *    - Test Case 4: Length = 19 (Max - 1) -> Valid (Terima)
+ *    - Test Case 5: Length = 20 (Max Boundary) -> Valid (Terima)
+ *    - Test Case 6: Length = 21 (Max + 1) -> Invalid (Tolak)
+ */
+
+module.exports = app;`,
+    testCases: []
+  },
+  {
+    id: "multi-tenant-feature-flag",
+    title: "Multi-Tenant Feature Flag & Percentage Rollout Engine",
+    role: "Full Stack Engineer",
+    level: "Mid-Level",
+    timeLimit: 30,
+    category: "Feature Toggles & Dynamic Configuration",
+    description: `## 1. Studi Kasus
+Dalam pengembangan aplikasi SaaS Multi-Tenant, **Feature Flags / Toggles** digunakan untuk merilis fitur baru secara bertahap (*Canary Release*), mengaktifkan eksperimen A/B testing, atau memberikan fitur khusus untuk tenant tertentu (VIP).
+
+Anda diminta membuat endpoint REST API Express.js untuk:
+\`\`\`http
+POST /features/evaluate
+\`\`\`
+
+---
+
+## 2. Spesifikasi Input & Output
+
+### Request Body:
+\`\`\`json
+{
+  "tenantId": "tenant_acme",
+  "userId": "user_42",
+  "flagKey": "new_checkout_v2"
+}
+\`\`\`
+
+### Response Berhasil (HTTP 200):
+\`\`\`json
+{
+  "enabled": true,
+  "reason": "TENANT_OVERRIDE"
+}
+\`\`\`
+
+---
+
+## 3. Data Awal In-Memory
+\`\`\`javascript
+const featureFlags = [
+  {
+    flagKey: "new_checkout_v2",
+    enabled: true,
+    rolloutPercentage: 50,
+    tenantOverrides: {
+      "tenant_acme": true,
+      "tenant_beta": false
+    }
+  },
+  {
+    flagKey: "dark_mode",
+    enabled: false,
+    rolloutPercentage: 100,
+    tenantOverrides: {}
   }
 ];
+\`\`\`
+
+---
+
+## 4. Requirement & Aturan Evaluasi
+1. **Validasi Payload**: Jika \`tenantId\`, \`userId\`, atau \`flagKey\` kosong → \`HTTP 400\` *"tenantId, userId, and flagKey are required"*.
+2. **Cek Keberadaan Flag**: Jika \`flagKey\` tidak ada di array \`featureFlags\` → \`HTTP 404\` *"Feature flag not found"*.
+3. **Hierarki Evaluasi 1 (Tenant Override)**:
+   - Jika \`tenantId\` terdaftar di \`flag.tenantOverrides\` (boolean): Kembalikan \`HTTP 200\` dengan \`enabled\` bernilai override tersebut, dan \`reason: "TENANT_OVERRIDE"\`.
+4. **Hierarki Evaluasi 2 (Global Toggle)**:
+   - Jika \`flag.enabled === false\`: Kembalikan \`HTTP 200\` dengan \`enabled: false\` dan \`reason: "GLOBAL_TOGGLE"\`.
+5. **Hierarki Evaluasi 3 (Percentage Rollout)**:
+   - Hitung nilai hash deterministik dari \`userId\` (misal jumlah ASCII char code % 100).
+   - Jika \`hashValue < flag.rolloutPercentage\`: Kembalikan \`enabled: true\`, \`reason: "PERCENTAGE_ROLLOUT"\`.
+   - Selain itu: Kembalikan \`enabled: false\`, \`reason: "PERCENTAGE_ROLLOUT"\`.
+
+---
+
+## 5. Pertanyaan Bonus Konseptual 💡
+> **Manajemen Feature Flag di Scaled Microservices**
+> *Di bagian komentar kode solusi Anda, jelaskan:*
+> - Penggunaan platform Feature Flag terpusat (seperti LaunchDarkly / Unleash).
+> - Strategi caching di Redis & in-memory memory sync untuk evaluasi flag dengan latency sub-millisecond.
+`,
+    starterCode: `const express = require('express');
+const app = express();
+app.use(express.json());
+
+const featureFlags = [
+  {
+    flagKey: "new_checkout_v2",
+    enabled: true,
+    rolloutPercentage: 50,
+    tenantOverrides: {
+      "tenant_acme": true,
+      "tenant_beta": false
+    }
+  },
+  {
+    flagKey: "dark_mode",
+    enabled: false,
+    rolloutPercentage: 100,
+    tenantOverrides: {}
+  }
+];
+
+app.post('/features/evaluate', (req, res) => {
+  const { tenantId, userId, flagKey } = req.body;
+
+  // TODO: Implementasi Evaluasi Feature Flag
+  // 1. Validasi kelengkapan body (tenantId, userId, flagKey) -> HTTP 400
+  // 2. Cari flag berdasarkan flagKey -> HTTP 404 jika tidak ada
+  // 3. Evaluasi Tenant Override (jika tenantId ada di tenantOverrides) -> reason: TENANT_OVERRIDE
+  // 4. Evaluasi Global Toggle (jika enabled === false) -> reason: GLOBAL_TOGGLE
+  // 5. Evaluasi Rollout Percentage berdasarkan hash userId -> reason: PERCENTAGE_ROLLOUT
+
+  return res.status(500).json({ message: "Belum diimplementasikan" });
+});
+
+/*
+ * JAWABAN PERTANYAAN BONUS (Feature Flags at Scale):
+ *
+ * 1. Enterprise Feature Flag Platforms (Unleash / LaunchDarkly):
+ *
+ * 2. Low-Latency Caching & In-Memory Sync Strategies:
+ */
+
+module.exports = app;
+`,
+    bonusQuestion: "Jelaskan strategi manajemen Feature Flags pada arsitektur Microservices (LaunchDarkly, Unleash, Redis caching, dan zero-downtime canary deployment).",
+    idealSolution: `const express = require('express');
+const app = express();
+app.use(express.json());
+
+const featureFlags = [
+  {
+    flagKey: "new_checkout_v2",
+    enabled: true,
+    rolloutPercentage: 50,
+    tenantOverrides: {
+      "tenant_acme": true,
+      "tenant_beta": false
+    }
+  },
+  {
+    flagKey: "dark_mode",
+    enabled: false,
+    rolloutPercentage: 100,
+    tenantOverrides: {}
+  }
+];
+
+function getUserIdHash(userId) {
+  let hash = 0;
+  for (let i = 0; i < userId.length; i++) {
+    hash += userId.charCodeAt(i);
+  }
+  return hash % 100;
+}
+
+app.post('/features/evaluate', (req, res) => {
+  const { tenantId, userId, flagKey } = req.body;
+
+  if (!tenantId || !userId || !flagKey) {
+    return res.status(400).json({ message: "tenantId, userId, and flagKey are required" });
+  }
+
+  const flag = featureFlags.find(f => f.flagKey === flagKey);
+  if (!flag) {
+    return res.status(404).json({ message: "Feature flag not found" });
+  }
+
+  if (flag.tenantOverrides && tenantId in flag.tenantOverrides) {
+    return res.status(200).json({
+      enabled: Boolean(flag.tenantOverrides[tenantId]),
+      reason: "TENANT_OVERRIDE"
+    });
+  }
+
+  if (!flag.enabled) {
+    return res.status(200).json({
+      enabled: false,
+      reason: "GLOBAL_TOGGLE"
+    });
+  }
+
+  const userHash = getUserIdHash(String(userId));
+  const isEnabled = userHash < flag.rolloutPercentage;
+
+  return res.status(200).json({
+    enabled: isEnabled,
+    reason: "PERCENTAGE_ROLLOUT"
+  });
+});
+
+/*
+ * JAWABAN BONUS - FEATURE FLAGS AT SCALE:
+ *
+ * 1. PLATFORM CENTRALIZED FEATURE FLAGS:
+ *    Platform seperti LaunchDarkly atau Unleash menyediakan Dashboard GUI bagi Product Manager/DevOps untuk mengontrol fitur tanpa perlu redeploy kode. SDK terhubung via Streaming WebSocket/SSE untuk menerima pembaruan flag secara instan.
+ *
+ * 2. LOW-LATENCY CACHING STRATEGY:
+ *    Untuk menghindari panggilan database pada setiap HTTP request, SDK menyimpan aturan flag di Local Memory (O(1) lookup). Ketika ada perubahan flag di Dashboard, event Pub/Sub (Redis / SSE) memperbarui cache lokal server secara otomatis tanpa Downtime.
+ */
+
+module.exports = app;`,
+    testCases: []
+  }
+];
+
 
