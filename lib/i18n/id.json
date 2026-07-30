@@ -67,5 +67,13 @@
   "idealSolutionSub": "Termasuk validasi & komentar bonus",
   "tryAgain": "Coba Lagi / Refaktor",
   "backToEditor": "Kembali ke Editor",
-  "minsLabel": "Menit"
+  "minsLabel": "Menit",
+  "navProfile": "Profil Candidate",
+  "profileTitle": "Profil & Pelacak Progres",
+  "profileSub": "Ringkasan performa live-coding, evaluasi AI, dan rincian kemampuan per peran.",
+  "backToHome": "Kembali ke Beranda",
+  "roleBreakdown": "Breakdown Kemampuan Per Peran",
+  "sessionHistory": "Riwayat Sesi LiveCode",
+  "clearHistory": "Hapus Riwayat State",
+  "confirmClear": "Apakah Anda yakin ingin menghapus semua riwayat sesi dan draf kode?"
 }
