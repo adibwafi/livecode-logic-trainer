@@ -60,7 +60,21 @@ export default function AdaptiveTracker() {
 
   const recentSessions = metrics.slice(-3).reverse();
 
-  if (completedProblems.length === 0) return null;
+  if (completedProblems.length === 0) {
+    return (
+      <div className="glass-panel rounded-2xl p-6 text-center space-y-3 border border-zinc-200/80 bg-white/80 backdrop-blur-xl">
+        <div className="inline-flex p-3 rounded-full bg-violet-50 text-violet-600 border border-violet-100">
+          <Target className="w-5 h-5" />
+        </div>
+        <div>
+          <h3 className="text-sm font-bold text-zinc-900">Belum Ada Sesi Terselesaikan</h3>
+          <p className="text-xs text-zinc-500 mt-1 max-w-xs mx-auto">
+            Selesaikan salah satu tantangan 30 menit untuk membuka analisa progres adaptif dan skor AI kamu.
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div
