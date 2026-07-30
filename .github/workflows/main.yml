@@ -1,0 +1,94 @@
+# ─── LiveCode Logic Trainer — CI/CD Pipeline ──────────────────────────────────
+# Triggers: push to main, PRs targeting main
+# Jobs: typecheck → lint → build (in parallel where possible)
+# ──────────────────────────────────────────────────────────────────────────────
+
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  NODE_VERSION: '20'
+  # Stub GROQ key for build (no real API calls in CI)
+  GROQ_API_KEY: ci-build-stub-key
+
+jobs:
+  # ── 1. Type Check ──────────────────────────────────────────────────────────
+  typecheck:
+    name: TypeScript Check
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js ${{ env.NODE_VERSION }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run TypeScript compiler (no emit)
+        run: npx tsc --noEmit
+
+  # ── 2. ESLint ─────────────────────────────────────────────────────────────
+  lint:
+    name: ESLint
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js ${{ env.NODE_VERSION }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run ESLint
+        run: npx eslint . --ext .ts,.tsx --max-warnings 0
+
+  # ── 3. Production Build ───────────────────────────────────────────────────
+  build:
+    name: Next.js Build
+    runs-on: ubuntu-latest
+    needs: [typecheck]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js ${{ env.NODE_VERSION }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Create .env.local for build
+        run: echo "GROQ_API_KEY=${{ env.GROQ_API_KEY }}" > .env.local
+
+      - name: Build Next.js (Turbopack production)
+        run: npm run build
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: nextjs-build-${{ github.sha }}
+          path: .next/
+          retention-days: 7
+          if-no-files-found: error
