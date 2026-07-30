@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { TestRunResult, TestResultItem } from './types';
 
 /**

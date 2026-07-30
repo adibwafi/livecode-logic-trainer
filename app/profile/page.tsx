@@ -51,8 +51,8 @@ export default function ProfilePage() {
   const [showConfirmClear, setShowConfirmClear] = useState(false);
 
   const totalProblems = PROBLEMS.length;
-  const avgScore = selectAvgScore({ completedProblems, metrics } as any);
-  const avgTimeSeconds = selectAvgTime({ completedProblems, metrics } as any);
+  const avgScore = selectAvgScore({ completedProblems, metrics } as Parameters<typeof selectAvgScore>[0]);
+  const avgTimeSeconds = selectAvgTime({ completedProblems, metrics } as Parameters<typeof selectAvgTime>[0]);
   const avgTimeMinutes = Math.round(avgTimeSeconds / 60);
 
   // Calculate Candidate Mastery Rank

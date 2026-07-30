@@ -106,12 +106,12 @@ Return ONLY a single valid JSON object matching this EXACT structure:
     const assessment: AssessmentResult = JSON.parse(responseText);
 
     return NextResponse.json(assessment);
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Assessment API Error:', error);
     return NextResponse.json(
       {
         error: 'Failed to process assessment via Groq',
-        details: error.message
+        details: error instanceof Error ? error.message : String(error)
       },
       { status: 500 }
     );

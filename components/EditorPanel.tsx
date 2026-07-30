@@ -21,7 +21,7 @@ export default function EditorPanel({
   isWorkerRunning = false,
 }: EditorPanelProps) {
   const [copied, setCopied] = React.useState(false);
-  const editorRef = useRef<any>(null);
+  const editorRef = useRef<Parameters<OnMount>[0] | null>(null);
 
   const handleEditorWillMount: BeforeMount = (monaco) => {
     monaco.editor.defineTheme('antigravity-vs-dark', {

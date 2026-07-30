@@ -29,7 +29,7 @@ export interface TestResultItem {
   name: string;
   passed: boolean;
   actualStatus?: number;
-  actualBody?: any;
+  actualBody?: unknown;
   error?: string;
 }
 
