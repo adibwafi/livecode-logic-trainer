@@ -11,7 +11,6 @@
  *              { type: 'ERROR',  payload: { message: string } }
  */
 
-/* eslint-disable no-restricted-globals */
 
 // ── Watchdog: kill worker if execution exceeds 5 seconds ──────────────────────
 let watchdog = null;
