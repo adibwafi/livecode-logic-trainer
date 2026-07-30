@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { Analytics } from "@vercel/analytics/next";
+import { LazyMotion, domAnimation } from "framer-motion";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -77,7 +78,9 @@ export default function RootLayout({
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col bg-white text-zinc-900 selection:bg-violet-100 selection:text-zinc-900" suppressHydrationWarning>
-        {children}
+        <LazyMotion features={domAnimation} strict>
+          {children}
+        </LazyMotion>
         <Analytics />
         <SpeedInsights />
       </body>
