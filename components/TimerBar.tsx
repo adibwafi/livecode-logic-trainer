@@ -32,7 +32,10 @@ export default function TimerBar({
 
   // Reset timer when initialMinutes prop changes
   useEffect(() => {
-    setSecondsLeft(initialMinutes * 60);
+    const timeoutId = setTimeout(() => {
+      setSecondsLeft(initialMinutes * 60);
+    }, 0);
+    return () => clearTimeout(timeoutId);
   }, [initialMinutes]);
 
   // Pure interval countdown — no external side-effects inside reducer

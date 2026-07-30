@@ -40,7 +40,10 @@ export default function SessionHeader({
   const [muted, setMuted] = useState<boolean>(false);
 
   useEffect(() => {
-    setMuted(isSoundMuted());
+    const timeoutId = setTimeout(() => {
+      setMuted(isSoundMuted());
+    }, 0);
+    return () => clearTimeout(timeoutId);
   }, []);
 
   const toggleSound = () => {

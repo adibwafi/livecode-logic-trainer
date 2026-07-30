@@ -2,7 +2,7 @@
 
 import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { useParams } from 'next/navigation';
-import { AnimatePresence, m } from 'framer-motion';
+import { AnimatePresence } from 'framer-motion';
 import { PROBLEMS } from '@/lib/problems';
 import SessionHeader from '@/components/SessionHeader';
 import ProblemPanel from '@/components/ProblemPanel';
@@ -117,7 +117,10 @@ export default function ProblemSessionPage() {
   // Restore latest draft on problem change
   useEffect(() => {
     const draft = drafts[problemId]?.code;
-    setCode(draft ?? problem.starterCode);
+    const timeoutId = setTimeout(() => {
+      setCode(draft ?? problem.starterCode);
+    }, 0);
+    return () => clearTimeout(timeoutId);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [problemId]);
 
