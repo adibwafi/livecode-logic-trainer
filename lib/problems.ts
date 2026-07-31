@@ -1951,6 +1951,434 @@ app.post('/features/evaluate', (req, res) => {
 
 module.exports = app;`,
     testCases: []
+  },
+  {
+    id: "docker-healthcheck-api",
+    title: "Container Health Check & Readiness Probe API",
+    role: "DevOps Engineer",
+    level: "Mid-Level",
+    timeLimit: 30,
+    category: "Container Orchestration & Observability",
+    description: `## 1. Studi Kasus
+Dalam ekosistem Kubernetes dan Docker, setiap service container **wajib** mengekspos endpoint health check agar orkestrator dapat menentukan apakah pod siap menerima traffic (Readiness Probe) atau masih bisa dijalankan (Liveness Probe).
+
+Anda diminta membuat dua endpoint health check untuk Express.js API:
+\`\`\`http
+POST /health      — Liveness Probe (apakah container masih hidup?)
+POST /readiness   — Readiness Probe (apakah container siap menerima request?)
+\`\`\`
+
+---
+
+## 2. Spesifikasi Input & Output
+
+### POST /health — Liveness Probe
+
+#### Response Sehat (HTTP 200):
+\`\`\`json
+{
+  "status": "UP",
+  "uptime": 12345,
+  "timestamp": "2024-01-01T00:00:00.000Z"
+}
+\`\`\`
+
+#### Response Tidak Sehat (HTTP 503) — saat \`forceUnhealthy: true\` di body:
+\`\`\`json
+{
+  "status": "DOWN",
+  "error": "Application is in an unhealthy state"
+}
+\`\`\`
+
+### POST /readiness — Readiness Probe
+
+#### Response Ready (HTTP 200):
+\`\`\`json
+{
+  "status": "READY",
+  "checks": {
+    "database": "UP",
+    "cache": "UP"
+  }
+}
+\`\`\`
+
+#### Response Not Ready (HTTP 503) — saat \`dbStatus: "DOWN"\` di body:
+\`\`\`json
+{
+  "status": "NOT_READY",
+  "checks": {
+    "database": "DOWN",
+    "cache": "UP"
+  }
+}
+\`\`\`
+
+---
+
+## 3. Requirement & Aturan Validasi
+
+### Endpoint \`/health\` (Liveness):
+1. Jika request body mengandung \`{ forceUnhealthy: true }\` → kembalikan \`HTTP 503\` dengan status \`"DOWN"\`.
+2. Dalam kondisi normal → kembalikan \`HTTP 200\` dengan \`{ status: "UP", uptime: process.uptime(), timestamp: new Date().toISOString() }\`.
+
+### Endpoint \`/readiness\` (Readiness):
+1. Terima parameter \`dbStatus\` dan \`cacheStatus\` dari request body (default keduanya \`"UP"\`).
+2. Jika salah satu status bernilai \`"DOWN"\` → kembalikan \`HTTP 503\` dengan status \`"NOT_READY"\`.
+3. Jika keduanya \`"UP"\` → kembalikan \`HTTP 200\` dengan status \`"READY"\`.
+
+---
+
+## 4. Pertanyaan Bonus Konseptual 💡
+> **Kubernetes Probes: Liveness vs Readiness vs Startup**
+> *Di bagian komentar kode solusi Anda, jelaskan:*
+> - **Liveness Probe**: Kapan Kubernetes merestart container (loop/deadlock)?
+> - **Readiness Probe**: Kapan Kubernetes mengalihkan traffic dari pod?
+> - **Startup Probe**: Mengapa dibutuhkan untuk aplikasi dengan startup time lama?
+> - Konfigurasi YAML Kubernetes untuk ketiga probe ini.
+`,
+    starterCode: `const express = require('express');
+const app = express();
+app.use(express.json());
+
+// Simulasi status dependency
+// Dalam production, ini akan mengecek koneksi database/cache nyata
+
+app.post('/health', (req, res) => {
+  const { forceUnhealthy } = req.body;
+
+  // TODO: Implementasi Liveness Probe
+  // 1. Jika forceUnhealthy === true -> HTTP 503 dengan status "DOWN"
+  // 2. Kondisi normal -> HTTP 200 dengan status "UP", uptime, timestamp
+
+  return res.status(500).json({ message: "Belum diimplementasikan" });
+});
+
+app.post('/readiness', (req, res) => {
+  const { dbStatus = 'UP', cacheStatus = 'UP' } = req.body;
+
+  // TODO: Implementasi Readiness Probe
+  // 1. Cek status semua dependency (database, cache)
+  // 2. Jika salah satu DOWN -> HTTP 503 dengan status "NOT_READY"
+  // 3. Jika semua UP -> HTTP 200 dengan status "READY"
+
+  return res.status(500).json({ message: "Belum diimplementasikan" });
+});
+
+/*
+ * JAWABAN PERTANYAAN BONUS (Kubernetes Probes):
+ *
+ * 1. Liveness Probe — Restart Container:
+ *
+ * 2. Readiness Probe — Redirect Traffic:
+ *
+ * 3. Startup Probe — Slow Start Apps:
+ *
+ * 4. Kubernetes YAML Configuration:
+ */
+
+module.exports = app;
+`,
+    bonusQuestion: "Jelaskan perbedaan Kubernetes Liveness, Readiness, dan Startup Probe beserta konfigurasi YAML dan use case production-nya.",
+    idealSolution: `const express = require('express');
+const app = express();
+app.use(express.json());
+
+app.post('/health', (req, res) => {
+  const { forceUnhealthy } = req.body;
+
+  if (forceUnhealthy === true) {
+    return res.status(503).json({
+      status: "DOWN",
+      error: "Application is in an unhealthy state"
+    });
+  }
+
+  return res.status(200).json({
+    status: "UP",
+    uptime: process.uptime ? process.uptime() : 0,
+    timestamp: new Date().toISOString()
+  });
+});
+
+app.post('/readiness', (req, res) => {
+  const { dbStatus = 'UP', cacheStatus = 'UP' } = req.body;
+
+  const checks = {
+    database: dbStatus,
+    cache: cacheStatus
+  };
+
+  const isReady = Object.values(checks).every(s => s === 'UP');
+
+  if (!isReady) {
+    return res.status(503).json({
+      status: "NOT_READY",
+      checks
+    });
+  }
+
+  return res.status(200).json({
+    status: "READY",
+    checks
+  });
+});
+
+/*
+ * JAWABAN BONUS — KUBERNETES PROBES:
+ *
+ * 1. LIVENESS PROBE:
+ *    Kubernetes mengirim request ke /health secara periodik.
+ *    Jika container merespons HTTP 5xx atau tidak merespons (timeout),
+ *    Kubernetes merestart container untuk memulihkan dari deadlock atau memory corruption.
+ *
+ * 2. READINESS PROBE:
+ *    Kubernetes mengirim request ke /readiness sebelum mengalihkan traffic.
+ *    Jika pod belum siap (koneksi DB belum established, warming up cache),
+ *    Kubernetes mengeluarkan pod dari load balancer sehingga tidak ada request yang diarahkan ke pod tersebut.
+ *
+ * 3. STARTUP PROBE:
+ *    Untuk aplikasi yang membutuhkan waktu startup lama (misal JVM app, ML model loading),
+ *    Startup Probe memberikan window waktu yang lebih panjang sebelum Liveness Probe aktif,
+ *    mencegah Kubernetes merestart container yang masih dalam proses inisialisasi.
+ *
+ * 4. KONFIGURASI YAML KUBERNETES:
+ *    livenessProbe:
+ *      httpGet:
+ *        path: /health
+ *        port: 3000
+ *      initialDelaySeconds: 10
+ *      periodSeconds: 10
+ *      failureThreshold: 3
+ *    readinessProbe:
+ *      httpGet:
+ *        path: /readiness
+ *        port: 3000
+ *      initialDelaySeconds: 5
+ *      periodSeconds: 5
+ *      failureThreshold: 2
+ *    startupProbe:
+ *      httpGet:
+ *        path: /health
+ *        port: 3000
+ *      failureThreshold: 30
+ *      periodSeconds: 10
+ */
+
+module.exports = app;`,
+    testCases: []
+  },
+  {
+    id: "cicd-pipeline-gate",
+    title: "CI/CD Quality Gate & Automated Deploy Guard",
+    role: "DevOps Engineer",
+    level: "Mid-Level",
+    timeLimit: 30,
+    category: "CI/CD Automation & Quality Assurance",
+    description: `## 1. Studi Kasus
+Dalam pipeline CI/CD modern (GitHub Actions, GitLab CI, Jenkins), setiap deployment ke environment \`production\` atau \`staging\` harus melewati **Quality Gate** otomatis. Quality Gate memastikan bahwa kode yang akan di-deploy memenuhi standar minimum: test coverage, build status, dan kondisi branch yang diizinkan.
+
+Anda diminta membuat endpoint REST API Express.js sebagai Quality Gate engine:
+\`\`\`http
+POST /pipeline/gate
+\`\`\`
+
+---
+
+## 2. Spesifikasi Input & Output
+
+### Request Body:
+\`\`\`json
+{
+  "branch": "main",
+  "buildStatus": "SUCCESS",
+  "coverage": 85,
+  "environment": "production"
+}
+\`\`\`
+
+### Response Approved (HTTP 200):
+\`\`\`json
+{
+  "approved": true,
+  "environment": "production",
+  "checks": {
+    "branch": "PASS",
+    "build": "PASS",
+    "coverage": "PASS"
+  },
+  "message": "All quality gates passed. Deployment approved."
+}
+\`\`\`
+
+### Response Blocked (HTTP 422):
+\`\`\`json
+{
+  "approved": false,
+  "environment": "production",
+  "checks": {
+    "branch": "PASS",
+    "build": "PASS",
+    "coverage": "FAIL"
+  },
+  "failureReasons": ["Coverage 45% is below minimum threshold of 80%"]
+}
+\`\`\`
+
+---
+
+## 3. Requirement & Aturan Validasi
+
+1. **Validasi Payload**: Jika \`branch\`, \`buildStatus\`, \`coverage\`, atau \`environment\` tidak diisi → \`HTTP 400\` *"Missing required pipeline parameters"*.
+
+2. **Gate 1 — Branch Protection** (environment \`production\` saja):
+   - Hanya branch \`main\` atau \`master\` yang boleh deploy ke production.
+   - Branch lain → \`HTTP 422\` dengan \`checks.branch: "FAIL"\` dan reason *"Only main/master branch can deploy to production"*.
+
+3. **Gate 2 — Build Status Check**:
+   - Hanya \`buildStatus === "SUCCESS"\` yang diizinkan.
+   - Status lain (FAILED, RUNNING, CANCELLED) → \`HTTP 422\` dengan \`checks.build: "FAIL"\`.
+
+4. **Gate 3 — Coverage Threshold**:
+   - Minimum coverage **80%** untuk environment \`production\`, **60%** untuk \`staging\`.
+   - Jika \`coverage\` di bawah threshold → \`HTTP 422\` dengan \`checks.coverage: "FAIL"\`.
+
+5. **Semua Gate Lulus**: Kembalikan \`HTTP 200\` dengan \`approved: true\`.
+
+---
+
+## 4. Pertanyaan Bonus Konseptual 💡
+> **GitOps & Deployment Strategies**
+> *Di bagian komentar kode solusi Anda, jelaskan:*
+> - **Blue-Green Deployment**: Cara mengurangi downtime dengan dua environment identik.
+> - **Canary Deployment**: Cara merilis fitur ke sebagian kecil user (misal 5%) sebelum full rollout.
+> - **Feature Flags sebagai Safety Valve**: Cara menonaktifkan fitur bermasalah di production tanpa redeploy.
+`,
+    starterCode: `const express = require('express');
+const app = express();
+app.use(express.json());
+
+// Quality Gate Configuration
+const COVERAGE_THRESHOLDS = {
+  production: 80,
+  staging: 60,
+  development: 0
+};
+
+const PROTECTED_BRANCHES = ['main', 'master'];
+
+app.post('/pipeline/gate', (req, res) => {
+  const { branch, buildStatus, coverage, environment } = req.body;
+
+  // TODO: Implementasi CI/CD Quality Gate Engine
+  // 1. Validasi payload lengkap (HTTP 400 jika ada yang kosong)
+  // 2. Gate 1: Cek branch protection untuk production (HTTP 422 jika gagal)
+  // 3. Gate 2: Cek build status harus "SUCCESS" (HTTP 422 jika gagal)
+  // 4. Gate 3: Cek coverage >= threshold sesuai environment (HTTP 422 jika gagal)
+  // 5. Jika semua gate lulus -> HTTP 200 approved: true
+
+  return res.status(500).json({ message: "Belum diimplementasikan" });
+});
+
+/*
+ * JAWABAN PERTANYAAN BONUS (GitOps & Deployment Strategies):
+ *
+ * 1. Blue-Green Deployment:
+ *
+ * 2. Canary Deployment:
+ *
+ * 3. Feature Flags sebagai Safety Valve:
+ */
+
+module.exports = app;
+`,
+    bonusQuestion: "Jelaskan strategi Blue-Green Deployment, Canary Release, dan penggunaan Feature Flags sebagai mekanisme rollback instan di production.",
+    idealSolution: `const express = require('express');
+const app = express();
+app.use(express.json());
+
+const COVERAGE_THRESHOLDS = {
+  production: 80,
+  staging: 60,
+  development: 0
+};
+
+const PROTECTED_BRANCHES = ['main', 'master'];
+
+app.post('/pipeline/gate', (req, res) => {
+  const { branch, buildStatus, coverage, environment } = req.body;
+
+  // 1. Validasi Payload
+  if (!branch || !buildStatus || coverage === undefined || coverage === null || !environment) {
+    return res.status(400).json({ message: "Missing required pipeline parameters" });
+  }
+
+  const checks = { branch: 'PASS', build: 'PASS', coverage: 'PASS' };
+  const failureReasons = [];
+  const threshold = COVERAGE_THRESHOLDS[environment] ?? 80;
+
+  // 2. Gate 1: Branch Protection (hanya untuk production)
+  if (environment === 'production' && !PROTECTED_BRANCHES.includes(branch)) {
+    checks.branch = 'FAIL';
+    failureReasons.push(\`Only main/master branch can deploy to production. Current branch: "\${branch}"\`);
+  }
+
+  // 3. Gate 2: Build Status
+  if (buildStatus !== 'SUCCESS') {
+    checks.build = 'FAIL';
+    failureReasons.push(\`Build status is "\${buildStatus}". Only SUCCESS builds can be deployed.\`);
+  }
+
+  // 4. Gate 3: Coverage Threshold
+  const coverageNum = Number(coverage);
+  if (isNaN(coverageNum) || coverageNum < threshold) {
+    checks.coverage = 'FAIL';
+    failureReasons.push(\`Coverage \${coverageNum}% is below minimum threshold of \${threshold}% for \${environment}\`);
+  }
+
+  // 5. Evaluasi Final
+  if (failureReasons.length > 0) {
+    return res.status(422).json({
+      approved: false,
+      environment,
+      checks,
+      failureReasons
+    });
+  }
+
+  return res.status(200).json({
+    approved: true,
+    environment,
+    checks,
+    message: "All quality gates passed. Deployment approved."
+  });
+});
+
+/*
+ * JAWABAN BONUS — DEPLOYMENT STRATEGIES & GITOPS:
+ *
+ * 1. BLUE-GREEN DEPLOYMENT:
+ *    Maintain dua environment identik: "Blue" (production aktif) dan "Green" (versi baru).
+ *    Deploy versi baru ke Green, jalankan smoke test, lalu alihkan load balancer dari Blue ke Green secara instan.
+ *    Jika ada masalah, rollback hanya perlu mengalihkan traffic kembali ke Blue (zero-downtime rollback).
+ *
+ * 2. CANARY DEPLOYMENT:
+ *    Deploy versi baru hanya ke sebagian kecil pod/server (misal 5%).
+ *    Monitor error rate, latency, dan business metrics selama beberapa menit/jam.
+ *    Jika sehat, secara bertahap naikkan persentase traffic (5% -> 25% -> 100%).
+ *    Jika ada anomali, rollback hanya mengurangi persentase canary ke 0%.
+ *    Tools: Kubernetes Argo Rollouts, Flagger, NGINX weighted routing.
+ *
+ * 3. FEATURE FLAGS SEBAGAI SAFETY VALVE:
+ *    Deploy kode baru dengan fitur dinonaktifkan via Feature Flag (flag.enabled = false).
+ *    Aktifkan fitur secara bertahap melalui dashboard Feature Flag (LaunchDarkly/Unleash) TANPA redeploy.
+ *    Jika fitur bermasalah di production, nonaktifkan flag secara instan — rollback dalam hitungan detik.
+ *    Ideal untuk: A/B Testing, Canary Feature Release, Dark Launch, Emergency Kill Switch.
+ */
+
+module.exports = app;`,
+    testCases: []
   }
 ];
 

@@ -69,6 +69,7 @@ export default function HomePage() {
     { key: 'Frontend', label: 'Frontend Engineer' },
     { key: 'Full Stack', label: 'Full Stack Engineer' },
     { key: 'QA', label: 'QA Engineer' },
+    { key: 'DevOps', label: 'DevOps Engineer' },
   ];
 
   const filteredProblems = selectedRole === 'ALL'

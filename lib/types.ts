@@ -1,7 +1,7 @@
 export interface Problem {
   id: string;
   title: string;
-  role: 'Backend Engineer' | 'Frontend Engineer' | 'Full Stack Engineer' | 'QA Engineer';
+  role: 'Backend Engineer' | 'Frontend Engineer' | 'Full Stack Engineer' | 'QA Engineer' | 'DevOps Engineer';
   level: 'Mid-Level' | 'Senior' | 'Junior';
   timeLimit: number; // in minutes
   category: string;
