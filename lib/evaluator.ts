@@ -499,6 +499,117 @@ export function runLocalTests(userCode: string): TestRunResult {
     }
 
 
+
+    // Evaluate DevOps: Docker Health Check (/health and /readiness)
+    if (postRoutes['/health']) {
+      {
+        const r1 = simulateRequest('/health', {});
+        const passed = r1.statusCode === 200 && r1.responseBody?.status === 'UP';
+        results.push({
+          id: 'tc_health_ok',
+          name: 'Liveness Probe — Healthy State (HTTP 200)',
+          passed,
+          actualStatus: r1.statusCode,
+          error: passed ? undefined : `Expected HTTP 200 with status "UP", got ${r1.statusCode}`
+        });
+      }
+      {
+        const r2 = simulateRequest('/health', { forceUnhealthy: true });
+        const passed = r2.statusCode === 503 && r2.responseBody?.status === 'DOWN';
+        results.push({
+          id: 'tc_health_unhealthy',
+          name: 'Liveness Probe — Unhealthy State (HTTP 503)',
+          passed,
+          actualStatus: r2.statusCode,
+          error: passed ? undefined : `Expected HTTP 503 with status "DOWN", got ${r2.statusCode}`
+        });
+      }
+    }
+
+    if (postRoutes['/readiness']) {
+      {
+        const r1 = simulateRequest('/readiness', { dbStatus: 'UP', cacheStatus: 'UP' });
+        const passed = r1.statusCode === 200 && r1.responseBody?.status === 'READY';
+        results.push({
+          id: 'tc_ready_ok',
+          name: 'Readiness Probe — All Services UP (HTTP 200)',
+          passed,
+          actualStatus: r1.statusCode,
+          error: passed ? undefined : `Expected HTTP 200 with status "READY", got ${r1.statusCode}`
+        });
+      }
+      {
+        const r2 = simulateRequest('/readiness', { dbStatus: 'DOWN', cacheStatus: 'UP' });
+        const passed = r2.statusCode === 503 && r2.responseBody?.status === 'NOT_READY';
+        results.push({
+          id: 'tc_ready_not_ready',
+          name: 'Readiness Probe — Database DOWN (HTTP 503)',
+          passed,
+          actualStatus: r2.statusCode,
+          error: passed ? undefined : `Expected HTTP 503 with status "NOT_READY", got ${r2.statusCode}`
+        });
+      }
+    }
+
+    // Evaluate DevOps: CI/CD Quality Gate (/pipeline/gate)
+    if (postRoutes['/pipeline/gate']) {
+      {
+        const r1 = simulateRequest('/pipeline/gate', {});
+        const passed = r1.statusCode === 400;
+        results.push({
+          id: 'tc_gate_missing',
+          name: 'Missing Pipeline Parameters (HTTP 400)',
+          passed,
+          actualStatus: r1.statusCode,
+          error: passed ? undefined : `Expected HTTP 400, got ${r1.statusCode}`
+        });
+      }
+      {
+        const r2 = simulateRequest('/pipeline/gate', { branch: 'feature/xyz', buildStatus: 'SUCCESS', coverage: 85, environment: 'production' });
+        const passed = r2.statusCode === 422 && r2.responseBody?.approved === false;
+        results.push({
+          id: 'tc_gate_wrong_branch',
+          name: 'Branch Protection — feature branch to production (HTTP 422)',
+          passed,
+          actualStatus: r2.statusCode,
+          error: passed ? undefined : `Expected HTTP 422 approved:false for non-main branch, got ${r2.statusCode}`
+        });
+      }
+      {
+        const r3 = simulateRequest('/pipeline/gate', { branch: 'main', buildStatus: 'SUCCESS', coverage: 45, environment: 'production' });
+        const passed = r3.statusCode === 422 && r3.responseBody?.approved === false;
+        results.push({
+          id: 'tc_gate_low_coverage',
+          name: 'Coverage Gate — Below 80% threshold (HTTP 422)',
+          passed,
+          actualStatus: r3.statusCode,
+          error: passed ? undefined : `Expected HTTP 422 for low coverage, got ${r3.statusCode}`
+        });
+      }
+      {
+        const r4 = simulateRequest('/pipeline/gate', { branch: 'main', buildStatus: 'SUCCESS', coverage: 85, environment: 'production' });
+        const passed = r4.statusCode === 200 && r4.responseBody?.approved === true;
+        results.push({
+          id: 'tc_gate_pass',
+          name: 'All Quality Gates Pass — Deployment Approved (HTTP 200)',
+          passed,
+          actualStatus: r4.statusCode,
+          error: passed ? undefined : `Expected HTTP 200 approved:true, got ${r4.statusCode}`
+        });
+      }
+      {
+        const r5 = simulateRequest('/pipeline/gate', { branch: 'main', buildStatus: 'FAILED', coverage: 85, environment: 'production' });
+        const passed = r5.statusCode === 422 && r5.responseBody?.approved === false;
+        results.push({
+          id: 'tc_gate_build_fail',
+          name: 'Build Failure Blocks Deploy (HTTP 422)',
+          passed,
+          actualStatus: r5.statusCode,
+          error: passed ? undefined : `Expected HTTP 422 for failed build, got ${r5.statusCode}`
+        });
+      }
+    }
+
     if (results.length === 0) {
       results.push({
         id: 'tc_route_generic',
