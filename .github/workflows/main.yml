@@ -16,7 +16,7 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  NODE_VERSION: '20'
+  NODE_VERSION: '22'
   # Stub GROQ key for build (no real API calls in CI)
   GROQ_API_KEY: ci-build-stub-key
 
@@ -89,6 +89,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: nextjs-build-${{ github.sha }}
-          path: .next/
+          path: .next
           retention-days: 7
           if-no-files-found: error
+          include-hidden-files: true
