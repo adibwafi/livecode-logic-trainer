@@ -1,6 +1,6 @@
 # LiveCode Logic Trainer 🚀
 
-An interactive, timed web application designed for live-code technical interview preparation. Practice JavaScript REST API logic under real interview time constraints (**strictly capped at 30 minutes**) for Backend, Frontend, Full Stack, and QA roles across Indonesian and global tech companies.
+An interactive, timed web application designed for live-code technical interview preparation. Practice JavaScript REST API logic under real interview time constraints (**strictly capped at 30 minutes**) for Backend, Frontend, Full Stack, QA, and **DevOps** roles across Indonesian and global tech companies.
 
 ![Next.js](https://img.shields.io/badge/Next.js-16-black?style=for-the-badge&logo=next.js)
 ![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-v4-38B2AC?style=for-the-badge&logo=tailwind-css)
@@ -33,18 +33,17 @@ The UI is built on a **cinematic dark-mode design language** inspired by Sana La
   - Commentary fades in smoothly via `animate-fade-in` keyed on content change.
 - **Web Audio FX Engine**: Offline, zero-dependency Web Audio synthesizers for test run clicks, success major chimes, failure double tones, and victory fanfares (with Mute/Unmute toggle).
 - **Achievement Badges System**: Unlockable post-assessment badges (`⚡ Speed Demon`, `🛡️ Zero Bug Ninja`, `🧠 Architecture Guru`, `🔥 Clutch Master`) with staggered entrance animations in the Results Modal.
-- **Local Unit Test Console**: Execute isolated unit test cases against your Monaco code in real-time before final submission across all 12 problem endpoints.
-- **Groq LLM Assessment Engine**: Evaluates code submissions using `llama-3.3-70b-versatile` for:
-  - Logic correctness & unhandled edge cases
-  - Engineering best practices (modularity, status codes `200`, `201`, `400`, `404`, `409`, `429`, `503`)
-  - Conceptual bonus question evaluation (Argon2/bcrypt, Debouncing vs Throttling, QA EP & BVA, Feature Flags, PostgreSQL Race Conditions, Redis Rate Limiting, Idempotency, JWT Security, Webhook DLQ, Circuit Breakers, Pact Contract Testing)
-  - Production-grade ideal solution generation
+- **Local Unit Test Console**: Execute isolated unit test cases against your Monaco code in real-time before final submission across all 14 problem endpoints.
+- **Dual-Engine Assessment System**:
+  - **Primary**: Groq LLM (`llama-3.3-70b-versatile`) for deep AI code review, edge case evaluation, and conceptual bonus scoring.
+  - **Fallback (Rate Limit / No API Key)**: When Groq daily token quota (TPD) is exhausted or `GROQ_API_KEY` is not configured, the system **automatically falls back** to a rich local evaluation — returns problem-specific score, passed/failed test cases, best practice tips, and a detailed note explaining the AI fallback. No HTTP 500 errors.
+  - Bonus topics: Argon2/bcrypt, Debouncing vs Throttling, QA EP & BVA, Feature Flags, PostgreSQL Race Conditions, Redis Rate Limiting, Idempotency, JWT Security, Webhook DLQ, Circuit Breakers, Pact Contract Testing, Kubernetes Probes, Blue-Green & Canary Deployments.
 - **Vercel Telemetry & Speed Insights**: Integrated `@vercel/analytics` and `@vercel/speed-insights` for real-time web performance metrics and user traffic monitoring.
 - **Results Modal**: Status-keyed glow ring (emerald/amber/rose), color-coded score with text-shadow glow, confetti (violet/emerald palette), glass tab navigation, staggered achievement badge entrance.
 
 ---
 
-## 📚 Problem Catalog (Junior & Mid-Level, <= 30 Mins)
+## 📚 Problem Catalog (Junior & Mid-Level, <= 30 Mins) — 14 Problems
 
 ### 🟢 Junior Level Problems
 1. **User Registration & Password Complexity Validator** (`Backend Engineer` • `Junior` • 30 mins)
@@ -107,6 +106,17 @@ The UI is built on a **cinematic dark-mode design language** inspired by Sana La
     - Endpoint: `POST /orders/transition`
     - Key Logic: Finite State Machine transition validation (`CREATED -> PAID -> PROCESSING -> SHIPPED -> DELIVERED`).
     - Bonus: Integration Testing vs Consumer-Driven Contract Testing (Pact).
+
+### 🚀 DevOps Engineer Problems (New!)
+13. **Container Health Check & Readiness Probe API** (`DevOps Engineer` • `Mid-Level` • 30 mins)
+    - Endpoints: `POST /health` (Liveness Probe) & `POST /readiness` (Readiness Probe)
+    - Key Logic: Liveness detection with unhealthy state simulation, multi-dependency readiness check (`database`, `cache`), proper HTTP 200/503 responses.
+    - Bonus: Kubernetes Liveness vs Readiness vs Startup Probe — YAML configuration & use cases.
+
+14. **CI/CD Quality Gate & Automated Deploy Guard** (`DevOps Engineer` • `Mid-Level` • 30 mins)
+    - Endpoint: `POST /pipeline/gate`
+    - Key Logic: Three-gate pipeline validator — branch protection (only `main`/`master` to production), build status check, coverage threshold (80% production / 60% staging).
+    - Bonus: Blue-Green Deployment, Canary Release, and Feature Flags as an emergency safety valve.
 
 ---
 
@@ -173,7 +183,7 @@ livecode-logic-trainer/
 │   └── ResultsModal.tsx            # Status-keyed glow modal, staggered achievement badges
 ├── lib/
 │   ├── types.ts                    # TypeScript interface definitions
-│   ├── problems.ts                 # 12 In-memory problem seed definitions
+│   ├── problems.ts                 # 14 In-memory problem seed definitions (incl. 2 DevOps)
 │   ├── soundFX.ts                  # Web Audio API sound synthesizer
 │   └── evaluator.ts                # Isolated JS unit test runner
 ├── .env.local.example              # Environment variables template

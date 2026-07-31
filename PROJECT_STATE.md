@@ -3,7 +3,7 @@
 ## 1. EXECUTIVE SUMMARY & TECH STACK
 
 ### Core Purpose & Scope
-**LiveCode Logic Trainer** is a specialized, interactive web application built for live-coding technical interview preparation. It enables software engineers (Backend, Frontend, Full Stack, QA) to practice JavaScript REST API logic under strict interview time constraints (**max 30 minutes**). The app features a split-pane IDE, countdown timer auto-submit, real-time local test execution, an AI-driven assessment engine powered by Groq (`llama-3.3-70b-versatile`), and an interactive **Fun Gamification Suite** (Recruiter Personas, Web Audio FX, Achievements) to eliminate interview anxiety.
+**LiveCode Logic Trainer** is a specialized, interactive web application built for live-coding technical interview preparation. It enables software engineers (Backend, Frontend, Full Stack, QA, **DevOps**) to practice JavaScript REST API logic under strict interview time constraints (**max 30 minutes**). The app features a split-pane IDE, countdown timer auto-submit, real-time local test execution via **Web Worker sandbox**, a **Dual-Engine AI assessment system** (Groq primary + rich local fallback for rate-limited scenarios), and an interactive **Fun Gamification Suite** (Recruiter Personas, Web Audio FX, Achievements) to eliminate interview anxiety.
 
 ### Complete Tech Stack & Key Configurations
 - **Framework**: Next.js 16 (App Router, Turbopack, React 19).
@@ -13,7 +13,7 @@
 - **Styling**: Tailwind CSS v4 (`@import "tailwindcss"` in `globals.css`) with **Sana Labs Pure White Light Design System** — see §Design System below.
 - **Code Editor**: `@monaco-editor/react` (`antigravity-dark` obsidian theme based on `vs-dark`, JS syntax highlighting, `fontLigatures`, `cursorBlinking: smooth`, `smoothScrolling`).
 - **Markdown Rendering**: `react-markdown` with GFM support (`prose-zinc`).
-- **AI Assessment Engine**: `groq-sdk` calling model `llama-3.3-70b-versatile` with `response_format: { type: "json_object" }`.
+- **AI Assessment Engine**: `groq-sdk` calling model `llama-3.3-70b-versatile` with `response_format: { type: "json_object" }`. Features **automatic rate-limit fallback** (TPD exhaustion detection) — returns rich local evaluation instead of HTTP 500.
 - **Audio Synthesizer Engine**: Web Audio API oscillator/gain node synth (`lib/soundFX.ts`) for offline, zero-dependency sound cues.
 - **SEO & Production Readiness**: Complete Next.js 16 Metadata (`title`, `description`, `keywords`, `openGraph`, `twitter`, `icons`) and separate `Viewport` configuration (`themeColor: "#ffffff"`).
 - **Database / Storage**: **NONE (Strictly In-Memory)**. Seed data and session states use JavaScript objects/arrays.
@@ -113,9 +113,12 @@ livecode-logic-trainer/
 │   └── ResultsModal.tsx            # Assessment modal: status-keyed glow ring, staggered badges
 ├── lib/                            # Core Logic & Utilities
 │   ├── types.ts                    # TypeScript interfaces (Problem, AssessmentResult, Achievement, Persona)
-│   ├── problems.ts                 # 12 In-memory problem seed definitions (Junior & Mid-Level across 4 roles)
+│   ├── problems.ts                 # 14 In-memory problem seed definitions (Junior, Mid-Level across 5 roles incl. DevOps)
 │   ├── soundFX.ts                  # Web Audio API synthesizer for test run, chime, error & fanfare cues
-│   └── evaluator.ts                # Isolated JS function sandbox & dynamic unit test assertion runner
+│   └── evaluator.ts                # Isolated JS function sandbox & dynamic unit test assertion runner (14 problem suites)
+├── public/
+│   └── workers/
+│       └── executor.worker.js      # Web Worker sandbox for secure client-side code execution (problem-specific dispatch)
 ├── .env.local                      # Secret keys (GROQ_API_KEY - Git Ignored)
 ├── .env.local.example              # Key template for development
 ├── README.md                       # Developer documentation & quickstart
@@ -130,7 +133,12 @@ livecode-logic-trainer/
 - **Decoupled Timer State Management**: `TimerBar.tsx` uses decoupled ref callbacks and standalone `useEffect` listeners to eliminate React 19 `setState`-in-render warnings. Timer states drive color-keyed glow aura transitions via CSS `dangerPulse` / amber box-shadow.
 - **Dual-Engine Evaluation Strategy**:
   1. *Primary Engine*: Groq API (`llama-3.3-70b-versatile`) producing strict structured JSON evaluations.
-  2. *Fallback / Auxiliary Engine*: `lib/evaluator.ts` running mocked Express `req`/`res` contexts via JavaScript `Function` constructor execution for zero-latency local feedback.
+  2. *Rate Limit Fallback*: When Groq TPD (tokens per day) is exhausted, `app/api/assess/route.ts` detects the 429 error and automatically serves a rich `AssessmentResult` built from local test data — problem-specific score, passed/failed test details, best practices, and a clear `⚠️ Rate limit note`. No HTTP 500 exposed to client.
+  3. *Auxiliary Engine*: `lib/evaluator.ts` running mocked Express `req`/`res` contexts via JavaScript `Function` constructor for zero-latency local feedback.
+- **Web Worker Code Execution**: `public/workers/executor.worker.js` runs user code in a secure sandboxed Worker thread with:
+  - Fixed `express is not a function` bug — `mockExpress` is now a proper **function** that returns `mockApp` when called (not a plain object).
+  - Problem-specific test dispatch — routes test assertions based on `problemId` matching `postRoutes` paths.
+  - 5-second watchdog timeout to prevent infinite loops.
 
 ---
 
@@ -139,7 +147,7 @@ livecode-logic-trainer/
 ### Built Modules & Active Features
 1. **Landing / Problem Discovery (`app/page.tsx`)**: Filterable catalog of **12 problems** (Junior & Mid-Level) across Backend, Frontend, Full Stack, and QA roles. Features dual ambient glow orbs, mesh grid overlay, violet-accented hero headline, glass filter pills with ring glow on active, glass problem cards with inset radial hover glow, and gradient Start Challenge CTA.
 2. **Problem Seed Catalog (`lib/problems.ts`)**:
-   - `voucher-redemption`: E-commerce Voucher Redemption API (Backend • Mid-Level • 30m)
+    - `voucher-redemption`: E-commerce Voucher Redemption API (Backend • Mid-Level • 30m)
    - `rate-limiter-middleware`: In-Memory Sliding Window Rate Limiter (Backend • Mid-Level • 30m)
    - `cart-checkout-engine`: E-commerce Cart Checkout & Tax Engine (Full Stack • Mid-Level • 30m)
    - `order-inventory-reservation`: Flash Sale Inventory Stock Reservation (Backend • Mid-Level • 30m)
@@ -151,6 +159,8 @@ livecode-logic-trainer/
    - `pagination-search-filter`: API Data Filtering & Pagination Engine (Frontend • Junior • 30m)
    - `api-payload-schema-validator`: API Payload Schema & Type Assertion Engine (QA • Junior • 30m)
    - `multi-tenant-feature-flag`: Multi-Tenant Feature Flag & Percentage Rollout Engine (Full Stack • Mid-Level • 30m)
+   - `docker-healthcheck-api`: Container Health Check & Readiness Probe API (DevOps • Mid-Level • 30m) **[NEW]**
+   - `cicd-pipeline-gate`: CI/CD Quality Gate & Automated Deploy Guard (DevOps • Mid-Level • 30m) **[NEW]**
 3. **Interactive Live Session (`app/session/[problemId]/page.tsx`)**:
    - Synchronized **30-minute** countdown timer with color-keyed glow aura warnings (amber → rose with `dangerPulse` breathing animation).
    - Recruiter Mood Meter glass pill HUD with animated commentary fade-in and emoji drop-shadow glow.
