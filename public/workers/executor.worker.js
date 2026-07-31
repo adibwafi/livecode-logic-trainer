@@ -124,7 +124,7 @@ function simulateRequest(handler, body, headers) {
 
 // ── Problem-specific test suites ─────────────────────────────────────────────
 
-function runProblemTests(postRoutes, problemId) {
+function runProblemTests(postRoutes) {
   const results = [];
 
   // Helper to push a test result
@@ -336,7 +336,7 @@ function runProblemTests(postRoutes, problemId) {
 
 // ── Main test runner ──────────────────────────────────────────────────────────
 
-function runTests(code, problemId) {
+function runTests(code) {
   const logs = [];
 
   try {
@@ -359,7 +359,7 @@ function runTests(code, problemId) {
       };
     }
 
-    const results = runProblemTests(postRoutes, problemId || '');
+    const results = runProblemTests(postRoutes);
     const passedCount = results.filter(r => r.passed).length;
 
     logs.push(`[Worker] Execution complete. ${passedCount}/${results.length} passed.`);
@@ -390,7 +390,7 @@ self.onmessage = (event) => {
     resetWatchdog();
 
     try {
-      const testResult = runTests(payload.code, payload.problemId);
+      const testResult = runTests(payload.code);
       clearTimeout(watchdog);
       self.postMessage({ type: 'RESULT', payload: testResult });
     } catch (err) {
