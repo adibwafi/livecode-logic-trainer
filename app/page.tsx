@@ -79,19 +79,6 @@ export default function HomePage() {
   return (
     <div className="min-h-screen bg-white text-zinc-900 font-sans relative overflow-hidden">
 
-      {/* ── Ambient Background Orbs (Light Mode Soft Glow) ── */}
-      <div className="pointer-events-none fixed inset-0 overflow-hidden" aria-hidden="true">
-        <div className="absolute top-[-120px] left-1/2 -translate-x-1/2 w-[900px] h-[600px] rounded-full bg-violet-200/35 blur-[140px] animate-glow-pulse" />
-        <div className="absolute top-[300px] right-[-100px] w-[500px] h-[400px] rounded-full bg-emerald-200/25 blur-[120px] animate-glow-pulse" style={{ animationDelay: '1.5s' }} />
-        <div
-          className="absolute inset-0 opacity-[0.025]"
-          style={{
-            backgroundImage: `radial-gradient(circle at 1px 1px, rgba(0,0,0,0.8) 1px, transparent 0)`,
-            backgroundSize: '40px 40px',
-          }}
-        />
-      </div>
-
       {/* ── Navigation ── */}
       <nav
         className="border-b border-zinc-200/80 bg-white/90 backdrop-blur-2xl sticky top-0 z-40"
@@ -221,12 +208,6 @@ export default function HomePage() {
                   layout
                   className="group relative rounded-2xl p-6 flex flex-col justify-between glass-card bg-white border border-zinc-200/90 shadow-sm hover:shadow-md hover:border-zinc-300 transition-all duration-200 overflow-hidden"
                 >
-                  {/* Inset hover glow effect */}
-                  <div
-                    className="absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity duration-500"
-                    style={{ background: 'radial-gradient(ellipse at 50% 0%, rgba(124,58,237,0.06) 0%, transparent 70%)' }}
-                    aria-hidden="true"
-                  />
 
                   <div className="space-y-4 relative">
                     {/* Badges row */}
