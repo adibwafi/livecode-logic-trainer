@@ -320,6 +320,83 @@ function runProblemTests(postRoutes) {
     assert('tc_config_valid', 'Valid Production Config (HTTP 200)', r3.statusCode === 200 && r3.responseBody?.valid === true, r3.statusCode, `Expected 200 valid:true, got ${r3.statusCode}`);
   }
 
+  // ── HappyFresh: Complex Cart & Promo Engine (/cart/calculate) ────────────
+  if (postRoutes['/cart/calculate']) {
+    const h = postRoutes['/cart/calculate'];
+    const r1 = simulateRequest(h, { items: "not-an-array" });
+    assert('tc_cart_invalid', 'Input Validation (Non-array items → HTTP 400)', r1.statusCode === 400, r1.statusCode, `Expected 400, got ${r1.statusCode}`);
+
+    const items = [
+      { id: '1', name: 'Greenfields Milk 1L', category: 'Dairy', price: 35000, quantity: 2, inStock: true },
+      { id: '2', name: 'Indomilk Chocolate 1L', category: 'Dairy', price: 20000, quantity: 1, inStock: false },
+      { id: '3', name: 'Wagyu Beef 200g', category: 'Meat', price: 250000, quantity: 1, inStock: true }
+    ];
+    const r2 = simulateRequest(h, { items, promoRules: [] });
+    const passedR2 = r2.statusCode === 200 && r2.responseBody?.subtotal === 320000 && r2.responseBody?.total === 320000 && Array.isArray(r2.responseBody?.outOfStockItems) && r2.responseBody?.outOfStockItems.length === 1;
+    assert('tc_cart_subtotal_oos', 'Subtotal & Out-Of-Stock Exclusion (HTTP 200)', passedR2, r2.statusCode, `Expected subtotal:320000 & 1 OOS item, got subtotal:${r2.responseBody?.subtotal}`);
+
+    const promos = [
+      { id: 'p-dairy', type: 'CATEGORY_PERCENTAGE', category: 'Dairy', discountPercentage: 10 },
+      { id: 'p-flat', type: 'MIN_SPEND_FLAT', minSpend: 300000, discountAmount: 50000 }
+    ];
+    const r3 = simulateRequest(h, { items, promoRules: promos });
+    const passedR3 = r3.statusCode === 200 && r3.responseBody?.discount === 50000 && r3.responseBody?.total === 270000 && r3.responseBody?.appliedPromo?.id === 'p-flat';
+    assert('tc_cart_best_promo', 'Best-Value Promo Selection (Non-stackable Max Discount)', passedR3, r3.statusCode, `Expected discount:50000 and total:270000, got discount:${r3.responseBody?.discount}`);
+  }
+
+  // ── HappyFresh: Delivery Slot Reservation (/slots/reserve) ───────────────
+  if (postRoutes['/slots/reserve']) {
+    const h = postRoutes['/slots/reserve'];
+    const r1 = simulateRequest(h, { availableSlots: null });
+    assert('tc_slots_invalid', 'Input Validation (Missing arrays → HTTP 400)', r1.statusCode === 400, r1.statusCode, `Expected 400, got ${r1.statusCode}`);
+
+    const slots = [{ id: 'SLOT-01', startTime: '10:00', endTime: '12:00', capacity: 2 }];
+    const requests = [
+      { requestId: 'req-3', userId: 'u3', slotId: 'SLOT-01', timestamp: 1700000030 },
+      { requestId: 'req-1', userId: 'u1', slotId: 'SLOT-01', timestamp: 1700000010 },
+      { requestId: 'req-2', userId: 'u2', slotId: 'SLOT-01', timestamp: 1700000020 },
+    ];
+    const r2 = simulateRequest(h, { availableSlots: slots, bookingRequests: requests });
+    const confirmed = r2.responseBody?.confirmedBookings || [];
+    const failed = r2.responseBody?.failedBookings || [];
+    const passedR2 = r2.statusCode === 200 && confirmed.length === 2 && confirmed[0].requestId === 'req-1' && failed.length === 1 && failed[0].reason === 'SLOT_FULL';
+    assert('tc_slots_chrono_capacity', 'Chronological Sort & Capacity Guard (HTTP 200)', passedR2, r2.statusCode, `Expected 2 confirmed (req-1 first) and 1 failed SLOT_FULL`);
+
+    const r3 = simulateRequest(h, {
+      availableSlots: slots,
+      bookingRequests: [
+        { requestId: 'req-dup-1', userId: 'u1', slotId: 'SLOT-01', timestamp: 1700000010 },
+        { requestId: 'req-dup-2', userId: 'u1', slotId: 'SLOT-01', timestamp: 1700000015 },
+        { requestId: 'req-invalid', userId: 'u2', slotId: 'SLOT-99', timestamp: 1700000020 }
+      ]
+    });
+    const failedR3 = r3.responseBody?.failedBookings || [];
+    const hasDup = failedR3.some(f => f.reason === 'DUPLICATE_USER_IN_SLOT');
+    const hasNotFound = failedR3.some(f => f.reason === 'SLOT_NOT_FOUND');
+    assert('tc_slots_dup_and_notfound', 'Duplicate User & Invalid Slot Error Handlers', r3.statusCode === 200 && hasDup && hasNotFound, r3.statusCode, `Expected DUPLICATE_USER_IN_SLOT and SLOT_NOT_FOUND`);
+  }
+
+  // ── HappyFresh: Item Substitution (/items/substitute) ────────────────────
+  if (postRoutes['/items/substitute']) {
+    const h = postRoutes['/items/substitute'];
+    const r1 = simulateRequest(h, { targetItem: null });
+    assert('tc_subst_invalid', 'Input Validation (Missing body → HTTP 400)', r1.statusCode === 400, r1.statusCode, `Expected 400, got ${r1.statusCode}`);
+
+    const target = { id: 't1', name: 'Indomilk UHT 1L', category: 'Dairy', brand: 'Indomilk', price: 20000 };
+    const catalog = [
+      { id: 'p1', name: 'Ultra Milk 1L', category: 'Dairy', brand: 'Ultra', price: 21000, inStock: true },
+      { id: 'p2', name: 'Indomilk Vanilla 1L', category: 'Dairy', brand: 'Indomilk', price: 20000, inStock: true },
+      { id: 'p3', name: 'Indomilk OOS', category: 'Dairy', brand: 'Indomilk', price: 20000, inStock: false }
+    ];
+    const r2 = simulateRequest(h, { targetItem: target, catalog });
+    const passedR2 = r2.statusCode === 200 && r2.responseBody?.substitute?.id === 'p2' && r2.responseBody?.score === 100;
+    assert('tc_subst_score_oos', 'Heuristic Scoring Match (Category + Price + Brand = 100)', passedR2, r2.statusCode, `Expected substitute p2 with score 100, got ${r2.responseBody?.substitute?.id}`);
+
+    const r3 = simulateRequest(h, { targetItem: target, catalog: [{ id: 'p_oil', name: 'Bimoli 2L', category: 'Pantry', brand: 'Bimoli', price: 35000, inStock: true }] });
+    const passedR3 = r3.statusCode === 200 && r3.responseBody?.substitute === null;
+    assert('tc_subst_threshold', 'Threshold Guard (Returns null when score < 50)', passedR3, r3.statusCode, `Expected null substitute for low score candidate`);
+  }
+
   // ── Fallback: generic route check ────────────────────────────────────────
   if (results.length === 0) {
     const activePaths = Object.keys(postRoutes);

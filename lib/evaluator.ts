@@ -610,6 +610,157 @@ export function runLocalTests(userCode: string): TestRunResult {
       }
     }
 
+    // ── HappyFresh Cart & Promo Engine (/cart/calculate) ────────────────────────
+    if (activePaths.includes('/cart/calculate')) {
+      {
+        const r1 = simulateRequest('/cart/calculate', { items: "not-an-array" });
+        const passed = r1.statusCode === 400;
+        results.push({
+          id: 'tc_cart_invalid',
+          name: 'Input Validation — Non-array items (HTTP 400)',
+          passed,
+          actualStatus: r1.statusCode,
+          error: passed ? undefined : `Expected HTTP 400 for invalid items array, got ${r1.statusCode}`
+        });
+      }
+      {
+        const items = [
+          { id: '1', name: 'Greenfields Milk 1L', category: 'Dairy', price: 35000, quantity: 2, inStock: true },
+          { id: '2', name: 'Indomilk Chocolate 1L', category: 'Dairy', price: 20000, quantity: 1, inStock: false },
+          { id: '3', name: 'Wagyu Beef 200g', category: 'Meat', price: 250000, quantity: 1, inStock: true }
+        ];
+        const r2 = simulateRequest('/cart/calculate', { items, promoRules: [] });
+        const passed = r2.statusCode === 200 && r2.responseBody?.subtotal === 320000 && r2.responseBody?.total === 320000 && Array.isArray(r2.responseBody?.outOfStockItems) && r2.responseBody?.outOfStockItems.length === 1;
+        results.push({
+          id: 'tc_cart_subtotal_oos',
+          name: 'Subtotal & Out-Of-Stock Exclusion (HTTP 200)',
+          passed,
+          actualStatus: r2.statusCode,
+          error: passed ? undefined : `Expected subtotal:320000 & 1 OOS item, got subtotal:${r2.responseBody?.subtotal}`
+        });
+      }
+      {
+        const items = [
+          { id: '1', name: 'Greenfields Milk 1L', category: 'Dairy', price: 35000, quantity: 2, inStock: true },
+          { id: '3', name: 'Wagyu Beef 200g', category: 'Meat', price: 250000, quantity: 1, inStock: true }
+        ];
+        const promos = [
+          { id: 'p-dairy', type: 'CATEGORY_PERCENTAGE', category: 'Dairy', discountPercentage: 10 }, // 7,000
+          { id: 'p-flat', type: 'MIN_SPEND_FLAT', minSpend: 300000, discountAmount: 50000 } // 50,000
+        ];
+        const r3 = simulateRequest('/cart/calculate', { items, promoRules: promos });
+        const passed = r3.statusCode === 200 && r3.responseBody?.discount === 50000 && r3.responseBody?.total === 270000 && r3.responseBody?.appliedPromo?.id === 'p-flat';
+        results.push({
+          id: 'tc_cart_best_promo',
+          name: 'Best-Value Promo Selection (Non-stackable Max Discount)',
+          passed,
+          actualStatus: r3.statusCode,
+          error: passed ? undefined : `Expected discount:50000 and total:270000, got discount:${r3.responseBody?.discount}`
+        });
+      }
+    }
+
+    // ── HappyFresh Slot Reservation (/slots/reserve) ────────────────────────────
+    if (activePaths.includes('/slots/reserve')) {
+      {
+        const r1 = simulateRequest('/slots/reserve', { availableSlots: null });
+        const passed = r1.statusCode === 400;
+        results.push({
+          id: 'tc_slots_invalid',
+          name: 'Input Validation — Missing arrays (HTTP 400)',
+          passed,
+          actualStatus: r1.statusCode,
+          error: passed ? undefined : `Expected HTTP 400 for invalid body, got ${r1.statusCode}`
+        });
+      }
+      {
+        const slots = [{ id: 'SLOT-01', startTime: '10:00', endTime: '12:00', capacity: 2 }];
+        const requests = [
+          { requestId: 'req-3', userId: 'u3', slotId: 'SLOT-01', timestamp: 1700000030 },
+          { requestId: 'req-1', userId: 'u1', slotId: 'SLOT-01', timestamp: 1700000010 },
+          { requestId: 'req-2', userId: 'u2', slotId: 'SLOT-01', timestamp: 1700000020 },
+        ];
+        const r2 = simulateRequest('/slots/reserve', { availableSlots: slots, bookingRequests: requests });
+        const confirmed = r2.responseBody?.confirmedBookings || [];
+        const failed = r2.responseBody?.failedBookings || [];
+        const passed = r2.statusCode === 200 && confirmed.length === 2 && confirmed[0].requestId === 'req-1' && failed.length === 1 && failed[0].reason === 'SLOT_FULL';
+        results.push({
+          id: 'tc_slots_chrono_capacity',
+          name: 'Chronological Sort & Capacity Overbooking Guard (HTTP 200)',
+          passed,
+          actualStatus: r2.statusCode,
+          error: passed ? undefined : `Expected 2 confirmed (req-1 first) and 1 failed SLOT_FULL`
+        });
+      }
+      {
+        const slots = [{ id: 'SLOT-01', startTime: '10:00', endTime: '12:00', capacity: 3 }];
+        const requests = [
+          { requestId: 'req-dup-1', userId: 'u1', slotId: 'SLOT-01', timestamp: 1700000010 },
+          { requestId: 'req-dup-2', userId: 'u1', slotId: 'SLOT-01', timestamp: 1700000015 },
+          { requestId: 'req-invalid', userId: 'u2', slotId: 'SLOT-99', timestamp: 1700000020 }
+        ];
+        const r3 = simulateRequest('/slots/reserve', { availableSlots: slots, bookingRequests: requests });
+        const failed = r3.responseBody?.failedBookings || [];
+        const hasDup = failed.some((f: any) => f.reason === 'DUPLICATE_USER_IN_SLOT');
+        const hasNotFound = failed.some((f: any) => f.reason === 'SLOT_NOT_FOUND');
+        const passed = r3.statusCode === 200 && hasDup && hasNotFound;
+        results.push({
+          id: 'tc_slots_dup_and_notfound',
+          name: 'Duplicate User & Invalid Slot Error Handlers',
+          passed,
+          actualStatus: r3.statusCode,
+          error: passed ? undefined : `Expected DUPLICATE_USER_IN_SLOT and SLOT_NOT_FOUND failure reasons`
+        });
+      }
+    }
+
+    // ── HappyFresh Item Substitution (/items/substitute) ────────────────────────
+    if (activePaths.includes('/items/substitute')) {
+      {
+        const r1 = simulateRequest('/items/substitute', { targetItem: null });
+        const passed = r1.statusCode === 400;
+        results.push({
+          id: 'tc_subst_invalid',
+          name: 'Input Validation — Missing targetItem/catalog (HTTP 400)',
+          passed,
+          actualStatus: r1.statusCode,
+          error: passed ? undefined : `Expected HTTP 400 for invalid body, got ${r1.statusCode}`
+        });
+      }
+      {
+        const target = { id: 't1', name: 'Indomilk UHT 1L', category: 'Dairy', brand: 'Indomilk', price: 20000 };
+        const catalog = [
+          { id: 'p1', name: 'Ultra Milk 1L', category: 'Dairy', brand: 'Ultra', price: 21000, inStock: true }, // 80 pts
+          { id: 'p2', name: 'Indomilk Vanilla 1L', category: 'Dairy', brand: 'Indomilk', price: 20000, inStock: true }, // 100 pts
+          { id: 'p3', name: 'Indomilk OOS', category: 'Dairy', brand: 'Indomilk', price: 20000, inStock: false } // OOS
+        ];
+        const r2 = simulateRequest('/items/substitute', { targetItem: target, catalog });
+        const passed = r2.statusCode === 200 && r2.responseBody?.substitute?.id === 'p2' && r2.responseBody?.score === 100;
+        results.push({
+          id: 'tc_subst_score_oos',
+          name: 'Heuristic Scoring Match (Category + Price + Brand = 100)',
+          passed,
+          actualStatus: r2.statusCode,
+          error: passed ? undefined : `Expected substitute p2 with score 100, got ${r2.responseBody?.substitute?.id} score:${r2.responseBody?.score}`
+        });
+      }
+      {
+        const target = { id: 't1', name: 'Indomilk UHT 1L', category: 'Dairy', brand: 'Indomilk', price: 20000 };
+        const catalog = [
+          { id: 'p_oil', name: 'Bimoli 2L', category: 'Pantry', brand: 'Bimoli', price: 35000, inStock: true }
+        ];
+        const r3 = simulateRequest('/items/substitute', { targetItem: target, catalog });
+        const passed = r3.statusCode === 200 && r3.responseBody?.substitute === null;
+        results.push({
+          id: 'tc_subst_threshold',
+          name: 'Threshold Guard — Returns null when score < 50',
+          passed,
+          actualStatus: r3.statusCode,
+          error: passed ? undefined : `Expected null substitute for low score candidate, got ${JSON.stringify(r3.responseBody?.substitute)}`
+        });
+      }
+    }
+
     if (results.length === 0) {
       results.push({
         id: 'tc_route_generic',

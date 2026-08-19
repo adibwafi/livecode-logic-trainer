@@ -2379,7 +2379,588 @@ app.post('/pipeline/gate', (req, res) => {
 
 module.exports = app;`,
     testCases: []
+  },
+  {
+    id: "happyfresh-cart-engine",
+    title: "🛒 HappyFresh: Complex Cart & Promo Calculation Engine",
+    role: "Full Stack Engineer",
+    level: "Mid-Level",
+    timeLimit: 30,
+    category: "E-Grocery Promo Engine & Basket Calculations",
+    company: "HappyFresh",
+    badge: "🥑 HappyFresh Special",
+    description: `## 🛒 1. Studi Kasus
+Di HappyFresh, mesin kalkulasi keranjang belanja memproses ribuan keranjang per menit dari mitra supermarket (Super Indo, Grand Lucky, Lotte Mart).
+
+Ketika pelanggan melakukan checkout, sistem harus menghitung subtotal, memfilter item yang habis (**Out-of-Stock / OOS**), dan mengevaluasi aturan promo promosi yang berlaku. Karena promosi bersifat **non-stackable (mutually exclusive)**, sistem harus memilih **satu promosi dengan nilai diskon tertinggi** untuk pelanggan.
+
+Anda diminta membuat logika endpoint REST API Express.js untuk:
+\`\`\`http
+POST /cart/calculate
+\`\`\`
+
+---
+
+## 2. Spesifikasi Input & Output
+
+### Request Body:
+\`\`\`json
+{
+  "items": [
+    { "id": "1", "name": "Greenfields Fresh Milk 1L", "category": "Dairy", "price": 35000, "quantity": 2, "inStock": true },
+    { "id": "2", "name": "Indomilk UHT Chocolate 1L", "category": "Dairy", "price": 20000, "quantity": 1, "inStock": false },
+    { "id": "3", "name": "Wagyu Beef Ribeye 200g", "category": "Meat", "price": 250000, "quantity": 1, "inStock": true }
+  ],
+  "promoRules": [
+    { "id": "promo-dairy-10", "name": "10% Off Dairy", "type": "CATEGORY_PERCENTAGE", "category": "Dairy", "discountPercentage": 10 },
+    { "id": "promo-flat-50k", "name": "Rp 50k Off Orders > Rp 300k", "type": "MIN_SPEND_FLAT", "minSpend": 300000, "discountAmount": 50000 }
+  ]
+}
+\`\`\`
+
+### Response Berhasil (HTTP 200):
+\`\`\`json
+{
+  "subtotal": 320000,
+  "discount": 50000,
+  "total": 270000,
+  "appliedPromo": {
+    "id": "promo-flat-50k",
+    "name": "Rp 50k Off Orders > Rp 300k",
+    "type": "MIN_SPEND_FLAT",
+    "minSpend": 300000,
+    "discountAmount": 50000
+  },
+  "outOfStockItems": [
+    { "id": "2", "name": "Indomilk UHT Chocolate 1L", "category": "Dairy", "price": 20000, "quantity": 1, "inStock": false }
+  ]
+}
+\`\`\`
+
+---
+
+## 3. Requirement & Aturan Bisnis
+1. **Validasi Request**:
+   - Jika \`items\` bukan array atau tidak disertakan, kembalikan \`HTTP 400\` dengan \`{ "error": "Invalid items array" }\`.
+2. **Filter Out-of-Stock (OOS)**:
+   - Item dengan \`inStock === false\` tidak boleh dimasukkan ke dalam perhitungan subtotal atau promo. Item OOS harus dikumpulkan ke dalam array \`outOfStockItems\`.
+3. **Kalkulasi Subtotal**:
+   - Subtotal dihitung dari \`sum(price * quantity)\` untuk semua item yang in-stock (\`inStock === true\`).
+4. **Evaluasi Promo Rules**:
+   - \`CATEGORY_PERCENTAGE\`: Diskon \`discountPercentage%\` untuk item dalam kategori terkait. Jika ada \`maxDiscount\`, diskon tidak boleh melebihi nilai cap tersebut.
+   - \`MIN_SPEND_FLAT\`: Diskon tetap \`discountAmount\` jika \`subtotal >= minSpend\`.
+5. **Best-Value Promo Selection (Non-Stacking)**:
+   - Bandingkan semua promo yang memenuhi syarat. Ambil **satu promo dengan nilai potongan terbesar**.
+   - Jika tidak ada promo yang berlaku atau \`promoRules\` kosong, \`discount: 0\` dan \`appliedPromo: null\`.
+6. **Total**:
+   - \`total = max(0, subtotal - discount)\`.`,
+    starterCode: `const express = require('express');
+const app = express();
+app.use(express.json());
+
+// POST /cart/calculate
+app.post('/cart/calculate', (req, res) => {
+  const { items, promoRules = [] } = req.body;
+
+  // TODO: 1. Validasi items array (HTTP 400 jika invalid)
+  // TODO: 2. Pisahkan in-stock vs out-of-stock items
+  // TODO: 3. Hitung subtotal in-stock items
+  // TODO: 4. Evaluasi promo rules dan pilih promo dengan potongan terbesar (non-stackable)
+  // TODO: 5. Hitung total = subtotal - discount
+
+  return res.status(200).json({
+    subtotal: 0,
+    discount: 0,
+    total: 0,
+    appliedPromo: null,
+    outOfStockItems: []
+  });
+});
+
+module.exports = app;`,
+    bonusQuestion: "Bagaimana cara menangani promo multi-tier (misal diskon bertingkat Rp 20rb min 150rb, Rp 50rb min 300rb) dan flash-sale item pricing dengan ACID transaction di PostgreSQL?",
+    idealSolution: `const express = require('express');
+const app = express();
+app.use(express.json());
+
+app.post('/cart/calculate', (req, res) => {
+  const { items, promoRules = [] } = req.body;
+
+  // 1. Validasi items array
+  if (!Array.isArray(items)) {
+    return res.status(400).json({ error: "Invalid items array" });
+  }
+
+  // 2. Filter in-stock vs out-of-stock
+  const inStockItems = [];
+  const outOfStockItems = [];
+
+  for (const item of items) {
+    if (item.inStock === true && (item.quantity || 0) > 0 && (item.price || 0) >= 0) {
+      inStockItems.push(item);
+    } else {
+      outOfStockItems.push(item);
+    }
+  }
+
+  // 3. Hitung Subtotal
+  const subtotal = inStockItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+
+  // 4. Evaluasi Promosi (Best-Value Rule)
+  let bestDiscount = 0;
+  let appliedPromo = null;
+
+  if (Array.isArray(promoRules)) {
+    for (const rule of promoRules) {
+      let currentDiscount = 0;
+
+      if (rule.type === 'CATEGORY_PERCENTAGE') {
+        const eligibleCategoryTotal = inStockItems
+          .filter(item => item.category?.toLowerCase() === rule.category?.toLowerCase())
+          .reduce((sum, item) => sum + (item.price * item.quantity), 0);
+
+        currentDiscount = Math.round((eligibleCategoryTotal * (rule.discountPercentage || 0)) / 100);
+        if (rule.maxDiscount && currentDiscount > rule.maxDiscount) {
+          currentDiscount = rule.maxDiscount;
+        }
+      } else if (rule.type === 'MIN_SPEND_FLAT') {
+        if (subtotal >= (rule.minSpend || 0)) {
+          currentDiscount = rule.discountAmount || 0;
+        }
+      }
+
+      if (currentDiscount > bestDiscount) {
+        bestDiscount = currentDiscount;
+        appliedPromo = rule;
+      }
+    }
+  }
+
+  // Discount tidak boleh melebihi subtotal
+  const finalDiscount = Math.min(bestDiscount, subtotal);
+  const total = Math.max(0, subtotal - finalDiscount);
+
+  return res.status(200).json({
+    subtotal,
+    discount: finalDiscount,
+    total,
+    appliedPromo,
+    outOfStockItems
+  });
+});
+
+/*
+ * JAWABAN BONUS — POSTGRESQL TRANSACTION & PROMO ENGINE:
+ * 1. ACID TRANSACTIONS: Gunakan 'SELECT ... FOR UPDATE' pada tabel flash_sale_inventory
+ *    untuk lock row stok saat checkout agar tidak terjadi overselling.
+ * 2. PROMO REDEMPTION LEDGER: Catat voucher_redemptions dengan Unique Constraint (user_id, promo_id)
+ *    untuk mencegah race-condition double dip promo.
+ */
+
+module.exports = app;`,
+    testCases: []
+  },
+  {
+    id: "happyfresh-slot-reservation",
+    title: "🚚 HappyFresh: Delivery Slot Reservation & Anti-Overbooking",
+    role: "Backend Engineer",
+    level: "Mid-Level",
+    timeLimit: 30,
+    category: "Concurrency, Queue Simulation & Dispatch Slots",
+    company: "HappyFresh",
+    badge: "🥑 HappyFresh Special",
+    description: `## 🚚 1. Studi Kasus
+Slot pengantaran kurir van HappyFresh (misal \`10:00 - 12:00\`) memiliki kapasitas armada terbatas (misal 2 pesanan per slot). Pada jam sibuk, ratusan pesanan masuk bersamaan. 
+
+Sistem reservasi slot harus memproses permintaan secara kronologis (berdasarkan \`timestamp\`), mencegah overbooking (\`SLOT_FULL\`), memvalidasi slot (\`SLOT_NOT_FOUND\`), mencegah klaim ganda oleh user yang sama (\`DUPLICATE_USER_IN_SLOT\`), dan menghasilkan laporan utilisasi slot.
+
+Anda diminta membuat logika endpoint REST API Express.js untuk:
+\`\`\`http
+POST /slots/reserve
+\`\`\`
+
+---
+
+## 2. Spesifikasi Input & Output
+
+### Request Body:
+\`\`\`json
+{
+  "availableSlots": [
+    { "id": "SLOT-08-10", "startTime": "08:00", "endTime": "10:00", "capacity": 2 },
+    { "id": "SLOT-10-12", "startTime": "10:00", "endTime": "12:00", "capacity": 3 }
+  ],
+  "bookingRequests": [
+    { "requestId": "req-3", "userId": "user-C", "slotId": "SLOT-08-10", "timestamp": 1700000030 },
+    { "requestId": "req-1", "userId": "user-A", "slotId": "SLOT-08-10", "timestamp": 1700000010 },
+    { "requestId": "req-2", "userId": "user-B", "slotId": "SLOT-08-10", "timestamp": 1700000020 }
+  ]
+}
+\`\`\`
+
+### Response Berhasil (HTTP 200):
+\`\`\`json
+{
+  "confirmedBookings": [
+    { "requestId": "req-1", "userId": "user-A", "slotId": "SLOT-08-10", "bookedAt": 1700000010 },
+    { "requestId": "req-2", "userId": "user-B", "slotId": "SLOT-08-10", "bookedAt": 1700000020 }
+  ],
+  "failedBookings": [
+    { "requestId": "req-3", "userId": "user-C", "slotId": "SLOT-08-10", "reason": "SLOT_FULL", "timestamp": 1700000030 }
+  ],
+  "slotUtilization": {
+    "SLOT-08-10": { "capacity": 2, "bookedCount": 2, "remainingCapacity": 0 },
+    "SLOT-10-12": { "capacity": 3, "bookedCount": 0, "remainingCapacity": 3 }
+  }
+}
+\`\`\`
+
+---
+
+## 3. Requirement & Aturan Validasi
+1. **Validasi Request**: Jika \`availableSlots\` atau \`bookingRequests\` bukan array, kembalikan \`HTTP 400\`.
+2. **Urutan Kronologis**: Urutkan \`bookingRequests\` berdasarkan \`timestamp\` secara ascending (terlama ke terbaru).
+3. **Pencegahan Overbooking**: Jika slot sudah mencapai kapasitas, permintaan berikutnya ditolak dengan \`reason: "SLOT_FULL"\`.
+4. **Slot Tidak Ada**: Jika \`slotId\` tidak terdaftar di \`availableSlots\`, tolak dengan \`reason: "SLOT_NOT_FOUND"\`.
+5. **Klaim Ganda**: Jika \`userId\` yang sama mencoba memesan slot yang sama lebih dari 1x, tolak dengan \`reason: "DUPLICATE_USER_IN_SLOT"\`.
+6. **Laporan Utilisasi**: Kembalikan ringkasan kapasitas & sisa kuota untuk setiap slot di \`slotUtilization\`.`,
+    starterCode: `const express = require('express');
+const app = express();
+app.use(express.json());
+
+// POST /slots/reserve
+app.post('/slots/reserve', (req, res) => {
+  const { availableSlots, bookingRequests } = req.body;
+
+  // TODO: 1. Validasi request body (HTTP 400 jika invalid)
+  // TODO: 2. Urutkan bookingRequests secara kronologis (timestamp asc)
+  // TODO: 3. Lakukan proses booking, catat confirmed & failed
+  // TODO: 4. Hitung utilisasi slot
+
+  return res.status(200).json({
+    confirmedBookings: [],
+    failedBookings: [],
+    slotUtilization: {}
+  });
+});
+
+module.exports = app;`,
+    bonusQuestion: "Bagaimana cara menangani distributed lock pada Redis Redlock atau PostgreSQL Advisory Lock untuk ribuan konkurensi reservasi slot pengantaran?",
+    idealSolution: `const express = require('express');
+const app = express();
+app.use(express.json());
+
+app.post('/slots/reserve', (req, res) => {
+  const { availableSlots, bookingRequests } = req.body;
+
+  // 1. Validasi
+  if (!Array.isArray(availableSlots) || !Array.isArray(bookingRequests)) {
+    return res.status(400).json({ error: "Invalid availableSlots or bookingRequests array" });
+  }
+
+  // Inisialisasi peta slot dan user tracking
+  const slotMap = new Map();
+  const slotBookedUsers = new Map(); // slotId -> Set<userId>
+
+  for (const slot of availableSlots) {
+    slotMap.set(slot.id, {
+      capacity: slot.capacity || 0,
+      bookedCount: 0,
+      remainingCapacity: slot.capacity || 0
+    });
+    slotBookedUsers.set(slot.id, new Set());
+  }
+
+  // 2. Sort requests secara kronologis (timestamp asc)
+  const sortedRequests = [...bookingRequests].sort((a, b) => (a.timestamp || 0) - (b.timestamp || 0));
+
+  const confirmedBookings = [];
+  const failedBookings = [];
+
+  // 3. Proses requests
+  for (const reqItem of sortedRequests) {
+    const { requestId, userId, slotId, timestamp } = reqItem;
+    const slotInfo = slotMap.get(slotId);
+
+    // Kasus 1: Slot tidak ditemukan
+    if (!slotInfo) {
+      failedBookings.push({
+        requestId,
+        userId,
+        slotId,
+        reason: "SLOT_NOT_FOUND",
+        timestamp
+      });
+      continue;
+    }
+
+    // Kasus 2: Duplicate booking oleh user yang sama di slot yang sama
+    const userSet = slotBookedUsers.get(slotId);
+    if (userSet.has(userId)) {
+      failedBookings.push({
+        requestId,
+        userId,
+        slotId,
+        reason: "DUPLICATE_USER_IN_SLOT",
+        timestamp
+      });
+      continue;
+    }
+
+    // Kasus 3: Slot sudah penuh
+    if (slotInfo.bookedCount >= slotInfo.capacity) {
+      failedBookings.push({
+        requestId,
+        userId,
+        slotId,
+        reason: "SLOT_FULL",
+        timestamp
+      });
+      continue;
+    }
+
+    // Sukses: Konfirmasi booking
+    slotInfo.bookedCount += 1;
+    slotInfo.remainingCapacity = slotInfo.capacity - slotInfo.bookedCount;
+    userSet.add(userId);
+
+    confirmedBookings.push({
+      requestId,
+      userId,
+      slotId,
+      bookedAt: timestamp
+    });
+  }
+
+  // 4. Bangun slotUtilization object
+  const slotUtilization = {};
+  slotMap.forEach((info, id) => {
+    slotUtilization[id] = {
+      capacity: info.capacity,
+      bookedCount: info.bookedCount,
+      remainingCapacity: info.remainingCapacity
+    };
+  });
+
+  return res.status(200).json({
+    confirmedBookings,
+    failedBookings,
+    slotUtilization
+  });
+});
+
+/*
+ * JAWABAN BONUS — DISTRIBUTED LOCKS:
+ * 1. REDIS REDLOCK: Gunakan SET slot_lock:{slotId} my_random_token NX PX 5000
+ *    sebelum memverifikasi dan mendeskresi kuota slot di Redis.
+ * 2. POSTGRESQL ADVISORY LOCK: pg_try_advisory_xact_lock(hashtext('slot_' || slot_id))
+ *    untuk lock non-blocking spesifik slot selama transaksi database.
+ */
+
+module.exports = app;`,
+    testCases: []
+  },
+  {
+    id: "happyfresh-item-substitution",
+    title: "🥦 HappyFresh: Picker Item Substitution Scoring Engine",
+    role: "Frontend Engineer",
+    level: "Mid-Level",
+    timeLimit: 30,
+    category: "Data Transformation, Search & Heuristic Scoring",
+    company: "HappyFresh",
+    badge: "🥑 HappyFresh Special",
+    description: `## 🥦 1. Studi Kasus
+Ketika personal shopper (Picker) HappyFresh di supermarket menemukan item kosong di rak (Out-of-Stock), aplikasi picker harus merekomendasikan produk alternatif terbaik kepada pelanggan secara instan.
+
+Rekomendasi dihitung menggunakan sistem scoring berbasis aturan:
+- **Kategori Sama Tepat**: **+50 poin** (case-insensitive).
+- **Harga dalam Rentang ±10%**: **+30 poin** (rentang \`[targetPrice * 0.9, targetPrice * 1.1]\`).
+- **Brand / Merek Sama**: **+20 poin** (case-insensitive).
+
+Anda diminta membuat logika endpoint REST API Express.js untuk:
+\`\`\`http
+POST /items/substitute
+\`\`\`
+
+---
+
+## 2. Spesifikasi Input & Output
+
+### Request Body:
+\`\`\`json
+{
+  "targetItem": {
+    "id": "target-1",
+    "name": "Indomilk UHT Chocolate 1L",
+    "category": "Dairy",
+    "brand": "Indomilk",
+    "price": 20000
+  },
+  "catalog": [
+    { "id": "p-1", "name": "Ultra Milk Chocolate 1L", "category": "Dairy", "brand": "Ultra Jaya", "price": 21000, "inStock": true },
+    { "id": "p-2", "name": "Indomilk UHT Vanilla 1L", "category": "Dairy", "brand": "Indomilk", "price": 20000, "inStock": true },
+    { "id": "p-3", "name": "Indomilk Sweetened Condensed Milk 370g", "category": "Canned Goods", "brand": "Indomilk", "price": 14000, "inStock": true }
+  ],
+  "minScoreThreshold": 50
+}
+\`\`\`
+
+### Response Berhasil (HTTP 200):
+\`\`\`json
+{
+  "substitute": {
+    "id": "p-2",
+    "name": "Indomilk UHT Vanilla 1L",
+    "category": "Dairy",
+    "brand": "Indomilk",
+    "price": 20000,
+    "inStock": true
+  },
+  "score": 100,
+  "matchReasons": [
+    "Exact Category Match (+50)",
+    "Price Proximity Match (+30)",
+    "Brand Match (+20)"
+  ]
+}
+\`\`\`
+
+---
+
+## 3. Requirement & Aturan Scoring
+1. **Validasi Request**: Jika \`targetItem\` atau \`catalog\` bukan objek/array yang valid, kembalikan \`HTTP 400\`.
+2. **Filter Eksklusi**:
+   - Produk dengan \`inStock === false\` tidak boleh dipilih.
+   - Produk target itu sendiri (matching \`id\`) tidak boleh direkomendasikan.
+3. **Ambang Batas (Threshold)**:
+   - Default \`minScoreThreshold\` adalah **50**.
+   - Jika tidak ada kandidat yang mencapai skor minimal, kembalikan \`{ "substitute": null, "score": 0, "matchReasons": [] }\`.
+4. **Tie-Breaker Deterministik**:
+   - Jika ada produk dengan skor tertinggi yang sama:
+     1. Pilih produk dengan **selisih harga terkecil** (\`Math.abs(price - targetPrice)\`).
+     2. Jika selisih harga sama, pilih produk dengan **nama urutan alfabetik pertama** (\`localeCompare\`).`,
+    starterCode: `const express = require('express');
+const app = express();
+app.use(express.json());
+
+// POST /items/substitute
+app.post('/items/substitute', (req, res) => {
+  const { targetItem, catalog, minScoreThreshold = 50 } = req.body;
+
+  // TODO: 1. Validasi input
+  // TODO: 2. Filter in-stock catalog & exclude targetItem.id
+  // TODO: 3. Hitung score: Category (+50), Price ±10% (+30), Brand (+20)
+  // TODO: 4. Terapkan tie-breaker & threshold
+
+  return res.status(200).json({
+    substitute: null,
+    score: 0,
+    matchReasons: []
+  });
+});
+
+module.exports = app;`,
+    bonusQuestion: "Bagaimana cara mengoptimalkan pencarian substitusi produk di jutaan SKU katalog e-grocery menggunakan Vector Search (pgvector / embeddings)?",
+    idealSolution: `const express = require('express');
+const app = express();
+app.use(express.json());
+
+app.post('/items/substitute', (req, res) => {
+  const { targetItem, catalog, minScoreThreshold = 50 } = req.body;
+
+  if (!targetItem || !Array.isArray(catalog)) {
+    return res.status(400).json({ error: "Invalid targetItem or catalog" });
+  }
+
+  const targetPrice = targetItem.price || 0;
+  const minPrice = targetPrice * 0.9;
+  const maxPrice = targetPrice * 1.1;
+
+  let bestCandidate = null;
+  let highestScore = -1;
+  let bestReasons = [];
+
+  for (const product of catalog) {
+    // Eksklusi item OOS dan targetItem itu sendiri
+    if (!product.inStock || product.id === targetItem.id) {
+      continue;
+    }
+
+    let score = 0;
+    const reasons = [];
+
+    // 1. Category match (+50)
+    if (product.category && targetItem.category &&
+        product.category.trim().toLowerCase() === targetItem.category.trim().toLowerCase()) {
+      score += 50;
+      reasons.push("Exact Category Match (+50)");
+    }
+
+    // 2. Price proximity ±10% (+30)
+    if (product.price >= minPrice && product.price <= maxPrice) {
+      score += 30;
+      reasons.push("Price Proximity Match (+30)");
+    }
+
+    // 3. Brand match (+20)
+    if (product.brand && targetItem.brand &&
+        product.brand.trim().toLowerCase() === targetItem.brand.trim().toLowerCase()) {
+      score += 20;
+      reasons.push("Brand Match (+20)");
+    }
+
+    // Cek apakah memenuhi threshold
+    if (score < minScoreThreshold) {
+      continue;
+    }
+
+    // Evaluasi Best Candidate dengan Tie-Breakers
+    if (score > highestScore) {
+      highestScore = score;
+      bestCandidate = product;
+      bestReasons = reasons;
+    } else if (score === highestScore && bestCandidate) {
+      const currentDiff = Math.abs((product.price || 0) - targetPrice);
+      const bestDiff = Math.abs((bestCandidate.price || 0) - targetPrice);
+
+      if (currentDiff < bestDiff) {
+        bestCandidate = product;
+        bestReasons = reasons;
+      } else if (currentDiff === bestDiff) {
+        if (product.name.localeCompare(bestCandidate.name) < 0) {
+          bestCandidate = product;
+          bestReasons = reasons;
+        }
+      }
+    }
+  }
+
+  if (!bestCandidate) {
+    return res.status(200).json({
+      substitute: null,
+      score: 0,
+      matchReasons: []
+    });
+  }
+
+  return res.status(200).json({
+    substitute: bestCandidate,
+    score: highestScore,
+    matchReasons: bestReasons
+  });
+});
+
+/*
+ * JAWABAN BONUS — VECTOR EMBEDDINGS & HYBRID SEARCH:
+ * 1. HYBRID SEARCH: Gabungkan Dense Vector Search (OpenAI text-embedding-3 / BGE embeddings)
+ *    dengan Sparse BM25 lexical search di PostgreSQL (pgvector + pg_trgm).
+ * 2. ATTRIBUTE HARD FILTERING: Pre-filter kategori & supermarket store branch sebelum similarity distance calculation.
+ */
+
+module.exports = app;`,
+    testCases: []
   }
 ];
+
 
 

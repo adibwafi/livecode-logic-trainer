@@ -10,6 +10,8 @@ export interface Problem {
   bonusQuestion: string;
   idealSolution: string;
   testCases: TestCase[];
+  company?: string;
+  badge?: string;
 }
 
 export interface TestCase {
