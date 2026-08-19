@@ -45,8 +45,8 @@ export interface CartCalculationResult {
  * @returns CartCalculationResult
  */
 export function calculateCart(
-  items: CartItem[],
-  promoRules: PromoRule[] = []
+  _items: CartItem[],
+  _promoRules: PromoRule[] = []
 ): CartCalculationResult {
   // TODO: Implement calculation and promo engine logic for HappyFresh checkout
   return {

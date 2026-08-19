@@ -39,9 +39,9 @@ export interface SubstitutionOptions {
  * @returns The best matching Product, or null if no candidate qualifies
  */
 export function findBestSubstitute(
-  targetItem: CartItem,
-  catalog: Product[],
-  options?: SubstitutionOptions
+  _targetItem: CartItem,
+  _catalog: Product[],
+  _options?: SubstitutionOptions
 ): Product | null {
   // TODO: Implement item substitution scoring algorithm for HappyFresh picking app
   return null;

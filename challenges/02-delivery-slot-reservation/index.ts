@@ -51,8 +51,8 @@ export interface SlotBookingResult {
  * @returns SlotBookingResult
  */
 export function reserveDeliverySlots(
-  availableSlots: DeliverySlot[],
-  bookingRequests: BookingRequest[]
+  _availableSlots: DeliverySlot[],
+  _bookingRequests: BookingRequest[]
 ): SlotBookingResult {
   // TODO: Implement chronological slot reservation engine for HappyFresh delivery dispatch
   return {
