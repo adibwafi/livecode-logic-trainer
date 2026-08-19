@@ -145,9 +145,9 @@ livecode-logic-trainer/
 ## 4. CURRENT IMPLEMENTATION STATE & DATA FLOW
 
 ### Built Modules & Active Features
-1. **Landing / Problem Discovery (`app/page.tsx`)**: Filterable catalog of **12 problems** (Junior & Mid-Level) across Backend, Frontend, Full Stack, and QA roles. Features dual ambient glow orbs, mesh grid overlay, violet-accented hero headline, glass filter pills with ring glow on active, glass problem cards with inset radial hover glow, and gradient Start Challenge CTA.
+1. **Landing / Problem Discovery (`app/page.tsx`)**: Filterable catalog of **17 problems** (Junior & Mid-Level) across Backend, Frontend, Full Stack, QA, DevOps, and **🥑 HappyFresh Track**. Features custom HappyFresh grocery badge indicators, emerald glow aura, dual ambient glow orbs, mesh grid overlay, violet-accented hero headline, glass filter pills with ring glow on active, and gradient Start Challenge CTA.
 2. **Problem Seed Catalog (`lib/problems.ts`)**:
-    - `voucher-redemption`: E-commerce Voucher Redemption API (Backend • Mid-Level • 30m)
+   - `voucher-redemption`: E-commerce Voucher Redemption API (Backend • Mid-Level • 30m)
    - `rate-limiter-middleware`: In-Memory Sliding Window Rate Limiter (Backend • Mid-Level • 30m)
    - `cart-checkout-engine`: E-commerce Cart Checkout & Tax Engine (Full Stack • Mid-Level • 30m)
    - `order-inventory-reservation`: Flash Sale Inventory Stock Reservation (Backend • Mid-Level • 30m)
@@ -159,15 +159,22 @@ livecode-logic-trainer/
    - `pagination-search-filter`: API Data Filtering & Pagination Engine (Frontend • Junior • 30m)
    - `api-payload-schema-validator`: API Payload Schema & Type Assertion Engine (QA • Junior • 30m)
    - `multi-tenant-feature-flag`: Multi-Tenant Feature Flag & Percentage Rollout Engine (Full Stack • Mid-Level • 30m)
-   - `docker-healthcheck-api`: Container Health Check & Readiness Probe API (DevOps • Mid-Level • 30m) **[NEW]**
-   - `cicd-pipeline-gate`: CI/CD Quality Gate & Automated Deploy Guard (DevOps • Mid-Level • 30m) **[NEW]**
-3. **Interactive Live Session (`app/session/[problemId]/page.tsx`)**:
+   - `docker-healthcheck-api`: Container Health Check & Readiness Probe API (DevOps • Mid-Level • 30m)
+   - `cicd-pipeline-gate`: CI/CD Quality Gate & Automated Deploy Guard (DevOps • Mid-Level • 30m)
+   - `happyfresh-cart-engine`: 🛒 HappyFresh: Complex Cart & Promo Calculation Engine (Full Stack • Mid-Level • 30m) **[NEW]**
+   - `happyfresh-slot-reservation`: 🚚 HappyFresh: Delivery Slot Reservation & Anti-Overbooking (Backend • Mid-Level • 30m) **[NEW]**
+   - `happyfresh-item-substitution`: 🥦 HappyFresh: Picker Item Substitution Scoring Engine (Frontend • Mid-Level • 30m) **[NEW]**
+3. **Standalone HappyFresh TypeScript / Jest Challenges (`challenges/`)**:
+   - `challenges/01-cart-promo-engine`: `README.md`, `index.ts`, `index.test.ts` (Jest)
+   - `challenges/02-delivery-slot-reservation`: `README.md`, `index.ts`, `index.test.ts` (Jest)
+   - `challenges/03-item-substitution`: `README.md`, `index.ts`, `index.test.ts` (Jest)
+4. **Interactive Live Session (`app/session/[problemId]/page.tsx`)**:
    - Synchronized **30-minute** countdown timer with color-keyed glow aura warnings (amber → rose with `dangerPulse` breathing animation).
    - Recruiter Mood Meter glass pill HUD with animated commentary fade-in and emoji drop-shadow glow.
    - Live Monaco code editor with glass toolbar, smooth caret animation, and font ligatures.
-4. **Local Test Runner & Audio FX**: Runs mock payload assertions with sound effects across all 12 problem endpoints.
-5. **AI Assessment Route & Badges**: Receives code, executes tests, calls Groq LLM, calculates achievement badges, triggers celebratory confetti (violet/emerald palette) and fanfare audio on PASS. Results modal features status-keyed glow ring and staggered badge entrance animations.
-6. **Vercel Telemetry & Performance Monitoring**: `@vercel/analytics` and `@vercel/speed-insights` integrated into root layout for Web Vitals and user interaction metrics tracking.
+5. **Local Test Runner & Web Worker Sandbox**: Runs mock payload assertions across all 17 problem endpoints with Web Audio sound effects.
+6. **AI Assessment Route & Badges**: Receives code, executes tests, calls Groq LLM, calculates achievement badges, triggers celebratory confetti (violet/emerald palette) and fanfare audio on PASS.
+7. **Vercel Telemetry & Performance Monitoring**: `@vercel/analytics` and `@vercel/speed-insights` integrated into root layout.
 
 ---
 

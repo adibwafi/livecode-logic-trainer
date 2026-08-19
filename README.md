@@ -160,12 +160,46 @@ The UI is built on a **cinematic dark-mode design language** inspired by Sana La
 
 ---
 
+### 🥑 HappyFresh Track Problems (E-Grocery Live Coding)
+15. **🛒 HappyFresh: Complex Cart & Promo Calculation Engine** (`Full Stack Engineer` • `Mid-Level` • 30 mins)
+    - Endpoint: `POST /cart/calculate`
+    - Key Logic: Subtotal calculation, out-of-stock item filtering, dynamic `CATEGORY_PERCENTAGE` (with `maxDiscount` cap) and `MIN_SPEND_FLAT` promo rules, best-value promo selection (mutually exclusive).
+    - Bonus: PostgreSQL ACID transactions with row-level locks (`SELECT FOR UPDATE`) and promo redemption ledgers.
+
+16. **🚚 HappyFresh: Delivery Slot Reservation & Anti-Overbooking** (`Backend Engineer` • `Mid-Level` • 30 mins)
+    - Endpoint: `POST /slots/reserve`
+    - Key Logic: Chronological request sorting (`timestamp` asc), capacity limit enforcement (`SLOT_FULL`), non-existent slot validation (`SLOT_NOT_FOUND`), duplicate user handling (`DUPLICATE_USER_IN_SLOT`), slot utilization metrics.
+    - Bonus: Distributed lock patterns with Redis Redlock vs PostgreSQL Advisory Locks.
+
+17. **🥦 HappyFresh: Picker Item Substitution Scoring Engine** (`Frontend Engineer` • `Mid-Level` • 30 mins)
+    - Endpoint: `POST /items/substitute`
+    - Key Logic: Rule-based heuristic scoring: Category match (+50), Price proximity ±10% (+30), Brand match (+20). OOS exclusion, threshold filter (>= 50), deterministic tie-breaking (price diff, then alphabetical).
+    - Bonus: High-dimensional vector embeddings & pgvector hybrid search for multi-million SKU grocery catalogs.
+
+---
+
+## 🧪 Standalone TypeScript & Jest Practice
+
+In addition to the in-browser live playground, standalone TypeScript interview challenges are available under `challenges/`:
+
+```bash
+# Run all challenge test suites
+npm test
+
+# Run a specific challenge suite
+npm test challenges/01-cart-promo-engine/index.test.ts
+npm test challenges/02-delivery-slot-reservation/index.test.ts
+npm test challenges/03-item-substitution/index.test.ts
+```
+
+---
+
 ## 📁 Repository Structure
 
 ```
 livecode-logic-trainer/
 ├── app/
-│   ├── page.tsx                    # Landing page, role filter & glassmorphism problem cards
+│   ├── page.tsx                    # Landing page, role & HappyFresh filter, glowing cards
 │   ├── layout.tsx                  # Root HTML layout, SEO metadata, OpenGraph & themeColor
 │   ├── globals.css                 # Tailwind CSS v4 + Sana Labs motion tokens & utility classes
 │   ├── session/[problemId]/
@@ -173,6 +207,10 @@ livecode-logic-trainer/
 │   └── api/
 │       └── assess/
 │           └── route.ts            # POST /api/assess (Groq LLM & Evaluator API)
+├── challenges/                     # Standalone TypeScript & Jest Interview Exercises
+│   ├── 01-cart-promo-engine/       # Complex Cart & Promo Calculation Engine
+│   ├── 02-delivery-slot-reservation/# Delivery Slot Reservation & Anti-Overbooking
+│   └── 03-item-substitution/       # Picker Item Substitution Scoring Engine
 ├── components/
 │   ├── SessionHeader.tsx           # Glass nav, recruiter HUD, timer & audio toggle
 │   ├── RecruiterMoodMeter.tsx      # Glass HUD pill, persona selector, animated commentary
@@ -183,9 +221,12 @@ livecode-logic-trainer/
 │   └── ResultsModal.tsx            # Status-keyed glow modal, staggered achievement badges
 ├── lib/
 │   ├── types.ts                    # TypeScript interface definitions
-│   ├── problems.ts                 # 14 In-memory problem seed definitions (incl. 2 DevOps)
+│   ├── problems.ts                 # 17 In-memory problem seed definitions (incl. 3 HappyFresh)
 │   ├── soundFX.ts                  # Web Audio API sound synthesizer
-│   └── evaluator.ts                # Isolated JS unit test runner
+│   └── evaluator.ts                # Isolated JS unit test runner (17 problem suites)
+├── public/
+│   └── workers/
+│       └── executor.worker.js      # Web Worker code execution sandbox
 ├── .env.local.example              # Environment variables template
 └── PROJECT_STATE.md                # Single Source of Truth architectural spec (w/ design system)
 ```
@@ -195,3 +236,4 @@ livecode-logic-trainer/
 ## 📄 License
 
 MIT License. Designed for live-code interview training & technical assessment.
+
