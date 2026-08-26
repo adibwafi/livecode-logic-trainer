@@ -113,9 +113,11 @@ livecode-logic-trainer/
 │   └── ResultsModal.tsx            # Assessment modal: status-keyed glow ring, staggered badges
 ├── lib/                            # Core Logic & Utilities
 │   ├── types.ts                    # TypeScript interfaces (Problem, AssessmentResult, Achievement, Persona)
-│   ├── problems.ts                 # 14 In-memory problem seed definitions (Junior, Mid-Level across 5 roles incl. DevOps)
+│   ├── problems.ts                 # 17 In-memory problem seed definitions across 5 roles + HappyFresh track
 │   ├── soundFX.ts                  # Web Audio API synthesizer for test run, chime, error & fanfare cues
-│   └── evaluator.ts                # Isolated JS function sandbox & dynamic unit test assertion runner (14 problem suites)
+│   ├── store.ts                    # Zustand persistent client store (drafts, metrics, history)
+│   ├── ai-assessment.ts            # LLM evaluation service (Groq Llama 3.3 + auto TPD rate-limit fallback)
+│   └── evaluator.ts                # Isolated JS function sandbox & dynamic unit test assertion runner (17 suites)
 ├── public/
 │   └── workers/
 │       └── executor.worker.js      # Web Worker sandbox for secure client-side code execution (problem-specific dispatch)
