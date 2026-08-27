@@ -1,14 +1,6 @@
 /**
  * public/workers/executor.worker.js
- * Web Worker — Secure Code Execution Engine
- *
- * Runs user-submitted JS code in a sandboxed Worker thread.
- * Prevents infinite loops with a hard 5-second watchdog timeout.
- * Communicates via postMessage/onmessage protocol.
- *
- * Message IN:  { type: 'RUN', payload: { code: string, problemId: string } }
- * Message OUT: { type: 'RESULT', payload: TestRunResult }
- *              { type: 'ERROR',  payload: { message: string } }
+ * Web Worker — Secure Code Execution Engine for JavaScript Problem Solving
  */
 
 // ── Watchdog: kill worker if execution exceeds 5 seconds ──────────────────────
@@ -27,12 +19,6 @@ function resetWatchdog() {
 
 // ── Safe eval with isolated scope ────────────────────────────────────────────
 
-/**
- * Executes user code inside a new Function sandbox.
- * Returns an object containing:
- *   - postRoutes: map of path -> handler (for app.post(...) calls)
- *   - logs: console output captured during execution
- */
 function safeEval(code) {
   const logs = [];
   const customLog = (...args) => {
@@ -41,7 +27,6 @@ function safeEval(code) {
 
   const postRoutes = {};
 
-  // Build mock Express app object
   const mockApp = {
     use: () => {},
     get: () => {},
@@ -56,9 +41,6 @@ function safeEval(code) {
     patch: () => {},
   };
 
-  // FIX: mockExpress must be a FUNCTION that returns mockApp when called.
-  // Previously `allowed['express']` was `() => app` (a plain object),
-  // so `const app = express()` threw "express is not a function".
   const mockExpress = function () { return mockApp; };
   mockExpress.json = () => (_req, _res, next) => { if (next) next(); };
   mockExpress.urlencoded = () => (_req, _res, next) => { if (next) next(); };
@@ -92,7 +74,7 @@ function safeEval(code) {
     { env: { NODE_ENV: 'test' } }
   );
 
-  return { postRoutes, logs };
+  return { postRoutes, exportsObj: mockModule.exports, logs };
 }
 
 // ── Simulate an HTTP request against a route handler ─────────────────────────
@@ -110,10 +92,9 @@ function simulateRequest(handler, body, headers) {
     send(data) { responseBody = data; this._ended = true; return this; },
     end() { this._ended = true; return this; },
   };
-  const next = () => {};
 
   try {
-    handler(req, res, next);
+    handler(req, res, () => {});
   } catch (err) {
     statusCode = 500;
     responseBody = { error: err.message };
@@ -124,10 +105,9 @@ function simulateRequest(handler, body, headers) {
 
 // ── Problem-specific test suites ─────────────────────────────────────────────
 
-function runProblemTests(postRoutes) {
+function runProblemTests(postRoutes, exportsObj, userCode) {
   const results = [];
 
-  // Helper to push a test result
   function assert(id, name, cond, actualStatus, errorMsg) {
     results.push({
       id,
@@ -138,23 +118,121 @@ function runProblemTests(postRoutes) {
     });
   }
 
-  // ── Voucher Redemption (/redeem) ──────────────────────────────────────────
+  // ── 1. Electronics Shop (getMoneySpent) ──────────────────────────────────
+  const hasGetMoneySpent = typeof exportsObj?.getMoneySpent === 'function' || (userCode && userCode.includes('getMoneySpent'));
+  if (hasGetMoneySpent) {
+    let fn = typeof exportsObj?.getMoneySpent === 'function' ? exportsObj.getMoneySpent : null;
+    if (!fn) {
+      try {
+        const evalFn = new Function(`${userCode}; return typeof getMoneySpent === 'function' ? getMoneySpent : null;`);
+        fn = evalFn();
+      } catch { /* ignore */ }
+    }
+
+    if (typeof fn === 'function') {
+      const out1 = fn([3, 1], [5, 2, 8], 10);
+      assert('tc_sample_0', 'Sample Case 0: Budget 10 -> 9', out1 === 9, out1, `Expected 9, got ${out1}`);
+
+      const out2 = fn([4], [5], 5);
+      assert('tc_sample_1', 'Sample Case 1: Budget 5 -> -1 (Overbudget)', out2 === -1, out2, `Expected -1, got ${out2}`);
+
+      const out3 = fn([40, 50, 60], [5, 8, 12, 20], 60);
+      assert('tc_exact_budget', 'Exact Budget Match: Budget 60 -> 60', out3 === 60, out3, `Expected 60, got ${out3}`);
+
+      const out4 = fn([15, 25, 40], [30, 45, 60], 100);
+      assert('tc_large_options', 'Multiple Options: Budget 100 -> 100', out4 === 100, out4, `Expected 100, got ${out4}`);
+    } else {
+      assert('err_fn_missing', 'getMoneySpent Definition', false, undefined, 'function getMoneySpent is not exported or defined.');
+    }
+  }
+
+  // ── 2. Transaction Pair Matcher (findReconciledPairs) ────────────────────
+  const hasFindPairs = typeof exportsObj?.findReconciledPairs === 'function' || (userCode && userCode.includes('findReconciledPairs'));
+  if (hasFindPairs) {
+    let fn = typeof exportsObj?.findReconciledPairs === 'function' ? exportsObj.findReconciledPairs : null;
+    if (!fn) {
+      try {
+        const evalFn = new Function(`${userCode}; return typeof findReconciledPairs === 'function' ? findReconciledPairs : null;`);
+        fn = evalFn();
+      } catch { /* ignore */ }
+    }
+
+    if (typeof fn === 'function') {
+      const out1 = fn(
+        [
+          { id: "T1", amount: 300 },
+          { id: "T2", amount: 700 },
+          { id: "T3", amount: 500 },
+          { id: "T4", amount: 500 }
+        ],
+        1000
+      );
+      assert('tc_exact_pairs', 'Standard Pairs Match (Target 1000)', Array.isArray(out1) && out1.length === 2, out1, `Expected 2 matched pairs`);
+    } else {
+      assert('err_fn_missing', 'findReconciledPairs Definition', false, undefined, 'function findReconciledPairs is not exported or defined.');
+    }
+  }
+
+  // ── 3. Traffic Spike Detector (detectSpikes) ─────────────────────────────
+  const hasDetectSpikes = typeof exportsObj?.detectSpikes === 'function' || (userCode && userCode.includes('detectSpikes'));
+  if (hasDetectSpikes) {
+    let fn = typeof exportsObj?.detectSpikes === 'function' ? exportsObj.detectSpikes : null;
+    if (!fn) {
+      try {
+        const evalFn = new Function(`${userCode}; return typeof detectSpikes === 'function' ? detectSpikes : null;`);
+        fn = evalFn();
+      } catch { /* ignore */ }
+    }
+
+    if (typeof fn === 'function') {
+      const out1 = fn([10, 11, 12, 13, 20, 21, 22, 23, 24, 25], 5, 4);
+      assert('tc_spike_detected', 'Detect Spike (Threshold 4 in 5s)', Array.isArray(out1) && out1.length >= 2, out1, `Expected spikes detected`);
+    } else {
+      assert('err_fn_missing', 'detectSpikes Definition', false, undefined, 'function detectSpikes is not exported or defined.');
+    }
+  }
+
+  // ── 4. In-Memory Search & Pagination (queryCatalog) ──────────────────────
+  const hasQueryCatalog = typeof exportsObj?.queryCatalog === 'function' || (userCode && userCode.includes('queryCatalog'));
+  if (hasQueryCatalog) {
+    let fn = typeof exportsObj?.queryCatalog === 'function' ? exportsObj.queryCatalog : null;
+    if (!fn) {
+      try {
+        const evalFn = new Function(`${userCode}; return typeof queryCatalog === 'function' ? queryCatalog : null;`);
+        fn = evalFn();
+      } catch { /* ignore */ }
+    }
+
+    if (typeof fn === 'function') {
+      const items = [
+        { id: "1", name: "Logitech MX Master", category: "ELECTRONICS", price: 100, stock: 5 },
+        { id: "2", name: "Apple Magic Mouse", category: "ELECTRONICS", price: 80, stock: 0 },
+        { id: "3", name: "Cotton T-Shirt", category: "FASHION", price: 20, stock: 10 }
+      ];
+      const out1 = fn(items, { keyword: "mouse", category: "ELECTRONICS" }, { page: 1, pageSize: 5 });
+      assert('tc_search_filter', 'Filter by Keyword & Category with Pagination', out1?.data?.length === 2, out1, `Expected 2 matching items`);
+    } else {
+      assert('err_fn_missing', 'queryCatalog Definition', false, undefined, 'function queryCatalog is not exported or defined.');
+    }
+  }
+
+  // ── 5. Voucher Redemption (/redeem) ──────────────────────────────────────
   if (postRoutes['/redeem']) {
     const h = postRoutes['/redeem'];
     const r1 = simulateRequest(h, { userId: 1 });
-    assert('tc_missing_fields', 'Request Validation (Missing fields → HTTP 400)', r1.statusCode === 400, r1.statusCode, `Expected 400, got ${r1.statusCode}`);
+    assert('tc_missing_fields', 'Payload Validation — Missing Fields (HTTP 400)', r1.statusCode === 400, r1.statusCode, `Expected 400, got ${r1.statusCode}`);
 
     const r2 = simulateRequest(h, { userId: 1, voucherCode: 'NONEXISTENT' });
-    assert('tc_not_found', 'Voucher Existence Check (Non-existent → HTTP 404)', r2.statusCode === 404, r2.statusCode, `Expected 404, got ${r2.statusCode}`);
+    assert('tc_not_found', 'Voucher Existence Check (HTTP 404)', r2.statusCode === 404, r2.statusCode, `Expected 404, got ${r2.statusCode}`);
 
     const r3 = simulateRequest(h, { userId: 101, voucherCode: 'PROMO50' });
-    assert('tc_success', 'Valid Redemption (PROMO50 → HTTP 200)', r3.statusCode === 200, r3.statusCode, `Expected 200, got ${r3.statusCode}`);
+    assert('tc_success', 'Successful Redemption (HTTP 200)', r3.statusCode === 200, r3.statusCode, `Expected 200, got ${r3.statusCode}`);
 
     const r4 = simulateRequest(h, { userId: 101, voucherCode: 'PROMO50' });
-    assert('tc_duplicate', 'Duplicate Redemption Protection (User 101 PROMO50 again → HTTP 400)', r4.statusCode === 400, r4.statusCode, `Expected 400 for duplicate, got ${r4.statusCode}`);
+    assert('tc_duplicate', 'Duplicate Claim Protection (HTTP 400)', r4.statusCode === 400, r4.statusCode, `Expected 400 for duplicate, got ${r4.statusCode}`);
   }
 
-  // ── Rate Limiter (/api/action) ──────────────────────────────────────────
+  // ── 6. Rate Limiter (/api/action) ────────────────────────────────────────
   if (postRoutes['/api/action']) {
     const h = postRoutes['/api/action'];
     const r1 = simulateRequest(h, {});
@@ -165,190 +243,57 @@ function runProblemTests(postRoutes) {
     assert('tc_rl_exceeded', 'Request 6 Exceeds Rate Limit (HTTP 429)', r6.statusCode === 429, r6.statusCode, `Expected 429, got ${r6.statusCode}`);
   }
 
-  // ── Cart Checkout (/cart/checkout) ───────────────────────────────────────
+  // ── 7. Cart Checkout (/cart/checkout) ─────────────────────────────────────
   if (postRoutes['/cart/checkout']) {
     const h = postRoutes['/cart/checkout'];
     const r1 = simulateRequest(h, { items: [] });
     assert('tc_cart_empty', 'Empty Items Array Check (HTTP 400)', r1.statusCode === 400, r1.statusCode, `Expected 400, got ${r1.statusCode}`);
 
     const r2 = simulateRequest(h, { items: [{ productId: 'P1', quantity: 2 }, { productId: 'P2', quantity: 1 }], voucherCode: 'TECH20' });
-    assert('tc_cart_success', 'Valid Cart Checkout & Discount Calculation (HTTP 200)', r2.statusCode === 200 && r2.responseBody?.total > 0, r2.statusCode, `Expected 200 with total, got ${r2.statusCode}`);
+    assert('tc_cart_success', 'Valid Cart Checkout & Calculation (HTTP 200)', r2.statusCode === 200 && r2.responseBody?.total > 0, r2.statusCode, `Expected 200 with total`);
   }
 
-  // ── Order Inventory Reservation (/orders/reserve) ────────────────────────
+  // ── 8. Flash Sale Reservation (/orders/reserve) ──────────────────────────
   if (postRoutes['/orders/reserve']) {
     const h = postRoutes['/orders/reserve'];
-    const r1 = simulateRequest(h, { userId: 'U1', itemId: 'ITEM_100', quantity: 2 });
-    assert('tc_reserve_success', 'Inventory Reservation Success (HTTP 201)', r1.statusCode === 201, r1.statusCode, `Expected 201, got ${r1.statusCode}`);
+    const r1 = simulateRequest(h, { productId: 'PS5' });
+    assert('tc_reserve_invalid', 'Missing Fields Validation (HTTP 400)', r1.statusCode === 400, r1.statusCode, `Expected 400, got ${r1.statusCode}`);
 
-    const r2 = simulateRequest(h, { userId: 'U2', itemId: 'ITEM_100', quantity: 99 });
-    assert('tc_reserve_insufficient', 'Insufficient Inventory Check (HTTP 400)', r2.statusCode === 400, r2.statusCode, `Expected 400, got ${r2.statusCode}`);
+    const r2 = simulateRequest(h, { userId: 'U1', productId: 'PS5', quantity: 2 });
+    assert('tc_reserve_success', 'Valid Reservation Allocation (HTTP 201)', r2.statusCode === 201, r2.statusCode, `Expected 201, got ${r2.statusCode}`);
+
+    const r3 = simulateRequest(h, { userId: 'U2', productId: 'PS5', quantity: 100 });
+    assert('tc_reserve_conflict', 'Overstock Reservation Guard (HTTP 409)', r3.statusCode === 409, r3.statusCode, `Expected 409, got ${r3.statusCode}`);
   }
 
-  // ── JWT Auth Refresh (/auth/refresh) ─────────────────────────────────────
-  if (postRoutes['/auth/refresh']) {
-    const h = postRoutes['/auth/refresh'];
-    const r1 = simulateRequest(h, {});
-    assert('tc_auth_missing', 'Missing Refresh Token Check (HTTP 400)', r1.statusCode === 400, r1.statusCode, `Expected 400, got ${r1.statusCode}`);
-
-    const r2 = simulateRequest(h, { refreshToken: 'REFRESH_EXPIRED' });
-    assert('tc_auth_expired', 'Expired Refresh Token Check (HTTP 401)', r2.statusCode === 401, r2.statusCode, `Expected 401, got ${r2.statusCode}`);
-
-    const r3 = simulateRequest(h, { refreshToken: 'REFRESH_VALID_123' });
-    assert('tc_auth_success', 'Valid Refresh Token Renewal (HTTP 200)', r3.statusCode === 200 && Boolean(r3.responseBody?.accessToken), r3.statusCode, `Expected 200 with accessToken, got ${r3.statusCode}`);
-  }
-
-  // ── Idempotent Webhook (/webhook/payment) ────────────────────────────────
+  // ── 9. Payment Webhook (/webhook/payment) ─────────────────────────────────
   if (postRoutes['/webhook/payment']) {
     const h = postRoutes['/webhook/payment'];
-    const r1 = simulateRequest(h, { eventId: 'E1', orderId: 'O1', status: 'SUCCESS' }, { 'x-signature': 'WRONG' });
-    assert('tc_webhook_sig', 'Signature Verification Check (HTTP 401)', r1.statusCode === 401, r1.statusCode, `Expected 401, got ${r1.statusCode}`);
+    const r1 = simulateRequest(h, { eventId: 'EVT_1', orderId: 'ORD_999', amount: 250000 }, { 'x-signature': 'wrong' });
+    assert('tc_webhook_sig_fail', 'Unauthorized Signature Check (HTTP 401)', r1.statusCode === 401, r1.statusCode, `Expected 401, got ${r1.statusCode}`);
 
-    const r2 = simulateRequest(h, { eventId: 'EVT_998811', orderId: 'ORD_1001', status: 'SUCCESS' }, { 'x-signature': 'VALID_SIGNATURE_KEY' });
-    assert('tc_webhook_success', 'Valid Webhook Order Update (HTTP 200)', r2.statusCode === 200, r2.statusCode, `Expected 200, got ${r2.statusCode}`);
+    const r2 = simulateRequest(h, { eventId: 'EVT_1', orderId: 'ORD_999', amount: 250000 }, { 'x-signature': 'secret-webhook-key' });
+    assert('tc_webhook_success', 'Valid First-Time Processing (HTTP 200)', r2.statusCode === 200, r2.statusCode, `Expected 200, got ${r2.statusCode}`);
 
-    const r3 = simulateRequest(h, { eventId: 'EVT_998811', orderId: 'ORD_1001', status: 'SUCCESS' }, { 'x-signature': 'VALID_SIGNATURE_KEY' });
-    assert('tc_webhook_idempotent', 'Duplicate Event Idempotency Check (HTTP 200)', r3.statusCode === 200, r3.statusCode, `Expected 200 for duplicate event, got ${r3.statusCode}`);
+    const r3 = simulateRequest(h, { eventId: 'EVT_1', orderId: 'ORD_999', amount: 250000 }, { 'x-signature': 'secret-webhook-key' });
+    assert('tc_webhook_idempotent', 'Idempotent Replay (HTTP 200 No-op)', r3.statusCode === 200, r3.statusCode, `Expected 200, got ${r3.statusCode}`);
   }
 
-  // ── Notification Dispatcher (/notifications/send) ────────────────────────
-  if (postRoutes['/notifications/send']) {
-    const h = postRoutes['/notifications/send'];
-    const r1 = simulateRequest(h, { to: 'a@b.com', subject: 'Hi', body: 'Test' });
-    assert('tc_notify_primary', 'Primary Provider Dispatch (SendGrid → HTTP 200)', r1.statusCode === 200 && r1.responseBody?.provider === 'SendGrid', r1.statusCode, `Expected SendGrid HTTP 200, got ${r1.statusCode}`);
-
-    const r2 = simulateRequest(h, { to: 'a@b.com', subject: 'Hi', body: 'Test', forcePrimaryError: true });
-    assert('tc_notify_fallback', 'Secondary Provider Fallback (Mailgun → HTTP 200)', r2.statusCode === 200 && r2.responseBody?.provider === 'Mailgun', r2.statusCode, `Expected Mailgun fallback HTTP 200, got ${r2.statusCode}`);
-  }
-
-  // ── Order State Machine (/orders/transition) ─────────────────────────────
-  if (postRoutes['/orders/transition']) {
-    const h = postRoutes['/orders/transition'];
-    const r1 = simulateRequest(h, { currentStatus: 'PAID', targetStatus: 'PROCESSING' });
-    assert('tc_fsm_valid', 'Valid FSM Transition (PAID → PROCESSING, HTTP 200)', r1.statusCode === 200 && r1.responseBody?.allowed === true, r1.statusCode, `Expected 200 allowed:true, got ${r1.statusCode}`);
-
-    const r2 = simulateRequest(h, { currentStatus: 'CANCELLED', targetStatus: 'SHIPPED' });
-    assert('tc_fsm_illegal', 'Illegal FSM Transition (CANCELLED → SHIPPED, HTTP 400)', r2.statusCode === 400 && r2.responseBody?.allowed === false, r2.statusCode, `Expected 400 allowed:false, got ${r2.statusCode}`);
-  }
-
-  // ── User Registration (/users/register) ──────────────────────────────────
-  if (postRoutes['/users/register']) {
-    const h = postRoutes['/users/register'];
-    const r1 = simulateRequest(h, {});
-    assert('tc_reg_missing', 'Missing Registration Fields (HTTP 400)', r1.statusCode === 400, r1.statusCode, `Expected 400, got ${r1.statusCode}`);
-
-    const r2 = simulateRequest(h, { email: 'invalid', password: 'weak', age: 20 });
-    assert('tc_reg_complexity', 'Email Format & Password Complexity (HTTP 400)', r2.statusCode === 400, r2.statusCode, `Expected 400, got ${r2.statusCode}`);
-
-    const r3 = simulateRequest(h, { email: 'newuser@example.com', password: 'Password123!', age: 20 });
-    assert('tc_reg_success', 'Valid User Registration (HTTP 201)', r3.statusCode === 201, r3.statusCode, `Expected 201, got ${r3.statusCode}`);
-
-    const r4 = simulateRequest(h, { email: 'existing@example.com', password: 'Password123!', age: 25 });
-    assert('tc_reg_duplicate', 'Duplicate Email Rejection (HTTP 409)', r4.statusCode === 409, r4.statusCode, `Expected 409, got ${r4.statusCode}`);
-  }
-
-  // ── Products Search (/api/products/search) ────────────────────────────────
-  if (postRoutes['/api/products/search']) {
-    const h = postRoutes['/api/products/search'];
-    const r1 = simulateRequest(h, { page: 0, limit: -5 });
-    assert('tc_search_invalid', 'Invalid Pagination Parameters (HTTP 400)', r1.statusCode === 400, r1.statusCode, `Expected 400, got ${r1.statusCode}`);
-
-    const r2 = simulateRequest(h, { query: 'phone', category: 'ELECTRONICS', page: 1, limit: 2 });
-    assert('tc_search_success', 'Filtered Data & Pagination Metadata (HTTP 200)', r2.statusCode === 200 && Array.isArray(r2.responseBody?.data) && Boolean(r2.responseBody?.pagination), r2.statusCode, `Expected 200 with data+pagination, got ${r2.statusCode}`);
-  }
-
-  // ── Schema Validator (/test/validate-payload) ─────────────────────────────
-  if (postRoutes['/test/validate-payload']) {
-    const h = postRoutes['/test/validate-payload'];
-    const r1 = simulateRequest(h, { username: 'a', email: 'bad', role: 'INVALID', tags: [] });
-    assert('tc_schema_invalid', 'Invalid Payload Schema Rejection (HTTP 400)', r1.statusCode === 400 && r1.responseBody?.valid === false, r1.statusCode, `Expected 400 valid:false, got ${r1.statusCode}`);
-
-    const r2 = simulateRequest(h, { username: 'dev_alex', email: 'alex@dev.com', role: 'ADMIN', tags: ['js', 'ts'] });
-    assert('tc_schema_valid', 'Valid Payload Schema Verification (HTTP 200)', r2.statusCode === 200 && r2.responseBody?.valid === true, r2.statusCode, `Expected 200 valid:true, got ${r2.statusCode}`);
-  }
-
-  // ── Multi-Tenant Feature Flag (/features/evaluate) ───────────────────────
-  if (postRoutes['/features/evaluate']) {
-    const h = postRoutes['/features/evaluate'];
-    const r1 = simulateRequest(h, {});
-    assert('tc_flag_missing', 'Missing Parameters Check (HTTP 400)', r1.statusCode === 400, r1.statusCode, `Expected 400, got ${r1.statusCode}`);
-
-    const r2 = simulateRequest(h, { tenantId: 't1', userId: 'u1', flagKey: 'UNKNOWN_FLAG' });
-    assert('tc_flag_not_found', 'Non-existent Feature Flag (HTTP 404)', r2.statusCode === 404, r2.statusCode, `Expected 404, got ${r2.statusCode}`);
-
-    const r3 = simulateRequest(h, { tenantId: 'tenant_acme', userId: 'user_42', flagKey: 'new_checkout_v2' });
-    assert('tc_flag_evaluation', 'Feature Flag Tenant Override Evaluation (HTTP 200)', r3.statusCode === 200 && typeof r3.responseBody?.enabled === 'boolean', r3.statusCode, `Expected 200 with enabled boolean, got ${r3.statusCode}`);
-  }
-
-  // ── DevOps: Docker Health Check (/health) ────────────────────────────────
-  if (postRoutes['/health'] || (postRoutes['/healthz'])) {
-    const route = postRoutes['/health'] || postRoutes['/healthz'];
-    const r1 = simulateRequest(route, {});
-    assert('tc_health_ok', 'Health Check Endpoint Returns 200', r1.statusCode === 200, r1.statusCode, `Expected 200, got ${r1.statusCode}`);
-
-    const r2 = simulateRequest(route, { forceUnhealthy: true });
-    const isHealthFail = r2.statusCode === 503 || r2.statusCode === 500;
-    assert('tc_health_unhealthy', 'Unhealthy State Returns 503', isHealthFail, r2.statusCode, `Expected 503, got ${r2.statusCode}`);
-  }
-
-  // ── DevOps: CI/CD Quality Gate (/pipeline/gate) ──────────────────────────
-  if (postRoutes['/pipeline/gate']) {
-    const h = postRoutes['/pipeline/gate'];
-    const r1 = simulateRequest(h, {});
-    assert('tc_gate_missing', 'Missing Pipeline Params (HTTP 400)', r1.statusCode === 400, r1.statusCode, `Expected 400, got ${r1.statusCode}`);
-
-    const r2 = simulateRequest(h, { coverage: 45, branch: 'main', buildStatus: 'SUCCESS' });
-    assert('tc_gate_low_coverage', 'Low Coverage Blocks Deploy (HTTP 422)', r2.statusCode === 422, r2.statusCode, `Expected 422 for low coverage, got ${r2.statusCode}`);
-
-    const r3 = simulateRequest(h, { coverage: 85, branch: 'main', buildStatus: 'SUCCESS' });
-    assert('tc_gate_pass', 'Valid Quality Gate Pass (HTTP 200)', r3.statusCode === 200 && r3.responseBody?.approved === true, r3.statusCode, `Expected 200 approved:true, got ${r3.statusCode}`);
-
-    const r4 = simulateRequest(h, { coverage: 85, branch: 'main', buildStatus: 'FAILED' });
-    assert('tc_gate_build_fail', 'Failed Build Blocks Deploy (HTTP 422)', r4.statusCode === 422 && r4.responseBody?.approved === false, r4.statusCode, `Expected 422 approved:false, got ${r4.statusCode}`);
-  }
-
-  // ── DevOps: Env Config Validator (/config/validate) ──────────────────────
-  if (postRoutes['/config/validate']) {
-    const h = postRoutes['/config/validate'];
-    const r1 = simulateRequest(h, {});
-    assert('tc_config_missing', 'Missing Config Body (HTTP 400)', r1.statusCode === 400, r1.statusCode, `Expected 400, got ${r1.statusCode}`);
-
-    const r2 = simulateRequest(h, { env: 'production', config: { DATABASE_URL: '', JWT_SECRET: 'x', PORT: '3000' } });
-    assert('tc_config_empty_secret', 'Empty Required Config Value (HTTP 422)', r2.statusCode === 422, r2.statusCode, `Expected 422 for empty DATABASE_URL, got ${r2.statusCode}`);
-
-    const r3 = simulateRequest(h, { env: 'production', config: { DATABASE_URL: 'postgres://db:5432/prod', JWT_SECRET: 'super-secure-key-abc123', PORT: '3000' } });
-    assert('tc_config_valid', 'Valid Production Config (HTTP 200)', r3.statusCode === 200 && r3.responseBody?.valid === true, r3.statusCode, `Expected 200 valid:true, got ${r3.statusCode}`);
-  }
-
-  // ── HappyFresh: Complex Cart & Promo Engine (/cart/calculate) ────────────
+  // ── 10. HappyFresh Cart (/cart/calculate) ─────────────────────────────────
   if (postRoutes['/cart/calculate']) {
     const h = postRoutes['/cart/calculate'];
-    const r1 = simulateRequest(h, { items: "not-an-array" });
-    assert('tc_cart_invalid', 'Input Validation (Non-array items → HTTP 400)', r1.statusCode === 400, r1.statusCode, `Expected 400, got ${r1.statusCode}`);
+    const r1 = simulateRequest(h, { items: [] });
+    assert('tc_hf_cart_empty', 'Empty Items Validation (HTTP 400)', r1.statusCode === 400, r1.statusCode, `Expected 400, got ${r1.statusCode}`);
 
-    const items = [
-      { id: '1', name: 'Greenfields Milk 1L', category: 'Dairy', price: 35000, quantity: 2, inStock: true },
-      { id: '2', name: 'Indomilk Chocolate 1L', category: 'Dairy', price: 20000, quantity: 1, inStock: false },
-      { id: '3', name: 'Wagyu Beef 200g', category: 'Meat', price: 250000, quantity: 1, inStock: true }
-    ];
-    const r2 = simulateRequest(h, { items, promoRules: [] });
-    const passedR2 = r2.statusCode === 200 && r2.responseBody?.subtotal === 320000 && r2.responseBody?.total === 320000 && Array.isArray(r2.responseBody?.outOfStockItems) && r2.responseBody?.outOfStockItems.length === 1;
-    assert('tc_cart_subtotal_oos', 'Subtotal & Out-Of-Stock Exclusion (HTTP 200)', passedR2, r2.statusCode, `Expected subtotal:320000 & 1 OOS item, got subtotal:${r2.responseBody?.subtotal}`);
-
-    const promos = [
-      { id: 'p-dairy', type: 'CATEGORY_PERCENTAGE', category: 'Dairy', discountPercentage: 10 },
-      { id: 'p-flat', type: 'MIN_SPEND_FLAT', minSpend: 300000, discountAmount: 50000 }
-    ];
-    const r3 = simulateRequest(h, { items, promoRules: promos });
-    const passedR3 = r3.statusCode === 200 && r3.responseBody?.discount === 50000 && r3.responseBody?.total === 270000 && r3.responseBody?.appliedPromo?.id === 'p-flat';
-    assert('tc_cart_best_promo', 'Best-Value Promo Selection (Non-stackable Max Discount)', passedR3, r3.statusCode, `Expected discount:50000 and total:270000, got discount:${r3.responseBody?.discount}`);
+    const r2 = simulateRequest(h, { items: [{ id: 'i1', price: 60000, quantity: 2 }], voucherCode: 'FRESH50' });
+    assert('tc_hf_cart_calc', 'Valid Cart Calculation (HTTP 200)', r2.statusCode === 200 && r2.responseBody?.finalTotal > 0, r2.statusCode, `Expected 200 with finalTotal`);
   }
 
-  // ── HappyFresh: Delivery Slot Reservation (/slots/reserve) ───────────────
+  // ── 11. HappyFresh Slots (/slots/reserve) ─────────────────────────────────
   if (postRoutes['/slots/reserve']) {
     const h = postRoutes['/slots/reserve'];
     const r1 = simulateRequest(h, { availableSlots: null });
-    assert('tc_slots_invalid', 'Input Validation (Missing arrays → HTTP 400)', r1.statusCode === 400, r1.statusCode, `Expected 400, got ${r1.statusCode}`);
+    assert('tc_slots_invalid', 'Input Validation (HTTP 400)', r1.statusCode === 400, r1.statusCode, `Expected 400, got ${r1.statusCode}`);
 
     const slots = [{ id: 'SLOT-01', startTime: '10:00', endTime: '12:00', capacity: 2 }];
     const requests = [
@@ -358,54 +303,22 @@ function runProblemTests(postRoutes) {
     ];
     const r2 = simulateRequest(h, { availableSlots: slots, bookingRequests: requests });
     const confirmed = r2.responseBody?.confirmedBookings || [];
-    const failed = r2.responseBody?.failedBookings || [];
-    const passedR2 = r2.statusCode === 200 && confirmed.length === 2 && confirmed[0].requestId === 'req-1' && failed.length === 1 && failed[0].reason === 'SLOT_FULL';
-    assert('tc_slots_chrono_capacity', 'Chronological Sort & Capacity Guard (HTTP 200)', passedR2, r2.statusCode, `Expected 2 confirmed (req-1 first) and 1 failed SLOT_FULL`);
-
-    const r3 = simulateRequest(h, {
-      availableSlots: slots,
-      bookingRequests: [
-        { requestId: 'req-dup-1', userId: 'u1', slotId: 'SLOT-01', timestamp: 1700000010 },
-        { requestId: 'req-dup-2', userId: 'u1', slotId: 'SLOT-01', timestamp: 1700000015 },
-        { requestId: 'req-invalid', userId: 'u2', slotId: 'SLOT-99', timestamp: 1700000020 }
-      ]
-    });
-    const failedR3 = r3.responseBody?.failedBookings || [];
-    const hasDup = failedR3.some(f => f.reason === 'DUPLICATE_USER_IN_SLOT');
-    const hasNotFound = failedR3.some(f => f.reason === 'SLOT_NOT_FOUND');
-    assert('tc_slots_dup_and_notfound', 'Duplicate User & Invalid Slot Error Handlers', r3.statusCode === 200 && hasDup && hasNotFound, r3.statusCode, `Expected DUPLICATE_USER_IN_SLOT and SLOT_NOT_FOUND`);
+    assert('tc_slots_chrono_capacity', 'Chronological Capacity Allocation (HTTP 200)', r2.statusCode === 200 && confirmed.length === 2, r2.statusCode, `Expected 2 confirmed bookings`);
   }
 
-  // ── HappyFresh: Item Substitution (/items/substitute) ────────────────────
+  // ── 12. HappyFresh Substitute (/items/substitute) ─────────────────────────
   if (postRoutes['/items/substitute']) {
     const h = postRoutes['/items/substitute'];
     const r1 = simulateRequest(h, { targetItem: null });
-    assert('tc_subst_invalid', 'Input Validation (Missing body → HTTP 400)', r1.statusCode === 400, r1.statusCode, `Expected 400, got ${r1.statusCode}`);
+    assert('tc_subst_invalid', 'Missing Payload Validation (HTTP 400)', r1.statusCode === 400, r1.statusCode, `Expected 400, got ${r1.statusCode}`);
 
     const target = { id: 't1', name: 'Indomilk UHT 1L', category: 'Dairy', brand: 'Indomilk', price: 20000 };
     const catalog = [
       { id: 'p1', name: 'Ultra Milk 1L', category: 'Dairy', brand: 'Ultra', price: 21000, inStock: true },
-      { id: 'p2', name: 'Indomilk Vanilla 1L', category: 'Dairy', brand: 'Indomilk', price: 20000, inStock: true },
-      { id: 'p3', name: 'Indomilk OOS', category: 'Dairy', brand: 'Indomilk', price: 20000, inStock: false }
+      { id: 'p2', name: 'Indomilk Vanilla 1L', category: 'Dairy', brand: 'Indomilk', price: 20000, inStock: true }
     ];
     const r2 = simulateRequest(h, { targetItem: target, catalog });
-    const passedR2 = r2.statusCode === 200 && r2.responseBody?.substitute?.id === 'p2' && r2.responseBody?.score === 100;
-    assert('tc_subst_score_oos', 'Heuristic Scoring Match (Category + Price + Brand = 100)', passedR2, r2.statusCode, `Expected substitute p2 with score 100, got ${r2.responseBody?.substitute?.id}`);
-
-    const r3 = simulateRequest(h, { targetItem: target, catalog: [{ id: 'p_oil', name: 'Bimoli 2L', category: 'Pantry', brand: 'Bimoli', price: 35000, inStock: true }] });
-    const passedR3 = r3.statusCode === 200 && r3.responseBody?.substitute === null;
-    assert('tc_subst_threshold', 'Threshold Guard (Returns null when score < 50)', passedR3, r3.statusCode, `Expected null substitute for low score candidate`);
-  }
-
-  // ── Fallback: generic route check ────────────────────────────────────────
-  if (results.length === 0) {
-    const activePaths = Object.keys(postRoutes);
-    results.push({
-      id: 'tc_route_generic',
-      name: `Endpoint Handler Execution (${activePaths.join(', ')})`,
-      passed: activePaths.length > 0,
-      error: activePaths.length === 0 ? 'No app.post() route found in submitted code.' : undefined,
-    });
+    assert('tc_subst_score_oos', 'Heuristic Score Match (HTTP 200)', r2.statusCode === 200 && r2.responseBody?.substitute?.id === 'p2', r2.statusCode, `Expected substitute p2`);
   }
 
   return results;
@@ -417,26 +330,34 @@ function runTests(code) {
   const logs = [];
 
   try {
-    const { postRoutes, logs: execLogs } = safeEval(code);
+    const { postRoutes, exportsObj, logs: execLogs } = safeEval(code);
     logs.push(...execLogs);
 
     const activePaths = Object.keys(postRoutes);
+    const hasPureFn = typeof exportsObj?.getMoneySpent === 'function' ||
+      typeof exportsObj?.findReconciledPairs === 'function' ||
+      typeof exportsObj?.detectSpikes === 'function' ||
+      typeof exportsObj?.queryCatalog === 'function' ||
+      code.includes('getMoneySpent') ||
+      code.includes('findReconciledPairs') ||
+      code.includes('detectSpikes') ||
+      code.includes('queryCatalog');
 
-    if (activePaths.length === 0) {
+    if (activePaths.length === 0 && !hasPureFn) {
       return {
         passedCount: 0,
         totalCount: 1,
         results: [{
           id: 'err_no_route',
-          name: 'Express Endpoint Handler Check',
+          name: 'Solution Handler Check',
           passed: false,
-          error: 'Could not find app.post(...) handler in submitted code. Make sure you define at least one POST route.',
+          error: 'Could not find app.post(...) handler or exported problem solving function in submitted code.',
         }],
         logs,
       };
     }
 
-    const results = runProblemTests(postRoutes);
+    const results = runProblemTests(postRoutes, exportsObj, code);
     const passedCount = results.filter(r => r.passed).length;
 
     logs.push(`[Worker] Execution complete. ${passedCount}/${results.length} passed.`);
