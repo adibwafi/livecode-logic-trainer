@@ -17,9 +17,9 @@ export interface Problem {
 export interface TestCase {
   id: string;
   name: string;
-  input: any;
+  input: unknown;
   expectedStatus?: number;
-  expectedOutput?: any;
+  expectedOutput?: unknown;
   expectedMessageSubstring?: string;
   setupFn?: string;
 }
