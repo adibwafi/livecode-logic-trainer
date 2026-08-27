@@ -147,7 +147,7 @@ livecode-logic-trainer/
 ## 4. CURRENT IMPLEMENTATION STATE & DATA FLOW
 
 ### Built Modules & Active Features
-1. **Landing / Problem Discovery (`app/page.tsx`)**: Filterable catalog of **17 problems** (Junior & Mid-Level) across Backend, Frontend, Full Stack, QA, DevOps, and **🥑 HappyFresh Track**. Features custom HappyFresh grocery badge indicators, emerald glow aura, dual ambient glow orbs, mesh grid overlay, violet-accented hero headline, glass filter pills with ring glow on active, and gradient Start Challenge CTA.
+1. **Landing / Problem Discovery (`app/page.tsx`)**: Filterable catalog of **21 problems** (Junior & Mid-Level) across Backend, Frontend, Full Stack, QA, DevOps, **🥑 HappyFresh Track (3)**, and **🏭 PT SPINDO Track (4)**.
 2. **Problem Seed Catalog (`lib/problems.ts`)**:
    - `voucher-redemption`: E-commerce Voucher Redemption API (Backend • Mid-Level • 30m)
    - `rate-limiter-middleware`: In-Memory Sliding Window Rate Limiter (Backend • Mid-Level • 30m)
@@ -163,13 +163,21 @@ livecode-logic-trainer/
    - `multi-tenant-feature-flag`: Multi-Tenant Feature Flag & Percentage Rollout Engine (Full Stack • Mid-Level • 30m)
    - `docker-healthcheck-api`: Container Health Check & Readiness Probe API (DevOps • Mid-Level • 30m)
    - `cicd-pipeline-gate`: CI/CD Quality Gate & Automated Deploy Guard (DevOps • Mid-Level • 30m)
-   - `happyfresh-cart-engine`: 🛒 HappyFresh: Complex Cart & Promo Calculation Engine (Full Stack • Mid-Level • 30m) **[NEW]**
-   - `happyfresh-slot-reservation`: 🚚 HappyFresh: Delivery Slot Reservation & Anti-Overbooking (Backend • Mid-Level • 30m) **[NEW]**
-   - `happyfresh-item-substitution`: 🥦 HappyFresh: Picker Item Substitution Scoring Engine (Frontend • Mid-Level • 30m) **[NEW]**
-3. **Standalone HappyFresh TypeScript / Jest Challenges (`challenges/`)**:
+   - `happyfresh-cart-engine`: 🛒 HappyFresh: Complex Cart & Promo Calculation Engine (Full Stack • Mid-Level • 30m)
+   - `happyfresh-slot-reservation`: 🚚 HappyFresh: Delivery Slot Reservation & Anti-Overbooking (Backend • Mid-Level • 30m)
+   - `happyfresh-item-substitution`: 🥦 HappyFresh: Picker Item Substitution Scoring Engine (Frontend • Mid-Level • 30m)
+   - `spindo-stock-allocation`: 🏭 SPINDO: Race Condition & Atomic Pipe Stock Allocation (Backend • Mid-Level • 30m) **[NEW]**
+   - `spindo-sliding-rate-limiter`: 🛡️ SPINDO: In-Memory Sliding Window Rate Limiter (Backend • Mid-Level • 30m) **[NEW]**
+   - `spindo-sensor-telemetry-aggregator`: 📡 SPINDO: IoT Pipe Welding Telemetry Stream & Anomaly Detector (Backend • Mid-Level • 30m) **[NEW]**
+   - `spindo-pipe-cutting-optimizer`: ✂️ SPINDO: 1D Pipe Cutting Stock & Scrap Minimization Engine (Backend • Mid-Level • 30m) **[NEW]**
+3. **Standalone Case Studies & Automated Unit Tests (`challenges/`)**:
    - `challenges/01-cart-promo-engine`: `README.md`, `index.ts`, `index.test.ts` (Jest)
    - `challenges/02-delivery-slot-reservation`: `README.md`, `index.ts`, `index.test.ts` (Jest)
    - `challenges/03-item-substitution`: `README.md`, `index.ts`, `index.test.ts` (Jest)
+   - `challenges/04-spindo-stock-allocation`: `README.md`, `stock_allocation.py`, `test_stock_allocation.py` (Python unittest) **[NEW]**
+   - `challenges/05-spindo-rate-limiter`: `README.md`, `rate_limiter.py`, `test_rate_limiter.py` (Python unittest) **[NEW]**
+   - `challenges/06-spindo-telemetry-aggregator`: `README.md`, `telemetry_aggregator.py`, `test_telemetry_aggregator.py` (Python unittest) **[NEW]**
+   - `challenges/07-spindo-pipe-cutting-optimizer`: `README.md`, `pipe_cutting_optimizer.py`, `test_pipe_cutting_optimizer.py` (Python unittest) **[NEW]**
 4. **Interactive Live Session (`app/session/[problemId]/page.tsx`)**:
    - Synchronized **30-minute** countdown timer with color-keyed glow aura warnings (amber → rose with `dangerPulse` breathing animation).
    - Recruiter Mood Meter glass pill HUD with animated commentary fade-in and emoji drop-shadow glow.

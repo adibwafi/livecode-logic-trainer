@@ -26,6 +26,7 @@ The UI is built on a **cinematic dark-mode design language** inspired by Sana La
 
 - **Split-Pane IDE UI**: Left dark panel for problem specifications & bonus architecture prompts (`react-markdown` with `prose-invert`); right panel for live coding with **Monaco Editor** (`vs-dark` theme, font ligatures, smooth caret, `scrolling smooth`).
 - **Strict 30-Minute Countdown Timer**: Enforces 30-minute time limits. Color-keyed glow aura transitions: normal glass → amber warning glow → rose `dangerPulse` breathing animation at < 5 minutes. Automatically locks editor to Read-Only and submits code when time reaches `00:00`.
+- **Dynamic Client-Side Pagination**: Grid displays 6 problems per page with animated transitions, page range counters ("Showing 1–6 of 21"), smooth scroll, and zero viewport overflow.
 - **Recruiter Persona HUD & Live Speech**:
   - ☕ **Indo Tech Lead** (*Mas Mas Tech Lead Ramah*): Relaxed, encouraging feedback in Bahasa Indonesia.
   - 🧐 **Global FAANG Interviewer**: Strict focus on edge cases, boundary conditions, and algorithmic efficiency.
@@ -33,7 +34,7 @@ The UI is built on a **cinematic dark-mode design language** inspired by Sana La
   - Commentary fades in smoothly via `animate-fade-in` keyed on content change.
 - **Web Audio FX Engine**: Offline, zero-dependency Web Audio synthesizers for test run clicks, success major chimes, failure double tones, and victory fanfares (with Mute/Unmute toggle).
 - **Achievement Badges System**: Unlockable post-assessment badges (`⚡ Speed Demon`, `🛡️ Zero Bug Ninja`, `🧠 Architecture Guru`, `🔥 Clutch Master`) with staggered entrance animations in the Results Modal.
-- **Local Unit Test Console**: Execute isolated unit test cases against your Monaco code in real-time before final submission across all 14 problem endpoints.
+- **Local Unit Test Console**: Execute isolated unit test cases against your Monaco code in real-time before final submission across problem endpoints.
 - **Dual-Engine Assessment System**:
   - **Primary**: Groq LLM (`llama-3.3-70b-versatile`) for deep AI code review, edge case evaluation, and conceptual bonus scoring.
   - **Fallback (Rate Limit / No API Key)**: When Groq daily token quota (TPD) is exhausted or `GROQ_API_KEY` is not configured, the system **automatically falls back** to a rich local evaluation — returns problem-specific score, passed/failed test cases, best practice tips, and a detailed note explaining the AI fallback. No HTTP 500 errors.
@@ -43,7 +44,7 @@ The UI is built on a **cinematic dark-mode design language** inspired by Sana La
 
 ---
 
-## 📚 Problem Catalog (Junior & Mid-Level, <= 30 Mins) — 14 Problems
+## 📚 Problem Catalog (Junior & Mid-Level, <= 30 Mins) — 21 Problems
 
 ### 🟢 Junior Level Problems
 1. **User Registration & Password Complexity Validator** (`Backend Engineer` • `Junior` • 30 mins)
@@ -107,7 +108,7 @@ The UI is built on a **cinematic dark-mode design language** inspired by Sana La
     - Key Logic: Finite State Machine transition validation (`CREATED -> PAID -> PROCESSING -> SHIPPED -> DELIVERED`).
     - Bonus: Integration Testing vs Consumer-Driven Contract Testing (Pact).
 
-### 🚀 DevOps Engineer Problems (New!)
+### 🚀 DevOps Engineer Problems
 13. **Container Health Check & Readiness Probe API** (`DevOps Engineer` • `Mid-Level` • 30 mins)
     - Endpoints: `POST /health` (Liveness Probe) & `POST /readiness` (Readiness Probe)
     - Key Logic: Liveness detection with unhealthy state simulation, multi-dependency readiness check (`database`, `cache`), proper HTTP 200/503 responses.
@@ -117,48 +118,6 @@ The UI is built on a **cinematic dark-mode design language** inspired by Sana La
     - Endpoint: `POST /pipeline/gate`
     - Key Logic: Three-gate pipeline validator — branch protection (only `main`/`master` to production), build status check, coverage threshold (80% production / 60% staging).
     - Bonus: Blue-Green Deployment, Canary Release, and Feature Flags as an emergency safety valve.
-
----
-
-## 🛠️ Getting Started
-
-### Prerequisites
-- Node.js 18.x or higher
-- npm or pnpm
-
-### Installation
-
-1. **Clone repository & install dependencies**:
-   ```bash
-   git clone https://github.com/adibwafi/livecode-logic-trainer.git
-   cd livecode-logic-trainer
-   npm install
-   ```
-
-2. **Configure Environment Variables**:
-   Copy `.env.local.example` to `.env.local`:
-   ```bash
-   cp .env.local.example .env.local
-   ```
-   Add your Groq API Key (get a free key at [console.groq.com](https://console.groq.com/keys)):
-   ```env
-   GROQ_API_KEY=gsk_your_groq_api_key_here
-   ```
-   *(Note: If no API key is set, the app falls back to the built-in isolated local unit test evaluator).*
-
-3. **Run Development Server**:
-   ```bash
-   npm run dev
-   ```
-   Open [http://localhost:3000](http://localhost:3000) in your browser.
-
-4. **Production Build**:
-   ```bash
-   npm run build
-   npm run start
-   ```
-
----
 
 ### 🥑 HappyFresh Track Problems (E-Grocery Live Coding)
 15. **🛒 HappyFresh: Complex Cart & Promo Calculation Engine** (`Full Stack Engineer` • `Mid-Level` • 30 mins)
@@ -176,20 +135,44 @@ The UI is built on a **cinematic dark-mode design language** inspired by Sana La
     - Key Logic: Rule-based heuristic scoring: Category match (+50), Price proximity ±10% (+30), Brand match (+20). OOS exclusion, threshold filter (>= 50), deterministic tie-breaking (price diff, then alphabetical).
     - Bonus: High-dimensional vector embeddings & pgvector hybrid search for multi-million SKU grocery catalogs.
 
+### 🏭 PT SPINDO Track Problems (Manufacturing & Python Backend)
+18. **🏭 SPINDO: Race Condition & Atomic Pipe Stock Allocation** (`Backend Engineer` • `Mid-Level` • 30 mins)
+    - Language: Python (SQLModel / SQLAlchemy ORM)
+    - Key Logic: Atomic stock reservation using `SELECT ... FOR UPDATE` pessimistic row locking, ACID rollback on insufficient inventory or SKU not found, available stock calculation.
+    - Bonus: Deadlock handling across multi-item allocation & distributed transaction isolation levels.
+
+19. **🛡️ SPINDO: In-Memory Sliding Window Rate Limiter** (`Backend Engineer` • `Mid-Level` • 30 mins)
+    - Language: Python (Data Structures & Algorithmic Security)
+    - Key Logic: `collections.deque` timestamp history, amortized O(1) eviction of expired logs, `(is_allowed, remaining, retry_after)` tuple output.
+    - Bonus: Redis Lua scripting for atomic sliding window evaluation across clustered API gateways.
+
+20. **📡 SPINDO: IoT Pipe Welding Telemetry Stream & Anomaly Detector** (`Backend Engineer` • `Mid-Level` • 30 mins)
+    - Language: Python (FastAPI / Time-Series Processing)
+    - Key Logic: Real-time telemetry batch aggregation (`min`, `max`, `avg`, `count`), tolerance boundary verification (`BELOW_MIN`, `ABOVE_MAX`), sudden temperature gradient drop detection (> 50°C in <= 5s).
+    - Bonus: High-throughput streaming architecture (Kafka + TimescaleDB + Celery async workers).
+
+21. **✂️ SPINDO: 1D Pipe Cutting Stock & Scrap Minimization Engine** (`Backend Engineer` • `Mid-Level` • 30 mins)
+    - Language: Python (Production Optimization & Heuristics)
+    - Key Logic: First-Fit Decreasing (FFD) 1D cutting stock heuristic, blade kerf cut loss accounting, scrap metal waste percentage minimization.
+    - Bonus: Formulating 1D cutting stock as an Integer Linear Programming (ILP) problem via PuLP/SciPy.
+
 ---
 
-## 🧪 Standalone TypeScript & Jest Practice
+## 🧪 Standalone Challenge Practice Suites
 
-In addition to the in-browser live playground, standalone TypeScript interview challenges are available under `challenges/`:
+In addition to the in-browser live playground, standalone test suites (TypeScript/Jest & Python/unittest) are available under `challenges/`:
 
 ```bash
-# Run all challenge test suites
-npm test
-
-# Run a specific challenge suite
+# ─── TypeScript & Jest Challenges (HappyFresh Track) ───
 npm test challenges/01-cart-promo-engine/index.test.ts
 npm test challenges/02-delivery-slot-reservation/index.test.ts
 npm test challenges/03-item-substitution/index.test.ts
+
+# ─── Python Challenges (PT SPINDO Manufacturing Track) ───
+python3 challenges/04-spindo-stock-allocation/test_stock_allocation.py
+python3 challenges/05-spindo-rate-limiter/test_rate_limiter.py
+python3 challenges/06-spindo-telemetry-aggregator/test_telemetry_aggregator.py
+python3 challenges/07-spindo-pipe-cutting-optimizer/test_pipe_cutting_optimizer.py
 ```
 
 ---
@@ -199,7 +182,7 @@ npm test challenges/03-item-substitution/index.test.ts
 ```
 livecode-logic-trainer/
 ├── app/
-│   ├── page.tsx                    # Landing page, role & HappyFresh filter, glowing cards
+│   ├── page.tsx                    # Landing page, role/company filters, paginated problem grid
 │   ├── layout.tsx                  # Root HTML layout, SEO metadata, OpenGraph & themeColor
 │   ├── globals.css                 # Tailwind CSS v4 + Sana Labs motion tokens & utility classes
 │   ├── session/[problemId]/
@@ -207,10 +190,14 @@ livecode-logic-trainer/
 │   └── api/
 │       └── assess/
 │           └── route.ts            # POST /api/assess (Groq LLM & Evaluator API)
-├── challenges/                     # Standalone TypeScript & Jest Interview Exercises
-│   ├── 01-cart-promo-engine/       # Complex Cart & Promo Calculation Engine
-│   ├── 02-delivery-slot-reservation/# Delivery Slot Reservation & Anti-Overbooking
-│   └── 03-item-substitution/       # Picker Item Substitution Scoring Engine
+├── challenges/                     # Standalone Interview Case Studies & Test Suites
+│   ├── 01-cart-promo-engine/       # HappyFresh Cart & Promo Calculation (TypeScript / Jest)
+│   ├── 02-delivery-slot-reservation/# HappyFresh Delivery Slot Reservation (TypeScript / Jest)
+│   ├── 03-item-substitution/       # HappyFresh Item Substitution Engine (TypeScript / Jest)
+│   ├── 04-spindo-stock-allocation/ # SPINDO Atomic Stock Allocation (Python / unittest)
+│   ├── 05-spindo-rate-limiter/     # SPINDO Sliding Window Rate Limiter (Python / unittest)
+│   ├── 06-spindo-telemetry-aggregator/# SPINDO IoT Telemetry & Anomaly Detector (Python / unittest)
+│   └── 07-spindo-pipe-cutting-optimizer/# SPINDO 1D Pipe Cutting Stock Optimizer (Python / unittest)
 ├── components/
 │   ├── SessionHeader.tsx           # Glass nav, recruiter HUD, timer & audio toggle
 │   ├── RecruiterMoodMeter.tsx      # Glass HUD pill, persona selector, animated commentary
@@ -221,14 +208,14 @@ livecode-logic-trainer/
 │   └── ResultsModal.tsx            # Status-keyed glow modal, staggered achievement badges
 ├── lib/
 │   ├── types.ts                    # TypeScript interface definitions
-│   ├── problems.ts                 # 17 In-memory problem seed definitions (incl. 3 HappyFresh)
+│   ├── problems.ts                 # 21 In-memory problem seed definitions (incl. HappyFresh & SPINDO)
 │   ├── soundFX.ts                  # Web Audio API sound synthesizer
-│   └── evaluator.ts                # Isolated JS unit test runner (17 problem suites)
+│   └── evaluator.ts                # Isolated JS unit test runner
 ├── public/
 │   └── workers/
 │       └── executor.worker.js      # Web Worker code execution sandbox
 ├── .env.local.example              # Environment variables template
-└── PROJECT_STATE.md                # Single Source of Truth architectural spec (w/ design system)
+└── PROJECT_STATE.md                # Single Source of Truth architectural spec
 ```
 
 ---
