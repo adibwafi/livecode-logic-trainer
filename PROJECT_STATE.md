@@ -147,42 +147,29 @@ livecode-logic-trainer/
 ## 4. CURRENT IMPLEMENTATION STATE & DATA FLOW
 
 ### Built Modules & Active Features
-1. **Landing / Problem Discovery (`app/page.tsx`)**: Filterable catalog of **21 problems** (Junior & Mid-Level) across Backend, Frontend, Full Stack, QA, DevOps, **🥑 HappyFresh Track (3)**, and **🏭 PT SPINDO Track (4)**.
+1. **Landing / Problem Discovery (`app/page.tsx`)**: Filterable catalog of **12 focused problems** (Mid-Level JavaScript Problem Solving & REST API Logic).
 2. **Problem Seed Catalog (`lib/problems.ts`)**:
-   - `voucher-redemption`: E-commerce Voucher Redemption API (Backend • Mid-Level • 30m)
-   - `rate-limiter-middleware`: In-Memory Sliding Window Rate Limiter (Backend • Mid-Level • 30m)
-   - `cart-checkout-engine`: E-commerce Cart Checkout & Tax Engine (Full Stack • Mid-Level • 30m)
-   - `order-inventory-reservation`: Flash Sale Inventory Stock Reservation (Backend • Mid-Level • 30m)
-   - `auth-session-manager`: JWT Token Refresh & Auto-Logout State Engine (Frontend • Mid-Level • 30m)
-   - `idempotent-payment-webhook`: Payment Gateway Idempotent Webhook Handler (Backend • Mid-Level • 30m)
-   - `notification-batch-dispatcher`: Resilient Notification Dispatcher with Fallback (Full Stack • Mid-Level • 30m)
-   - `order-state-machine-validator`: Order Lifecycle State Machine & Test Suite (QA • Mid-Level • 30m)
-   - `user-registration-validator`: User Registration & Password Complexity Validator (Backend • Junior • 30m)
-   - `pagination-search-filter`: API Data Filtering & Pagination Engine (Frontend • Junior • 30m)
-   - `api-payload-schema-validator`: API Payload Schema & Type Assertion Engine (QA • Junior • 30m)
-   - `multi-tenant-feature-flag`: Multi-Tenant Feature Flag & Percentage Rollout Engine (Full Stack • Mid-Level • 30m)
-   - `docker-healthcheck-api`: Container Health Check & Readiness Probe API (DevOps • Mid-Level • 30m)
-   - `cicd-pipeline-gate`: CI/CD Quality Gate & Automated Deploy Guard (DevOps • Mid-Level • 30m)
-   - `happyfresh-cart-engine`: 🛒 HappyFresh: Complex Cart & Promo Calculation Engine (Full Stack • Mid-Level • 30m)
-   - `happyfresh-slot-reservation`: 🚚 HappyFresh: Delivery Slot Reservation & Anti-Overbooking (Backend • Mid-Level • 30m)
-   - `happyfresh-item-substitution`: 🥦 HappyFresh: Picker Item Substitution Scoring Engine (Frontend • Mid-Level • 30m)
-   - `spindo-stock-allocation`: 🏭 SPINDO: Race Condition & Atomic Pipe Stock Allocation (Backend • Mid-Level • 30m) **[NEW]**
-   - `spindo-sliding-rate-limiter`: 🛡️ SPINDO: In-Memory Sliding Window Rate Limiter (Backend • Mid-Level • 30m) **[NEW]**
-   - `spindo-sensor-telemetry-aggregator`: 📡 SPINDO: IoT Pipe Welding Telemetry Stream & Anomaly Detector (Backend • Mid-Level • 30m) **[NEW]**
-   - `spindo-pipe-cutting-optimizer`: ✂️ SPINDO: 1D Pipe Cutting Stock & Scrap Minimization Engine (Backend • Mid-Level • 30m) **[NEW]**
+   - `voucher-redemption`: E-commerce Voucher Redemption API (Backend • Mid-Level • 20m)
+   - `electronics-shop`: 🛒 HackerRank: Electronics Shop (Optimal Budget Purchasing) (Full Stack • Mid-Level • 20m)
+   - `transaction-pair-matcher`: 💳 Fintech: Transaction Pair Reconciliation (Backend • Mid-Level • 20m)
+   - `traffic-spike-detector`: 📈 Observability: Sliding Window Traffic Spike Detector (Backend • Mid-Level • 20m)
+   - `rate-limiter-middleware`: In-Memory Sliding Window Rate Limiter (Backend • Mid-Level • 20m)
+   - `cart-checkout-engine`: E-commerce Cart Checkout & Tax Engine (Full Stack • Mid-Level • 20m)
+   - `order-inventory-reservation`: Flash Sale Inventory Stock Reservation (Backend • Mid-Level • 20m)
+   - `idempotent-payment-webhook`: Payment Gateway Idempotent Webhook Handler (Backend • Mid-Level • 20m)
+   - `happyfresh-cart-engine`: 🛒 HappyFresh: Complex Cart & Promo Calculation Engine (Full Stack • Mid-Level • 20m)
+   - `happyfresh-slot-reservation`: 🚚 HappyFresh: Delivery Slot Reservation & Anti-Overbooking (Backend • Mid-Level • 20m)
+   - `happyfresh-item-substitution`: 🥦 HappyFresh: Picker Item Substitution Scoring Engine (Frontend • Mid-Level • 20m)
+   - `catalog-search-pagination`: 🔍 E-commerce: Multi-Field Search & Pagination Engine (Full Stack • Mid-Level • 20m)
 3. **Standalone Case Studies & Automated Unit Tests (`challenges/`)**:
    - `challenges/01-cart-promo-engine`: `README.md`, `index.ts`, `index.test.ts` (Jest)
    - `challenges/02-delivery-slot-reservation`: `README.md`, `index.ts`, `index.test.ts` (Jest)
    - `challenges/03-item-substitution`: `README.md`, `index.ts`, `index.test.ts` (Jest)
-   - `challenges/04-spindo-stock-allocation`: `README.md`, `stock_allocation.py`, `test_stock_allocation.py` (Python unittest) **[NEW]**
-   - `challenges/05-spindo-rate-limiter`: `README.md`, `rate_limiter.py`, `test_rate_limiter.py` (Python unittest) **[NEW]**
-   - `challenges/06-spindo-telemetry-aggregator`: `README.md`, `telemetry_aggregator.py`, `test_telemetry_aggregator.py` (Python unittest) **[NEW]**
-   - `challenges/07-spindo-pipe-cutting-optimizer`: `README.md`, `pipe_cutting_optimizer.py`, `test_pipe_cutting_optimizer.py` (Python unittest) **[NEW]**
 4. **Interactive Live Session (`app/session/[problemId]/page.tsx`)**:
-   - Synchronized **30-minute** countdown timer with color-keyed glow aura warnings (amber → rose with `dangerPulse` breathing animation).
+   - Synchronized **20-minute** countdown timer with 2-phase visual indicators: **📖 5m Prep Phase** (reading & strategy) and **⚡ Live Coding Phase** (implementation & test run).
    - Recruiter Mood Meter glass pill HUD with animated commentary fade-in and emoji drop-shadow glow.
    - Live Monaco code editor with glass toolbar, smooth caret animation, and font ligatures.
-5. **Local Test Runner & Web Worker Sandbox**: Runs mock payload assertions across all 17 problem endpoints with Web Audio sound effects.
+5. **Local Test Runner & Web Worker Sandbox**: Runs mock payload assertions and pure JavaScript function assertions across all 12 problem suites with Web Audio sound effects.
 6. **AI Assessment Route & Badges**: Receives code, executes tests, calls Groq LLM, calculates achievement badges, triggers celebratory confetti (violet/emerald palette) and fanfare audio on PASS.
 7. **Vercel Telemetry & Performance Monitoring**: `@vercel/analytics` and `@vercel/speed-insights` integrated into root layout.
 

@@ -88,91 +88,80 @@ The UI is built on a **cinematic dark-mode design language** inspired by Sana La
    - Key Logic: Available inventory calculation (`totalStock - reservedStock`), TTL reservation creation.
    - Bonus: Automated TTL release via Redis Keyspace Notifications vs BullMQ Delayed Job Queue.
 
-9. **JWT Token Refresh & Auto-Logout State Engine** (`Frontend Engineer` • `Mid-Level` • 30 mins)
-   - Endpoint: `POST /auth/refresh`
-   - Key Logic: Handle token expiry (401), invalid token (403), generate fresh access token.
-   - Bonus: XSS vs CSRF mitigation when storing JWTs (HttpOnly Cookie + SameSite vs LocalStorage).
+### 🛠️ Practical REST API & Business Logic Problems (Express.js)
+1. **E-commerce Voucher Redemption API** (`Backend Engineer` • `Mid-Level` • 20 mins)
+   - Endpoint: `POST /redeem`
+   - Key Logic: Payload validation, single-redemption per user guard, quota deduction, HTTP 200/400/404.
+   - Bonus: Race condition mitigation via PostgreSQL `SELECT FOR UPDATE` vs Atomic Update.
 
-10. **Payment Gateway Idempotent Webhook Handler** (`Backend Engineer` • `Mid-Level` • 30 mins)
-    - Endpoint: `POST /webhook/payment`
-    - Key Logic: Header signature verification (`x-signature`), duplicate event ID deduplication (`HTTP 200`).
-    - Bonus: Webhook Dead Letter Queue (DLQ) & Exponential Backoff Retry strategies.
+2. **In-Memory Sliding Window Rate Limiter** (`Backend Engineer` • `Mid-Level` • 20 mins)
+   - Endpoint: `POST /api/action`
+   - Key Logic: Sliding time window log, IP-based request throttling, HTTP 429 Too Many Requests.
+   - Bonus: Distributed rate limiting with Redis Token Bucket & Lua scripting.
 
-11. **Resilient Notification Dispatcher with Provider Fallback** (`Full Stack Engineer` • `Mid-Level` • 30 mins)
-    - Endpoint: `POST /notifications/send`
-    - Key Logic: SendGrid primary attempt, automatic Mailgun secondary fallback upon errors.
-    - Bonus: Circuit Breaker pattern (CLOSED, OPEN, HALF-OPEN states).
+3. **E-commerce Cart Checkout & Tax Engine** (`Full Stack Engineer` • `Mid-Level` • 20 mins)
+   - Endpoint: `POST /cart/checkout`
+   - Key Logic: Stock availability validation, category-based discount voucher (`TECH20`), 11% VAT calculation.
+   - Bonus: Accurate financial floating point math & decimal precision patterns in JavaScript.
 
-12. **Order Lifecycle State Machine & Test Suite** (`QA Engineer` • `Mid-Level` • 30 mins)
-    - Endpoint: `POST /orders/transition`
-    - Key Logic: Finite State Machine transition validation (`CREATED -> PAID -> PROCESSING -> SHIPPED -> DELIVERED`).
-    - Bonus: Integration Testing vs Consumer-Driven Contract Testing (Pact).
+4. **Flash Sale Inventory Stock Reservation** (`Backend Engineer` • `Mid-Level` • 20 mins)
+   - Endpoint: `POST /orders/reserve`
+   - Key Logic: Temporary stock reservation with 5-minute TTL, auto-expiration release, HTTP 409 conflict guard.
+   - Bonus: High concurrency Flash Sale architecture (100k QPS) with Redis Lua & Kafka.
 
-### 🚀 DevOps Engineer Problems
-13. **Container Health Check & Readiness Probe API** (`DevOps Engineer` • `Mid-Level` • 30 mins)
-    - Endpoints: `POST /health` (Liveness Probe) & `POST /readiness` (Readiness Probe)
-    - Key Logic: Liveness detection with unhealthy state simulation, multi-dependency readiness check (`database`, `cache`), proper HTTP 200/503 responses.
-    - Bonus: Kubernetes Liveness vs Readiness vs Startup Probe — YAML configuration & use cases.
-
-14. **CI/CD Quality Gate & Automated Deploy Guard** (`DevOps Engineer` • `Mid-Level` • 30 mins)
-    - Endpoint: `POST /pipeline/gate`
-    - Key Logic: Three-gate pipeline validator — branch protection (only `main`/`master` to production), build status check, coverage threshold (80% production / 60% staging).
-    - Bonus: Blue-Green Deployment, Canary Release, and Feature Flags as an emergency safety valve.
+5. **Payment Gateway Idempotent Webhook Handler** (`Backend Engineer` • `Mid-Level` • 20 mins)
+   - Endpoint: `POST /webhook/payment`
+   - Key Logic: Header signature verification (`x-signature`), duplicate event ID deduplication (`HTTP 200`).
+   - Bonus: Distributed lock patterns via Redis SETNX for idempotent webhook workers.
 
 ### 🥑 HappyFresh Track Problems (E-Grocery Live Coding)
-15. **🛒 HappyFresh: Complex Cart & Promo Calculation Engine** (`Full Stack Engineer` • `Mid-Level` • 30 mins)
-    - Endpoint: `POST /cart/calculate`
-    - Key Logic: Subtotal calculation, out-of-stock item filtering, dynamic `CATEGORY_PERCENTAGE` (with `maxDiscount` cap) and `MIN_SPEND_FLAT` promo rules, best-value promo selection (mutually exclusive).
-    - Bonus: PostgreSQL ACID transactions with row-level locks (`SELECT FOR UPDATE`) and promo redemption ledgers.
+6. **🛒 HappyFresh: Complex Cart & Promo Calculation Engine** (`Full Stack Engineer` • `Mid-Level` • 20 mins)
+   - Endpoint: `POST /cart/calculate`
+   - Key Logic: Subtotal calculation, promo tiering (`FRESH50`, `VEGGIE10`), free shipping threshold.
+   - Bonus: Multi-tiered voucher stackability architecture.
 
-16. **🚚 HappyFresh: Delivery Slot Reservation & Anti-Overbooking** (`Backend Engineer` • `Mid-Level` • 30 mins)
-    - Endpoint: `POST /slots/reserve`
-    - Key Logic: Chronological request sorting (`timestamp` asc), capacity limit enforcement (`SLOT_FULL`), non-existent slot validation (`SLOT_NOT_FOUND`), duplicate user handling (`DUPLICATE_USER_IN_SLOT`), slot utilization metrics.
-    - Bonus: Distributed lock patterns with Redis Redlock vs PostgreSQL Advisory Locks.
+7. **🚚 HappyFresh: Delivery Slot Reservation & Anti-Overbooking** (`Backend Engineer` • `Mid-Level` • 20 mins)
+   - Endpoint: `POST /slots/reserve`
+   - Key Logic: Chronological request sorting (`timestamp` asc), capacity limit enforcement (`SLOT_FULL`), duplicate user guard.
+   - Bonus: Distributed locks with Redis Redlock.
 
-17. **🥦 HappyFresh: Picker Item Substitution Scoring Engine** (`Frontend Engineer` • `Mid-Level` • 30 mins)
-    - Endpoint: `POST /items/substitute`
-    - Key Logic: Rule-based heuristic scoring: Category match (+50), Price proximity ±10% (+30), Brand match (+20). OOS exclusion, threshold filter (>= 50), deterministic tie-breaking (price diff, then alphabetical).
-    - Bonus: High-dimensional vector embeddings & pgvector hybrid search for multi-million SKU grocery catalogs.
+8. **🥦 HappyFresh: Picker Item Substitution Scoring Engine** (`Frontend Engineer` • `Mid-Level` • 20 mins)
+   - Endpoint: `POST /items/substitute`
+   - Key Logic: Heuristic matching (Category +50, Price Proximity +30, Brand +20), in-stock filtering.
+   - Bonus: Hybrid dense vector search & BM25 lexical ranking.
 
-### 🏭 PT SPINDO Track Problems (Manufacturing & Python Backend)
-18. **🏭 SPINDO: Race Condition & Atomic Pipe Stock Allocation** (`Backend Engineer` • `Mid-Level` • 30 mins)
-    - Language: Python (SQLModel / SQLAlchemy ORM)
-    - Key Logic: Atomic stock reservation using `SELECT ... FOR UPDATE` pessimistic row locking, ACID rollback on insufficient inventory or SKU not found, available stock calculation.
-    - Bonus: Deadlock handling across multi-item allocation & distributed transaction isolation levels.
+### ⭐ Algorithmic & Data Processing Problem Solving (Pure JavaScript)
+9. **🛒 HackerRank: Electronics Shop (Optimal Budget Purchasing)** (`Full Stack Engineer` • `Mid-Level` • 20 mins)
+   - Function: `getMoneySpent(keyboards, drives, b)`
+   - Key Logic: Optimal purchasing combination under budget constraint $b$. Two Pointers algorithm ($O(N \log N + M \log M)$).
+   - Bonus: Asymptotic complexity tradeoff analysis for large scale inputs ($N, M \ge 100,000$).
 
-19. **🛡️ SPINDO: In-Memory Sliding Window Rate Limiter** (`Backend Engineer` • `Mid-Level` • 30 mins)
-    - Language: Python (Data Structures & Algorithmic Security)
-    - Key Logic: `collections.deque` timestamp history, amortized O(1) eviction of expired logs, `(is_allowed, remaining, retry_after)` tuple output.
-    - Bonus: Redis Lua scripting for atomic sliding window evaluation across clustered API gateways.
+10. **💳 Fintech: Transaction Pair Reconciliation** (`Backend Engineer` • `Mid-Level` • 20 mins)
+    - Function: `findReconciledPairs(transactions, targetSum)`
+    - Key Logic: $O(N)$ Hash Map complement lookup for matching financial transaction pairs.
+    - Bonus: External memory algorithms for multi-gigabyte reconciliation datasets.
 
-20. **📡 SPINDO: IoT Pipe Welding Telemetry Stream & Anomaly Detector** (`Backend Engineer` • `Mid-Level` • 30 mins)
-    - Language: Python (FastAPI / Time-Series Processing)
-    - Key Logic: Real-time telemetry batch aggregation (`min`, `max`, `avg`, `count`), tolerance boundary verification (`BELOW_MIN`, `ABOVE_MAX`), sudden temperature gradient drop detection (> 50°C in <= 5s).
-    - Bonus: High-throughput streaming architecture (Kafka + TimescaleDB + Celery async workers).
+11. **📈 Observability: Sliding Window Traffic Spike Detector** (`Backend Engineer` • `Mid-Level` • 20 mins)
+    - Function: `detectSpikes(timestamps, windowSeconds, threshold)`
+    - Key Logic: Sliding window two-pointer scan over timestamp log streams for DDoS/spike detection.
+    - Bonus: Real-time streaming sliding window on Apache Flink.
 
-21. **✂️ SPINDO: 1D Pipe Cutting Stock & Scrap Minimization Engine** (`Backend Engineer` • `Mid-Level` • 30 mins)
-    - Language: Python (Production Optimization & Heuristics)
-    - Key Logic: First-Fit Decreasing (FFD) 1D cutting stock heuristic, blade kerf cut loss accounting, scrap metal waste percentage minimization.
-    - Bonus: Formulating 1D cutting stock as an Integer Linear Programming (ILP) problem via PuLP/SciPy.
+12. **🔍 E-commerce: Multi-Field Search & Pagination Engine** (`Full Stack Engineer` • `Mid-Level` • 20 mins)
+    - Function: `queryCatalog(items, filters, pagination)`
+    - Key Logic: Case-insensitive keyword search, category & price range filtering, pagination offset calculation.
+    - Bonus: Elasticsearch index mappings & PostgreSQL GIN Trigram indexing.
 
 ---
 
 ## 🧪 Standalone Challenge Practice Suites
 
-In addition to the in-browser live playground, standalone test suites (TypeScript/Jest & Python/unittest) are available under `challenges/`:
+In addition to the in-browser live playground, standalone test suites (TypeScript/Jest) are available under `challenges/`:
 
 ```bash
 # ─── TypeScript & Jest Challenges (HappyFresh Track) ───
 npm test challenges/01-cart-promo-engine/index.test.ts
 npm test challenges/02-delivery-slot-reservation/index.test.ts
 npm test challenges/03-item-substitution/index.test.ts
-
-# ─── Python Challenges (PT SPINDO Manufacturing Track) ───
-python3 challenges/04-spindo-stock-allocation/test_stock_allocation.py
-python3 challenges/05-spindo-rate-limiter/test_rate_limiter.py
-python3 challenges/06-spindo-telemetry-aggregator/test_telemetry_aggregator.py
-python3 challenges/07-spindo-pipe-cutting-optimizer/test_pipe_cutting_optimizer.py
 ```
 
 ---
@@ -182,35 +171,31 @@ python3 challenges/07-spindo-pipe-cutting-optimizer/test_pipe_cutting_optimizer.
 ```
 livecode-logic-trainer/
 ├── app/
-│   ├── page.tsx                    # Landing page, role/company filters, paginated problem grid
+│   ├── page.tsx                    # Landing page, role filters, paginated problem grid
 │   ├── layout.tsx                  # Root HTML layout, SEO metadata, OpenGraph & themeColor
 │   ├── globals.css                 # Tailwind CSS v4 + Sana Labs motion tokens & utility classes
 │   ├── session/[problemId]/
-│   │   └── page.tsx                # Split-pane interactive session page
+│   │   └── page.tsx                # Split-pane interactive live coding session
 │   └── api/
 │       └── assess/
 │           └── route.ts            # POST /api/assess (Groq LLM & Evaluator API)
 ├── challenges/                     # Standalone Interview Case Studies & Test Suites
 │   ├── 01-cart-promo-engine/       # HappyFresh Cart & Promo Calculation (TypeScript / Jest)
 │   ├── 02-delivery-slot-reservation/# HappyFresh Delivery Slot Reservation (TypeScript / Jest)
-│   ├── 03-item-substitution/       # HappyFresh Item Substitution Engine (TypeScript / Jest)
-│   ├── 04-spindo-stock-allocation/ # SPINDO Atomic Stock Allocation (Python / unittest)
-│   ├── 05-spindo-rate-limiter/     # SPINDO Sliding Window Rate Limiter (Python / unittest)
-│   ├── 06-spindo-telemetry-aggregator/# SPINDO IoT Telemetry & Anomaly Detector (Python / unittest)
-│   └── 07-spindo-pipe-cutting-optimizer/# SPINDO 1D Pipe Cutting Stock Optimizer (Python / unittest)
+│   └── 03-item-substitution/       # HappyFresh Item Substitution Engine (TypeScript / Jest)
 ├── components/
 │   ├── SessionHeader.tsx           # Glass nav, recruiter HUD, timer & audio toggle
 │   ├── RecruiterMoodMeter.tsx      # Glass HUD pill, persona selector, animated commentary
-│   ├── TimerBar.tsx                # Countdown timer with color-keyed glow aura states
-│   ├── ProblemPanel.tsx            # Dark obsidian problem description & tabbed bonus/hints
+│   ├── TimerBar.tsx                # Countdown timer with 5m Prep Phase & Live Coding Phase
+│   ├── ProblemPanel.tsx            # Problem description, constraints & tabbed bonus/hints
 │   ├── EditorPanel.tsx             # Monaco Editor with glass toolbar & spring interactions
 │   ├── ConsolePanel.tsx            # Local isolated test runner drawer
 │   └── ResultsModal.tsx            # Status-keyed glow modal, staggered achievement badges
 ├── lib/
 │   ├── types.ts                    # TypeScript interface definitions
-│   ├── problems.ts                 # 21 In-memory problem seed definitions (incl. HappyFresh & SPINDO)
+│   ├── problems.ts                 # 18 In-memory problem seed definitions (JS Problem Solving)
 │   ├── soundFX.ts                  # Web Audio API sound synthesizer
-│   └── evaluator.ts                # Isolated JS unit test runner
+│   └── evaluator.ts                # Isolated JS unit test runner (REST API + Pure Functions)
 ├── public/
 │   └── workers/
 │       └── executor.worker.js      # Web Worker code execution sandbox
