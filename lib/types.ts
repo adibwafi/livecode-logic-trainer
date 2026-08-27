@@ -17,11 +17,9 @@ export interface Problem {
 export interface TestCase {
   id: string;
   name: string;
-  input: {
-    userId: number;
-    voucherCode: string;
-  };
-  expectedStatus: number;
+  input: any;
+  expectedStatus?: number;
+  expectedOutput?: any;
   expectedMessageSubstring?: string;
   setupFn?: string;
 }

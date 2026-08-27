@@ -83,37 +83,55 @@ export default function TimerBar({
         boxShadow: '0 1px 2px rgba(0,0,0,0.03)',
       };
 
+  const elapsedSeconds = initialMinutes * 60 - secondsLeft;
+  const isPrepPhase = elapsedSeconds < 300; // First 5 minutes
+
   return (
-    <div
-      className="flex items-center gap-2.5 px-3 py-1.5 rounded-full text-xs font-mono backdrop-blur-sm shadow-xs"
-      style={{
-        ...stateStyles,
-        transition: 'background 400ms cubic-bezier(0.16,1,0.3,1), border-color 400ms cubic-bezier(0.16,1,0.3,1), box-shadow 400ms cubic-bezier(0.16,1,0.3,1), color 400ms cubic-bezier(0.16,1,0.3,1)',
-      }}
-    >
-      <Clock
-        className="w-3.5 h-3.5"
-        style={{ color: isLowTime ? 'rgb(220, 38, 38)' : isWarningTime ? 'rgb(217, 119, 6)' : 'rgb(113, 113, 122)' }}
-      />
-      <span className="font-semibold tracking-wider">{formattedTime}</span>
-
-      {isLowTime && (
-        <span
-          className="flex items-center gap-1 text-[10px] font-sans font-medium px-1.5 py-0.5 rounded-full animate-scale-in"
-          style={{ background: 'rgba(254,226,226,1)', color: 'rgb(185,28,28)' }}
-        >
-          <AlertTriangle className="w-3 h-3" /> {t('timeWarning')}
-        </span>
-      )}
-
-      <button
-        onClick={onTogglePause}
-        className="ml-0.5 p-1 rounded-full text-zinc-500 hover:text-zinc-900 btn-glass"
-        style={{ transition: 'background 150ms cubic-bezier(0.16,1,0.3,1), color 150ms cubic-bezier(0.16,1,0.3,1)' }}
-        title={isPaused ? t('resumeTimer') : t('pauseTimer')}
+    <div className="flex items-center gap-2">
+      {/* Live Coding Phase Badge */}
+      <span
+        className="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-medium transition-all"
+        style={{
+          background: isPrepPhase ? 'rgba(238, 242, 255, 0.95)' : 'rgba(240, 253, 244, 0.95)',
+          color: isPrepPhase ? 'rgb(67, 56, 202)' : 'rgb(21, 128, 61)',
+          border: isPrepPhase ? '1px solid rgba(199, 210, 254, 0.8)' : '1px solid rgba(187, 247, 208, 0.8)',
+        }}
+        title={isPrepPhase ? 'Fase 5 Menit: Pahami soal, batasan, dan rancang algoritma' : 'Fase 15 Menit: Tulis kode solusi & jalankan unit test'}
       >
-        {isPaused ? <Play className="w-3 h-3" /> : <Pause className="w-3 h-3" />}
-      </button>
+        {isPrepPhase ? '📖 5m Prep Phase' : '⚡ Live Coding Phase'}
+      </span>
+
+      <div
+        className="flex items-center gap-2.5 px-3 py-1.5 rounded-full text-xs font-mono backdrop-blur-sm shadow-xs"
+        style={{
+          ...stateStyles,
+          transition: 'background 400ms cubic-bezier(0.16,1,0.3,1), border-color 400ms cubic-bezier(0.16,1,0.3,1), box-shadow 400ms cubic-bezier(0.16,1,0.3,1), color 400ms cubic-bezier(0.16,1,0.3,1)',
+        }}
+      >
+        <Clock
+          className="w-3.5 h-3.5"
+          style={{ color: isLowTime ? 'rgb(220, 38, 38)' : isWarningTime ? 'rgb(217, 119, 6)' : 'rgb(113, 113, 122)' }}
+        />
+        <span className="font-semibold tracking-wider">{formattedTime}</span>
+
+        {isLowTime && (
+          <span
+            className="flex items-center gap-1 text-[10px] font-sans font-medium px-1.5 py-0.5 rounded-full animate-scale-in"
+            style={{ background: 'rgba(254,226,226,1)', color: 'rgb(185,28,28)' }}
+          >
+            <AlertTriangle className="w-3 h-3" /> {t('timeWarning')}
+          </span>
+        )}
+
+        <button
+          onClick={onTogglePause}
+          className="ml-0.5 p-1 rounded-full text-zinc-500 hover:text-zinc-900 btn-glass"
+          style={{ transition: 'background 150ms cubic-bezier(0.16,1,0.3,1), color 150ms cubic-bezier(0.16,1,0.3,1)' }}
+          title={isPaused ? t('resumeTimer') : t('pauseTimer')}
+        >
+          {isPaused ? <Play className="w-3 h-3" /> : <Pause className="w-3 h-3" />}
+        </button>
+      </div>
     </div>
   );
 }
