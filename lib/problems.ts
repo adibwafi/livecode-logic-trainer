@@ -2959,6 +2959,387 @@ app.post('/items/substitute', (req, res) => {
 
 module.exports = app;`,
     testCases: []
+  },
+  {
+    id: "spindo-stock-allocation",
+    title: "🏭 SPINDO: Race Condition & Atomic Pipe Stock Allocation",
+    role: "Backend Engineer",
+    level: "Mid-Level",
+    timeLimit: 30,
+    category: "Database Transaction, Pessimistic Locking & ACID Safety",
+    company: "SPINDO",
+    badge: "🏭 SPINDO Track (Python)",
+    description: `## 🏭 1. Studi Kasus
+Di PT Steel Pipe Industry of Indonesia Tbk (SPINDO), pesanan pipa baja dari distributor datang bersamaan. Anda harus memastikan alokasi stok pipa baja di gudang tidak terjadi *over-selling* atau *race condition* saat beberapa transaksi masuk di milidetik yang sama.
+
+Anda diminta mengimplementasikan fungsi alokasi stok transaksi aman:
+\`\`\`python
+def allocate_pipe_stock(session: Session, order_id: str, pipe_sku: str, qty_requested: int) -> dict
+\`\`\`
+
+---
+
+## 2. Model & Persyaratan Bisnis
+1. **Model \`PipeInventory\`**:
+   - \`sku\` (Primary Key): Kode unik pipa (misal: \`"PIPE-SCH40-4IN"\`)
+   - \`total_stock\`: Total fisik di gudang
+   - \`reserved_stock\`: Stok yang sudah dipesan/dialokasikan
+   - \`available_stock\`: \`total_stock - reserved_stock\`
+2. **Pessimistic Locking**: Gunakan \`SELECT ... FOR UPDATE\` (\`with_for_update()\`) untuk mengunci row sebelum membaca ketersediaan stok.
+3. **Validasi Ketersediaan**:
+   - Jika stok tidak cukup (\`available_stock < qty_requested\`), lakukan \`session.rollback()\` dan kembalikan status \`FAILED\`.
+   - Jika SKU tidak ditemukan, lakukan rollback dan kembalikan \`FAILED\`.
+4. **Alokasi Sukses**: Tambah \`reserved_stock += qty_requested\`, commit transaksi, dan return status \`SUCCESS\`.`,
+    starterCode: `from sqlmodel import SQLModel, Field, Session, select
+from typing import Optional, Dict, Any
+from sqlalchemy.exc import SQLAlchemyError
+
+class PipeInventory(SQLModel, table=True):
+    __tablename__ = "pipe_inventories"
+    
+    sku: str = Field(primary_key=True, index=True)
+    pipe_type: str
+    total_stock: int = Field(default=0, ge=0)
+    reserved_stock: int = Field(default=0, ge=0)
+
+    @property
+    def available_stock(self) -> int:
+        return self.total_stock - self.reserved_stock
+
+def allocate_pipe_stock(session: Session, order_id: str, pipe_sku: str, qty_requested: int) -> Dict[str, Any]:
+    # TODO: Implementasikan SELECT ... FOR UPDATE & Atomic Allocation
+    pass`,
+    bonusQuestion: "Bagaimana cara menangani deadlock jika 2 transaksi mengalokasikan multiple SKUs dalam urutan berlawanan (misal Tx A: SKU 1 -> SKU 2, Tx B: SKU 2 -> SKU 1)?",
+    idealSolution: `from sqlmodel import SQLModel, Field, Session, select
+from typing import Optional, Dict, Any
+from sqlalchemy.exc import SQLAlchemyError
+
+class PipeInventory(SQLModel, table=True):
+    __tablename__ = "pipe_inventories"
+    
+    sku: str = Field(primary_key=True, index=True)
+    pipe_type: str
+    total_stock: int = Field(default=0, ge=0)
+    reserved_stock: int = Field(default=0, ge=0)
+
+    @property
+    def available_stock(self) -> int:
+        return self.total_stock - self.reserved_stock
+
+class InventoryAllocationError(Exception):
+    pass
+
+class InsufficientStockError(InventoryAllocationError):
+    pass
+
+class ProductNotFoundError(InventoryAllocationError):
+    pass
+
+def allocate_pipe_stock(
+    session: Session,
+    order_id: str,
+    pipe_sku: str,
+    qty_requested: int
+) -> Dict[str, Any]:
+    """
+    Mengalokasikan stok pipa secara atomik dan thread-safe menggunakan SELECT ... FOR UPDATE.
+    """
+    if qty_requested <= 0:
+        return {"status": "FAILED", "order_id": order_id, "sku": pipe_sku, "reason": "Qty must be > 0"}
+
+    try:
+        statement = (
+            select(PipeInventory)
+            .where(PipeInventory.sku == pipe_sku)
+            .with_for_update()
+        )
+        inventory = session.exec(statement).first()
+        if not inventory:
+            raise ProductNotFoundError(f"Pipe with SKU '{pipe_sku}' not found.")
+
+        if inventory.available_stock < qty_requested:
+            raise InsufficientStockError(
+                f"Insufficient stock for {pipe_sku}. Requested: {qty_requested}, Available: {inventory.available_stock}"
+            )
+
+        inventory.reserved_stock += qty_requested
+        session.add(inventory)
+        session.commit()
+        session.refresh(inventory)
+
+        return {
+            "status": "SUCCESS",
+            "order_id": order_id,
+            "sku": pipe_sku,
+            "allocated_qty": qty_requested,
+            "remaining_available_stock": inventory.available_stock
+        }
+    except (InsufficientStockError, ProductNotFoundError) as e:
+        session.rollback()
+        return {"status": "FAILED", "order_id": order_id, "sku": pipe_sku, "reason": str(e)}
+    except SQLAlchemyError as e:
+        session.rollback()
+        return {"status": "ERROR", "order_id": order_id, "sku": pipe_sku, "reason": str(e)}`,
+    testCases: []
+  },
+  {
+    id: "spindo-sliding-rate-limiter",
+    title: "🛡️ SPINDO: In-Memory Sliding Window Rate Limiter",
+    role: "Backend Engineer",
+    level: "Mid-Level",
+    timeLimit: 30,
+    category: "Algoritma Backend, Time-Window & Memory Management",
+    company: "SPINDO",
+    badge: "🏭 SPINDO Track (Python)",
+    description: `## 🏭 1. Studi Kasus
+Aplikasi internal pabrik SPINDO diakses oleh ribuan sensor IoT dan klien mobile di pabrik. Anda diminta membuat middleware rate limiter untuk melindungi server API dari request berlebihan (*spamming/bursting*).
+
+---
+
+## 2. Requirement & Algoritma
+1. **Class \`SlidingWindowRateLimiter(max_requests, window_seconds)\`**:
+   - Simpan timestamp per \`client_id\` menggunakan struktur data \`collections.deque\` untuk amortized \`O(1)\` eviction.
+2. **Method \`is_allowed(client_id: str) -> tuple[bool, int, float]\`**:
+   - Bersihkan timestamp usang di luar window waktu: \`timestamp <= current_time - window_seconds\`.
+   - Jika jumlah request dalam window < \`max_requests\`: izinkan request, return \`(True, remaining, 0.0)\`.
+   - Jika kuota habis: tolak request, hitung estimasi \`retry_after_seconds\`, return \`(False, 0, retry_after)\`.
+3. **Method \`reset_client(client_id: str) -> None\`**:
+   - Reset limit untuk IP atau sensor tertentu.`,
+    starterCode: `import time
+from collections import defaultdict, deque
+from typing import Tuple, Dict
+
+class SlidingWindowRateLimiter:
+    def __init__(self, max_requests: int, window_seconds: int):
+        self.max_requests = max_requests
+        self.window_seconds = window_seconds
+        self._clients: Dict[str, deque] = defaultdict(deque)
+
+    def is_allowed(self, client_id: str) -> Tuple[bool, int, float]:
+        # TODO: Implementasikan sliding window log menggunakan deque
+        pass`,
+    bonusQuestion: "Bagaimana cara menskalakan rate limiter ini ke multi-instance backend server menggunakan Redis dan Lua Scripting?",
+    idealSolution: `import time
+from collections import defaultdict, deque
+from typing import Tuple, Dict
+
+class SlidingWindowRateLimiter:
+    def __init__(self, max_requests: int, window_seconds: int):
+        self.max_requests = max_requests
+        self.window_seconds = window_seconds
+        self._clients: Dict[str, deque] = defaultdict(deque)
+
+    def is_allowed(self, client_id: str) -> Tuple[bool, int, float]:
+        current_time = time.time()
+        window_start = current_time - self.window_seconds
+        client_timestamps = self._clients[client_id]
+
+        while client_timestamps and client_timestamps[0] <= window_start:
+            client_timestamps.popleft()
+
+        if len(client_timestamps) < self.max_requests:
+            client_timestamps.append(current_time)
+            remaining = self.max_requests - len(client_timestamps)
+            return True, remaining, 0.0
+        else:
+            oldest_timestamp = client_timestamps[0]
+            retry_after = round(oldest_timestamp + self.window_seconds - current_time, 2)
+            return False, 0, max(0.0, retry_after)
+
+    def reset_client(self, client_id: str) -> None:
+        if client_id in self._clients:
+            del self._clients[client_id]`,
+    testCases: []
+  },
+  {
+    id: "spindo-sensor-telemetry-aggregator",
+    title: "📡 SPINDO: IoT Pipe Welding Telemetry Stream & Anomaly Detector",
+    role: "Backend Engineer",
+    level: "Mid-Level",
+    timeLimit: 30,
+    category: "FastAPI / Time-Series Stream Processing & Quality Control",
+    company: "SPINDO",
+    badge: "🏭 SPINDO Track (Python)",
+    description: `## 🏭 1. Studi Kasus
+Di lini produksi pipa baja ERW (*Electric Resistance Welded*) PT SPINDO, mesin pengelasan induksi frekuensi tinggi memonitor suhu pengelasan (\`weld_temp_celsius\`), tekanan forming (\`forming_pressure_bar\`), dan kecepatan laju pipa (\`line_speed_mpm\`).
+
+Anda diminta membangun engine \`TelemetryBatchProcessor\` yang memproses batch log sensor, menghitung statistik summary, dan mendeteksi anomali cacat pipa secara instan.
+
+---
+
+## 2. Requirement
+1. **Validasi & Pembersihan**: Filter payload corrupt yang tidak memiliki \`timestamp\`, \`metric_name\`, atau \`value\` numerik.
+2. **Statistik Summary**: Hitung \`min\`, \`max\`, \`avg\`, dan \`count\` per metrik.
+3. **Out-of-Bounds Detection**: Cek terhadap batas toleransi (\`lower_bound\`, \`upper_bound\`).
+4. **Sudden Temperature Drop**: Deteksi penurunan suhu las > 50°C dalam rentang waktu <= 5 detik.`,
+    starterCode: `from typing import List, Dict, Tuple, Any
+from collections import defaultdict
+
+class TelemetryBatchProcessor:
+    def __init__(self, tolerance_ranges: Dict[str, Tuple[float, float]]):
+        self.tolerance_ranges = tolerance_ranges
+
+    def process_batch(self, readings: List[Dict[str, Any]]) -> Dict[str, Any]:
+        # TODO: Implementasikan batch aggregation & anomaly detection
+        pass`,
+    bonusQuestion: "Bagaimana arsitektur streaming processing (Kafka / Celery / TimescaleDB) untuk memproses 50.000 events/detik dari seluruh lini pabrik?",
+    idealSolution: `from typing import List, Dict, Tuple, Any
+from collections import defaultdict
+
+class TelemetryBatchProcessor:
+    def __init__(self, tolerance_ranges: Dict[str, Tuple[float, float]]):
+        self.tolerance_ranges = tolerance_ranges
+
+    def process_batch(self, readings: List[Dict[str, Any]]) -> Dict[str, Any]:
+        if not readings:
+            return {"metrics_summary": {}, "anomalies": [], "total_valid_samples": 0}
+
+        valid_readings = [
+            r for r in readings
+            if isinstance(r, dict) and "timestamp" in r and "metric_name" in r
+            and isinstance(r.get("value"), (int, float)) and isinstance(r.get("timestamp"), (int, float))
+        ]
+        valid_readings.sort(key=lambda x: x["timestamp"])
+
+        grouped = defaultdict(list)
+        for r in valid_readings:
+            grouped[r["metric_name"]].append(r)
+
+        metrics_summary = {}
+        anomalies = []
+
+        for metric, records in grouped.items():
+            vals = [r["value"] for r in records]
+            metrics_summary[metric] = {
+                "count": len(vals), "min": min(vals), "max": max(vals), "avg": round(sum(vals) / len(vals), 2)
+            }
+            if metric in self.tolerance_ranges:
+                lower, upper = self.tolerance_ranges[metric]
+                for r in records:
+                    v = r["value"]
+                    if v < lower:
+                        anomalies.append({"timestamp": r["timestamp"], "metric_name": metric, "value": v, "violation_type": "BELOW_MIN"})
+                    elif v > upper:
+                        anomalies.append({"timestamp": r["timestamp"], "metric_name": metric, "value": v, "violation_type": "ABOVE_MAX"})
+
+        temp_records = grouped.get("weld_temp_celsius", [])
+        for i in range(1, len(temp_records)):
+            prev, curr = temp_records[i - 1], temp_records[i]
+            if 0 <= curr["timestamp"] - prev["timestamp"] <= 5.0 and prev["value"] - curr["value"] >= 50.0:
+                anomalies.append({"timestamp": curr["timestamp"], "metric_name": "weld_temp_celsius", "value": curr["value"], "violation_type": "SUDDEN_TEMP_DROP"})
+
+        return {"metrics_summary": metrics_summary, "anomalies": anomalies, "total_valid_samples": len(valid_readings)}`,
+    testCases: []
+  },
+  {
+    id: "spindo-pipe-cutting-optimizer",
+    title: "✂️ SPINDO: 1D Pipe Cutting Stock & Scrap Minimization Engine",
+    role: "Backend Engineer",
+    level: "Mid-Level",
+    timeLimit: 30,
+    category: "Algoritma Optimasi Produksi, Heuristik 1D Bin Packing & ERP BOM",
+    company: "SPINDO",
+    badge: "🏭 SPINDO Track (Python)",
+    description: `## 🏭 1. Studi Kasus
+Di divisi finishing pabrik pipa baja PT SPINDO, pipa induk diproduksi dalam panjang standar (misal 6.000 mm atau 12.000 mm). Pelanggan memesan kombinasi potongan dengan panjang non-standar (misal: 3 batang @ 2.400 mm, 4 batang @ 1.750 mm). Setiap pemotongan mengonsumsi \`blade_kerf_mm\` (misal 5 mm).
+
+Tugas Anda adalah mengimplementasikan algoritma optimasi pemotongan pipa 1D (*Cutting Stock Problem*) dengan metode **First-Fit Decreasing (FFD)** untuk meminimalkan sisa pipa yang terbuang (*scrap metal waste*).
+
+---
+
+## 2. Requirement
+1. Urutkan potongan dari yang terpanjang ke terpendek (*descending*).
+2. Gunakan pipa yang sudah dibuka jika sisa panjang muat (\`remaining_space >= cut_length + blade_kerf\`).
+3. Jika tidak muat di pipa manapun, buka pipa induk baru.
+4. Hitung persentase sisa limbah (*scrap percentage*).`,
+    starterCode: `from dataclasses import dataclass
+from typing import List, Dict, Any
+
+@dataclass
+class CutRequest:
+    order_id: str
+    length_mm: int
+    quantity: int
+
+def optimize_pipe_cutting(
+    stock_length_mm: int,
+    blade_kerf_mm: int,
+    cut_requests: List[CutRequest]
+) -> Dict[str, Any]:
+    # TODO: Implementasikan First-Fit Decreasing (FFD) 1D Cutting Stock
+    pass`,
+    bonusQuestion: "Bagaimana cara memformulasikan persoalan cutting stock ini menggunakan Integer Linear Programming (ILP) dengan library PuLP / SciPy?",
+    idealSolution: `from dataclasses import dataclass
+from typing import List, Dict, Any
+
+@dataclass
+class CutRequest:
+    order_id: str
+    length_mm: int
+    quantity: int
+
+class StockPipe:
+    def __init__(self, pipe_index: int, capacity_mm: int, blade_kerf_mm: int):
+        self.pipe_index = pipe_index
+        self.capacity_mm = capacity_mm
+        self.blade_kerf_mm = blade_kerf_mm
+        self.allocated_cuts = []
+        self.used_length_mm = 0
+
+    @property
+    def remaining_space_mm(self) -> int:
+        return self.capacity_mm - self.used_length_mm
+
+    def can_fit(self, cut_len: int) -> bool:
+        return self.remaining_space_mm >= (cut_len + self.blade_kerf_mm)
+
+    def add_cut(self, order_id: str, cut_len: int):
+        self.allocated_cuts.append({"order_id": order_id, "length_mm": cut_len})
+        self.used_length_mm += (cut_len + self.blade_kerf_mm)
+
+def optimize_pipe_cutting(
+    stock_length_mm: int,
+    blade_kerf_mm: int,
+    cut_requests: List[CutRequest]
+) -> Dict[str, Any]:
+    pieces = []
+    for req in cut_requests:
+        if req.length_mm > stock_length_mm:
+            raise ValueError(f"Requested length {req.length_mm} exceeds stock length {stock_length_mm}")
+        for _ in range(req.quantity):
+            pieces.append((req.order_id, req.length_mm))
+
+    pieces.sort(key=lambda x: x[1], reverse=True)
+    pipes: List[StockPipe] = []
+
+    for order_id, length_mm in pieces:
+        placed = False
+        for p in pipes:
+            if p.can_fit(length_mm):
+                p.add_cut(order_id, length_mm)
+                placed = True
+                break
+        if not placed:
+            new_p = StockPipe(len(pipes) + 1, stock_length_mm, blade_kerf_mm)
+            new_p.add_cut(order_id, length_mm)
+            pipes.append(new_p)
+
+    total_scrap = sum(p.remaining_space_mm for p in pipes)
+    total_supplied = len(pipes) * stock_length_mm
+    scrap_pct = round((total_scrap / total_supplied) * 100, 2) if total_supplied > 0 else 0.0
+
+    return {
+        "stock_pipe_length_mm": stock_length_mm,
+        "total_raw_pipes_used": len(pipes),
+        "total_cuts_produced": len(pieces),
+        "total_scrap_length_mm": total_scrap,
+        "scrap_percentage": scrap_pct,
+        "cutting_plans": [
+            {"pipe_index": p.pipe_index, "cuts": p.allocated_cuts, "used_length_mm": p.used_length_mm, "scrap_length_mm": p.remaining_space_mm}
+            for p in pipes
+        ]
+    }`,
+    testCases: []
   }
 ];
 
