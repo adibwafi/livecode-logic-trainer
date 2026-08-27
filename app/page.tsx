@@ -14,6 +14,9 @@ import {
   Play,
   User,
   ShoppingBag,
+  Factory,
+  ChevronLeft,
+  ChevronRight,
 } from 'lucide-react';
 
 // ─── Framer Motion variants ────────────────────────────────────────────────────
@@ -61,11 +64,15 @@ const pillVariants = {
   },
 };
 
+const ITEMS_PER_PAGE = 6;
+
 export default function HomePage() {
   const [selectedRole, setSelectedRole] = useState<string>('ALL');
+  const [currentPage, setCurrentPage] = useState<number>(1);
 
   const roleFilters = [
     { key: 'ALL', label: t('allRoles') },
+    { key: 'SPINDO', label: '🏭 SPINDO Track (4)' },
     { key: 'HappyFresh', label: '🥑 HappyFresh Track (3)' },
     { key: 'Backend', label: 'Backend Engineer' },
     { key: 'Frontend', label: 'Frontend Engineer' },
@@ -76,9 +83,31 @@ export default function HomePage() {
 
   const filteredProblems = selectedRole === 'ALL'
     ? PROBLEMS
+    : selectedRole === 'SPINDO'
+    ? PROBLEMS.filter((p) => p.company === 'SPINDO')
     : selectedRole === 'HappyFresh'
     ? PROBLEMS.filter((p) => p.company === 'HappyFresh')
     : PROBLEMS.filter((p) => p.role.toLowerCase().includes(selectedRole.toLowerCase()));
+
+  const totalItems = filteredProblems.length;
+  const totalPages = Math.max(1, Math.ceil(totalItems / ITEMS_PER_PAGE));
+  const validCurrentPage = Math.min(currentPage, totalPages);
+  const startIndex = (validCurrentPage - 1) * ITEMS_PER_PAGE;
+  const paginatedProblems = filteredProblems.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+
+  const handleRoleChange = (key: string) => {
+    setSelectedRole(key);
+    setCurrentPage(1);
+  };
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+    // Smooth scroll to catalog section
+    const catalogEl = document.getElementById('problem-catalog');
+    if (catalogEl) {
+      catalogEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  };
 
   return (
     <div className="min-h-screen bg-white text-zinc-900 font-sans relative overflow-hidden">
@@ -171,7 +200,7 @@ export default function HomePage() {
         </m.header>
 
         {/* ── Role Filter Pills ── */}
-        <section className="pb-10">
+        <section id="problem-catalog" className="pb-10 scroll-mt-24">
           <m.div
             className="flex items-center justify-center gap-2 flex-wrap text-xs"
             layout
@@ -180,7 +209,7 @@ export default function HomePage() {
               <m.button
                 key={key}
                 layout
-                onClick={() => setSelectedRole(key)}
+                onClick={() => handleRoleChange(key)}
                 whileTap={{ scale: 0.95 }}
                 className={`px-4 py-2 rounded-full font-medium btn-glass transition-all duration-200 ${
                   selectedRole === key
@@ -199,28 +228,42 @@ export default function HomePage() {
         <section className="pb-24">
           <AnimatePresence mode="popLayout">
             <m.div
-              key={selectedRole}
+              key={`${selectedRole}-${validCurrentPage}`}
               className="grid grid-cols-1 md:grid-cols-2 gap-5"
               variants={containerVariants}
               initial="hidden"
               animate="show"
             >
-              {filteredProblems.map((prob) => {
+              {paginatedProblems.map((prob) => {
                 const isHappyFresh = prob.company === 'HappyFresh';
+                const isSpindo = prob.company === 'SPINDO';
                 return (
                   <m.div
                     key={prob.id}
                     variants={cardVariants}
                     layout
                     className={`group relative rounded-2xl p-6 flex flex-col justify-between glass-card transition-all duration-200 overflow-hidden ${
-                      isHappyFresh
+                      isSpindo
+                        ? 'bg-gradient-to-b from-blue-500/[0.03] to-white border-2 border-blue-500/80 shadow-sm hover:shadow-md hover:border-blue-600 ring-2 ring-blue-500/10'
+                        : isHappyFresh
                         ? 'bg-gradient-to-b from-emerald-500/[0.03] to-white border-2 border-emerald-400/80 shadow-sm hover:shadow-md hover:border-emerald-500 ring-2 ring-emerald-500/10'
                         : 'bg-white border border-zinc-200/90 shadow-sm hover:shadow-md hover:border-zinc-300'
                     }`}
                   >
 
                     <div className="space-y-4 relative">
-                      {/* HappyFresh Top Special Tag */}
+                      {/* Company Top Special Tag */}
+                      {isSpindo && (
+                        <div className="flex items-center justify-between pb-0.5">
+                          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold tracking-wide uppercase bg-blue-700 text-white shadow-xs">
+                            <Factory className="w-3 h-3 text-blue-200" />
+                            PT SPINDO Case Study
+                          </span>
+                          <span className="text-[11px] font-semibold text-blue-900 bg-blue-100/90 px-2.5 py-0.5 rounded-full border border-blue-300">
+                            ⚙️ Pipe Manufacturing & Python
+                          </span>
+                        </div>
+                      )}
                       {isHappyFresh && (
                         <div className="flex items-center justify-between pb-0.5">
                           <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold tracking-wide uppercase bg-emerald-600 text-white shadow-xs">
@@ -237,7 +280,9 @@ export default function HomePage() {
                       <div className="flex items-center justify-between text-xs">
                         <div className="flex items-center gap-2">
                           <span className={`px-3 py-1 rounded-full border font-medium ${
-                            isHappyFresh
+                            isSpindo
+                              ? 'bg-blue-50 border-blue-200 text-blue-900 font-semibold'
+                              : isHappyFresh
                               ? 'bg-emerald-50 border-emerald-200 text-emerald-900 font-semibold'
                               : 'bg-zinc-100 border-zinc-200 text-zinc-800'
                           }`}>
@@ -278,7 +323,7 @@ export default function HomePage() {
                         </div>
                         <ul className="space-y-1.5 text-zinc-600 list-disc list-inside font-normal">
                           <li>In-Memory REST API Logic & HTTP Status Validation</li>
-                          <li>Strict Time Limit: {prob.timeLimit} mins (HappyFresh Interview Standard)</li>
+                          <li>Strict Time Limit: {prob.timeLimit} mins ({prob.company || 'Standard'} Interview Standard)</li>
                           <li className="text-zinc-800 font-medium">Architecture Bonus: {prob.bonusQuestion}</li>
                         </ul>
                       </div>
@@ -287,12 +332,14 @@ export default function HomePage() {
                     {/* Card Footer CTA */}
                     <div className="pt-5 mt-5 border-t border-zinc-200/80 flex items-center justify-between relative">
                       <div className="flex items-center gap-2 text-xs text-zinc-500 font-mono">
-                        Monaco IDE • JavaScript
+                        Monaco IDE • {isSpindo ? 'Python / SQL' : 'JavaScript'}
                       </div>
                       <Link
                         href={`/session/${prob.id}`}
                         className={`group/cta flex items-center gap-2 px-5 py-2 rounded-full font-semibold text-xs text-white shadow-md btn-glass hover-lift transition-all duration-200 ${
-                          isHappyFresh
+                          isSpindo
+                            ? 'bg-blue-600 hover:bg-blue-700 shadow-blue-600/20 ring-1 ring-blue-500/40'
+                            : isHappyFresh
                             ? 'bg-emerald-600 hover:bg-emerald-700 shadow-emerald-600/20 ring-1 ring-emerald-500/40'
                             : 'bg-zinc-900 hover:bg-zinc-800'
                         }`}
@@ -307,6 +354,66 @@ export default function HomePage() {
               })}
             </m.div>
           </AnimatePresence>
+
+          {/* ── Pagination Bar ── */}
+          {totalPages > 1 && (
+            <div className="mt-12 pt-6 border-t border-zinc-200/80 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs">
+              {/* Range info */}
+              <div className="text-zinc-500 font-medium">
+                Showing <span className="text-zinc-900 font-semibold">{startIndex + 1}</span>–
+                <span className="text-zinc-900 font-semibold">{Math.min(startIndex + ITEMS_PER_PAGE, totalItems)}</span> of{' '}
+                <span className="text-zinc-900 font-semibold">{totalItems}</span> challenges
+              </div>
+
+              {/* Navigation controls */}
+              <div className="flex items-center gap-1.5">
+                <button
+                  onClick={() => handlePageChange(validCurrentPage - 1)}
+                  disabled={validCurrentPage <= 1}
+                  className={`inline-flex items-center gap-1 px-3 py-1.5 rounded-full border text-xs font-medium transition-all duration-200 ${
+                    validCurrentPage <= 1
+                      ? 'opacity-40 cursor-not-allowed border-zinc-200 text-zinc-400'
+                      : 'border-zinc-200 bg-white hover:bg-zinc-50 text-zinc-700 hover:text-zinc-900 hover-lift shadow-xs'
+                  }`}
+                  aria-label="Previous Page"
+                >
+                  <ChevronLeft className="w-3.5 h-3.5" />
+                  <span>Prev</span>
+                </button>
+
+                <div className="flex items-center gap-1">
+                  {Array.from({ length: totalPages }, (_, idx) => idx + 1).map((page) => (
+                    <button
+                      key={page}
+                      onClick={() => handlePageChange(page)}
+                      className={`w-8 h-8 rounded-full text-xs font-semibold transition-all duration-200 flex items-center justify-center ${
+                        validCurrentPage === page
+                          ? 'bg-zinc-900 text-white shadow-xs ring-2 ring-violet-500/20'
+                          : 'bg-white border border-zinc-200 text-zinc-700 hover:bg-zinc-100 hover:text-zinc-900'
+                      }`}
+                      aria-current={validCurrentPage === page ? 'page' : undefined}
+                    >
+                      {page}
+                    </button>
+                  ))}
+                </div>
+
+                <button
+                  onClick={() => handlePageChange(validCurrentPage + 1)}
+                  disabled={validCurrentPage >= totalPages}
+                  className={`inline-flex items-center gap-1 px-3 py-1.5 rounded-full border text-xs font-medium transition-all duration-200 ${
+                    validCurrentPage >= totalPages
+                      ? 'opacity-40 cursor-not-allowed border-zinc-200 text-zinc-400'
+                      : 'border-zinc-200 bg-white hover:bg-zinc-50 text-zinc-700 hover:text-zinc-900 hover-lift shadow-xs'
+                  }`}
+                  aria-label="Next Page"
+                >
+                  <span>Next</span>
+                  <ChevronRight className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            </div>
+          )}
         </section>
       </div>
 
