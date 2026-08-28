@@ -161,16 +161,18 @@ livecode-logic-trainer/
    - `happyfresh-slot-reservation`: 🚚 HappyFresh: Delivery Slot Reservation & Anti-Overbooking (Backend • Mid-Level • 20m)
    - `happyfresh-item-substitution`: 🥦 HappyFresh: Picker Item Substitution Scoring Engine (Frontend • Mid-Level • 20m)
    - `catalog-search-pagination`: 🔍 E-commerce: Multi-Field Search & Pagination Engine (Full Stack • Mid-Level • 20m)
+   - *Enhancement*: All 12 problems include dynamic `hints`, `bestPractices`, `bonusRubric`, and benchmark-tested `idealSolution`.
 3. **Standalone Case Studies & Automated Unit Tests (`challenges/`)**:
    - `challenges/01-cart-promo-engine`: `README.md`, `index.ts`, `index.test.ts` (Jest)
    - `challenges/02-delivery-slot-reservation`: `README.md`, `index.ts`, `index.test.ts` (Jest)
    - `challenges/03-item-substitution`: `README.md`, `index.ts`, `index.test.ts` (Jest)
 4. **Interactive Live Session (`app/session/[problemId]/page.tsx`)**:
    - Synchronized **20-minute** countdown timer with 2-phase visual indicators: **📖 5m Prep Phase** (reading & strategy) and **⚡ Live Coding Phase** (implementation & test run).
+   - Dynamic `ProblemPanel` displaying problem-specific hints, best practices, and bonus architectural rubrics.
    - Recruiter Mood Meter glass pill HUD with animated commentary fade-in and emoji drop-shadow glow.
    - Live Monaco code editor with glass toolbar, smooth caret animation, and font ligatures.
 5. **Local Test Runner & Web Worker Sandbox**: Runs mock payload assertions and pure JavaScript function assertions across all 12 problem suites with Web Audio sound effects.
-6. **AI Assessment Route & Badges**: Receives code, executes tests, calls Groq LLM, calculates achievement badges, triggers celebratory confetti (violet/emerald palette) and fanfare audio on PASS.
+6. **Dual-Engine AI Assessment Route & Badges**: Receives code, executes tests, calls Groq LLM with robust fallback to rich verified solutions and problem-specific best practices, calculates achievement badges, triggers celebratory confetti (violet/emerald palette) and fanfare audio on PASS.
 7. **Vercel Telemetry & Performance Monitoring**: `@vercel/analytics` and `@vercel/speed-insights` integrated into root layout.
 
 ---
