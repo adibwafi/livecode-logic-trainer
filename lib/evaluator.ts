@@ -170,7 +170,7 @@ export function runLocalTests(userCode: string): TestRunResult {
 
       if (typeof fn === 'function') {
         const items = [
-          { id: "1", name: "Logitech MX Master", category: "ELECTRONICS", price: 100, stock: 5 },
+          { id: "1", name: "Logitech MX Master Mouse", category: "ELECTRONICS", price: 100, stock: 5 },
           { id: "2", name: "Apple Magic Mouse", category: "ELECTRONICS", price: 80, stock: 0 },
           { id: "3", name: "Cotton T-Shirt", category: "FASHION", price: 20, stock: 10 }
         ];

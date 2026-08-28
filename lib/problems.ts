@@ -98,6 +98,26 @@ app.post('/redeem', (req, res) => {
 
 module.exports = app;`,
     bonusQuestion: "Bagaimana cara menangani race condition pada kuota voucher di level database SQL ketika 1000 request masuk bersamaan?",
+    bonusRubric: {
+      title: "Bonus: Race Condition PostgreSQL",
+      subtitle: "Di produksi, state in-memory tidak akan berskala di multi-instance. Jelaskan strategi concurrency database berikut di komentar kode:",
+      points: [
+        "SELECT FOR UPDATE (Row Locking): Kunci baris voucher dalam transaksi DB selama pengecekan kuota.",
+        "Database Unique Constraints: Gunakan unique constraint/index pada (user_id, voucher_code) untuk mencegah klaim ganda.",
+        "Atomic Update Query: UPDATE vouchers SET quota = quota - 1 WHERE code = $1 AND quota > 0 (cek affected rows)."
+      ]
+    },
+    hints: [
+      "Periksa keberadaan userId dan voucherCode di awal handler, return HTTP 400 jika salah satu tidak ada.",
+      "Gunakan array.find() untuk mencari voucher, return HTTP 404 jika tidak ditemukan.",
+      "Gunakan array.some() pada redeemedVouchers untuk mendeteksi klaim ganda, return HTTP 400 jika sudah klaim.",
+      "Cek quota > 0 sebelum mengurangi nilai dan memasukkan ke redeemedVouchers."
+    ],
+    bestPractices: [
+      "Selalu lakukan sanitasi dan validasi tipe payload sebelum menjalankan query/mutasi state.",
+      "Gunakan HTTP Status Code semantik: 400 Bad Request, 404 Not Found, dan 200 OK.",
+      "Hindari mutasi global array tanpa concurrency guard di level produksi nyata."
+    ],
     idealSolution: `const express = require('express');
 const app = express();
 app.use(express.json());
@@ -233,6 +253,26 @@ function getMoneySpent(keyboards, drives, b) {
 
 module.exports = { getMoneySpent };`,
     bonusQuestion: "Bagaimana cara mengoptimalkan pencarian kombinasi termahal menggunakan teknik Two Pointers O(N log N + M log M) dibanding Brute Force O(N*M)?",
+    bonusRubric: {
+      title: "Bonus: Optimasi Two Pointers O(N log N + M log M)",
+      subtitle: "Jelaskan efisiensi algoritma Two Pointers dibanding Brute Force nested loop pada komentar kode Anda:",
+      points: [
+        "Sorting Strategy: Urutkan keyboards descending dan drives ascending (atau sebaliknya).",
+        "Linear Scan Pointers: Gerakkan pointer keyboard dan pointer drive dalam satu loop while (k < N && d < M).",
+        "Complexity Gain: Menghindari O(N*M) worst case ketika N dan M berukuran 100.000+ elemen."
+      ]
+    },
+    hints: [
+      "Inisialisasi variabel maxSpent = -1.",
+      "Metode Brute Force O(N*M): Iterasi nested loop untuk setiap keyboard dan setiap drive, update maxSpent jika sum <= b && sum > maxSpent.",
+      "Metode Two Pointers: Sort keyboards descending (y - x) dan drives ascending (x - y). Jika total <= b, update max dan geser drive ke kanan (d++). Jika total > b, geser keyboard ke kanan (k++).",
+      "Kembalikan nilai maxSpent di akhir fungsi."
+    ],
+    bestPractices: [
+      "Gunakan immutable copy [...array].sort() agar tidak memutasi array parameter input secara tidak sengaja.",
+      "Pertimbangkan boundary condition: array kosong atau elemen harga bernilai 0 / negatif.",
+      "Pilih algoritma Two Pointers saat dataset input sangat besar untuk menjamin efisiensi performa."
+    ],
     idealSolution: `function getMoneySpent(keyboards, drives, b) {
   let maxSpent = -1;
 
@@ -331,6 +371,26 @@ function findReconciledPairs(transactions, targetSum) {
 
 module.exports = { findReconciledPairs };`,
     bonusQuestion: "Bagaimana cara menangani rekonsiliasi skala besar (10 juta transaksi) yang tidak muat di memory sebuah server tunggal?",
+    bonusRubric: {
+      title: "Bonus: Rekonsiliasi Skala Besar (10M+ Transaksi)",
+      subtitle: "Jelaskan arsitektur distributed computing & database batching pada komentar kode Anda:",
+      points: [
+        "Distributed MapReduce / Spark: Partisi transaksi berdasarkan hash amount % N shard worker.",
+        "External Sort-Merge: Urutkan data transaksi ke disk storage lalu lakukan 2-way merge stream.",
+        "Database Indexing & Chunking: Lakukan stream pagination berbasis cursor indeks amount."
+      ]
+    },
+    hints: [
+      "Gunakan Map() JavaScript untuk menyimpan complement targetSum - tx.amount ke daftar transaction ID.",
+      "Jika complement ada di Map dan masih memiliki antrian ID, pasangkan dengan transaksi saat ini (pop ID dari map).",
+      "Jika complement tidak ada, masukkan tx.amount dan tx.id ke dalam Map.",
+      "Hasil akhir adalah array of tuple pairs [[id1, id2], [id3, id4]]."
+    ],
+    bestPractices: [
+      "Gunakan Map() bawaan JS untuk performa O(1) key lookup dibanding plain object jika key dinamis.",
+      "Hindari mutasi in-place array transaksi asli dari input.",
+      "Tangani transaksi dengan nilai kembar (amount sama) menggunakan array antrian ID pada tiap key map."
+    ],
     idealSolution: `function findReconciledPairs(transactions, targetSum) {
   const pairs = [];
   const map = new Map(); // amount -> Array of txId
@@ -423,6 +483,26 @@ function detectSpikes(timestamps, windowSeconds, threshold) {
 
 module.exports = { detectSpikes };`,
     bonusQuestion: "Bagaimana cara menerapkan algoritma ini secara real-time streaming pada Apache Flink atau Redis Sliding Log?",
+    bonusRubric: {
+      title: "Bonus: Real-time Streaming Spike Detection",
+      subtitle: "Jelaskan strategi streaming time-series windowing pada komentar kode Anda:",
+      points: [
+        "Redis Sorted Sets (ZSET): Gunakan ZADD timestamp dan ZREMRANGEBYSCORE untuk membersihkan log lama di luar sliding window.",
+        "Apache Flink Sliding Event Time Window: Window operator dengan .slideBy(windowSeconds) dan watermark delay.",
+        "Circuit Breaker Trigger: Publikasikan event spike ke Kafka alert topic untuk auto-scaling atau rate-limiting upstream."
+      ]
+    },
+    hints: [
+      "Gunakan pointer left = 0 dan iterasi right dari 0 hingga timestamps.length - 1.",
+      "Keluarkan timestamp di luar jendela dengan loop: while (timestamps[right] - timestamps[left] > windowSeconds) left++.",
+      "Hitung count = right - left + 1. Jika count >= threshold, rekam startTime = timestamps[left] dan endTime = timestamps[right].",
+      "Cegah duplikasi startTime dengan pengecekan array.some()."
+    ],
+    bestPractices: [
+      "Asumsikan timestamp sudah terurut atau gunakan sort((a,b) => a-b) untuk memastikan sliding window berjalan linear O(N).",
+      "Gunakan format objek eksplisit { startTime, endTime, count } sesuai standar time-series telemetry.",
+      "Tangani edge case array kosong dengan early return [] agar menghemat siklus CPU."
+    ],
     idealSolution: `function detectSpikes(timestamps, windowSeconds, threshold) {
   const spikes = [];
   if (!timestamps || timestamps.length === 0) return spikes;
@@ -521,6 +601,26 @@ app.post('/api/action', (req, res) => {
 
 module.exports = app;`,
     bonusQuestion: "Bagaimana cara mengimplementasikan distributed rate limiter di Kubernetes multi-pod cluster menggunakan Redis Token Bucket?",
+    bonusRubric: {
+      title: "Bonus: Distributed Rate Limiter Redis Token Bucket",
+      subtitle: "Jelaskan arsitektur distributed rate limiting pada komentar kode Anda:",
+      points: [
+        "Redis Lua Scripting: Eksekusi pengecekan dan pengurangan token secara atomik tanpa network race condition.",
+        "Token Bucket vs Sliding Window: Token bucket memungkinkan burst traffic sementara sliding window lebih kaku terhadap rate konstan.",
+        "HTTP Standard Headers: Kirimkan header RateLimit-Limit, RateLimit-Remaining, dan RateLimit-Reset."
+      ]
+    },
+    hints: [
+      "Ambil IP dari req.ip || '127.0.0.1'.",
+      "Filter requestLogs[ip] untuk hanya menyisakan timestamp dengan (now - t < WINDOW_MS).",
+      "Jika panjang array setelah difilter >= MAX_REQUESTS, return res.status(429).json({ error: ... }).",
+      "Jika lolos, masukkan timestamp now ke array dan return res.status(200).json({ message: ..., remaining })."
+    ],
+    bestPractices: [
+      "Gunakan HTTP 429 Too Many Requests untuk rate limiting standar RFC 6585.",
+      "Lakukan cleanup timestamp kedaluwarsa secara reaktif di setiap request agar tidak terjadi memory leak.",
+      "Sertakan informasi kuota sisa (remaining) dalam response payload."
+    ],
     idealSolution: `const express = require('express');
 const app = express();
 app.use(express.json());
@@ -615,6 +715,27 @@ app.post('/cart/checkout', (req, res) => {
 
 module.exports = app;`,
     bonusQuestion: "Bagaimana cara memastikan integritas kalkulasi harga finansial agar tidak terjadi rounding floating point bug di JavaScript?",
+    bonusRubric: {
+      title: "Bonus: Presisi Kalkulasi Finansial di JavaScript",
+      subtitle: "Jelaskan mitigasi floating point arithmetic error (0.1 + 0.2 !== 0.3) pada komentar kode Anda:",
+      points: [
+        "Integer Representation (Cents/Sen): Simpan semua nominal uang dalam unit terkecil (misal sen / rupiah bulat) sebelum dibagi.",
+        "Library Presisi Tinggi: Gunakan Decimal.js, BigNumber.js, atau BigInt untuk perhitungan presisi tinggi.",
+        "Rounding Rules Bank: Terapkan Math.round() atau Bankers Rounding (round half to even) pada nilai pajak."
+      ]
+    },
+    hints: [
+      "Periksa Array.isArray(items) && items.length > 0 di awal, return HTTP 400 jika tidak valid.",
+      "Iterasi setiap item untuk mencocokkan product ID dan validasi prod.stock >= item.quantity.",
+      "Hitung subtotal seluruh item dan akumulasi electronicsSubtotal khusus kategori ELECTRONICS.",
+      "Hitung diskon TECH20 = Math.min(electronicsSubtotal * 0.2, 200), lalu pajak = 11% dari (subtotal - discount).",
+      "Potong stok produk dan kembalikan response { subtotal, discount, taxableAmount, tax, total }."
+    ],
+    bestPractices: [
+      "Pisahkan validasi ketersediaan stok dari tahap mutasi pemotongan stok untuk mencegah inkonsistensi sebagian.",
+      "Gunakan Math.round((val * 100)) / 100 untuk pembulatan dua angka di belakang koma pada perhitungan pajak.",
+      "Kembalikan rincian kalkulasi lengkap (breakdown) agar mempermudah audit sisi frontend."
+    ],
     idealSolution: `const express = require('express');
 const app = express();
 app.use(express.json());
@@ -737,6 +858,27 @@ app.post('/orders/reserve', (req, res) => {
 
 module.exports = app;`,
     bonusQuestion: "Bagaimana merancang arsitektur Flash Sale 100.000 QPS menggunakan Redis Lua Scripting dan Kafka Queue?",
+    bonusRubric: {
+      title: "Bonus: Arsitektur Flash Sale 100K QPS",
+      subtitle: "Jelaskan strategi buffering & asynchronous processing pada komentar kode Anda:",
+      points: [
+        "Redis Atomic Decrement: Gunakan DECRBY atau Lua script untuk memastikan pengurangan stok in-memory sub-milidetik.",
+        "Asynchronous Queue: Masukkan pesanan yang lolos reservasi ke Kafka/RabbitMQ untuk diproses worker database di latar belakang.",
+        "Dead-Letter Queue (DLQ) & TTL Expiration: Batalkan reservasi otomatis jika pembayaran tidak selesai dalam batas TTL 5 menit."
+      ]
+    },
+    hints: [
+      "Validasi kelengkapan userId, productId, dan quantity (> 0), return HTTP 400 jika invalid.",
+      "Iterasi array reservations dari belakang untuk melepaskan reservasi status PENDING yang expired (expiresAt <= now).",
+      "Kembalikan kuota expired ke product.availableStock.",
+      "Jika availableStock < quantity, return HTTP 409 Conflict.",
+      "Jika cukup, kurangi availableStock, buat objek reservation dengan status 'PENDING', dan return HTTP 201 Created."
+    ],
+    bestPractices: [
+      "Gunakan HTTP 409 Conflict saat resource state tidak mencukupi untuk memenuhi request.",
+      "Kembalikan HTTP 201 Created dan ID reservasi unik saat berhasil membuat entitas reservasi baru.",
+      "Gunakan format ISO string untuk representasi timestamp kedaluwarsa pada response client."
+    ],
     idealSolution: `const express = require('express');
 const app = express();
 app.use(express.json());
@@ -862,6 +1004,26 @@ app.post('/webhook/payment', (req, res) => {
 
 module.exports = app;`,
     bonusQuestion: "Bagaimana cara menangani distributed lock pada webhook processing menggunakan Redis SETNX untuk mencegah race condition antar worker?",
+    bonusRubric: {
+      title: "Bonus: Distributed Lock Redis SETNX",
+      subtitle: "Jelaskan pencegahan race condition webhook concurrent retry pada komentar kode Anda:",
+      points: [
+        "Redis SETNX (SET if Not eXists): Buat lock key lock:webhook:eventId dengan TTL 30s.",
+        "Idempotency Table: Simpan status PROCESSING, PROCESSED, dan payload response di DB berindeks unik eventId.",
+        "Release Lock Safely: Lepaskan lock menggunakan Lua script pembanding token lock kepemilikan."
+      ]
+    },
+    hints: [
+      "Periksa req.headers['x-signature'] === 'secret-webhook-key', return HTTP 401 jika tidak cocok.",
+      "Validasi kelengkapan eventId, orderId, amount, return HTTP 400 jika kosong.",
+      "Gunakan processedEvents.has(eventId). Jika true, kembalikan HTTP 200 langsung tanpa memutasi order (idempotent replay).",
+      "Jika event baru, update order.status = 'PAID', tambahkan eventId ke processedEvents, dan return HTTP 200."
+    ],
+    bestPractices: [
+      "Selalu verifikasi HMAC signature atau secret header sebelum membaca isi request body webhook.",
+      "Pastikan idempotent retry selalu mengembalikan status HTTP 200 OK agar payment gateway tidak mengirimkan retry tanpa henti.",
+      "Gunakan data structure Set untuk lookup O(1) status eventId yang sudah diproses."
+    ],
     idealSolution: `const express = require('express');
 const app = express();
 app.use(express.json());
@@ -939,7 +1101,7 @@ POST /cart/calculate
 \`\`\`
 
 > ⏱️ **Alokasi Waktu Live Coding (20 Menit)**:
-> - **5 Menit Pertama**: Memahami aturan diskon: item promo -> subtotal -> voucher code -> ongkir (gratis jika $\ge 150.000$).
+> - **5 Menit Pertama**: Memahami aturan diskon: item promo -> subtotal -> voucher code -> ongkir (gratis jika $\\ge 150.000$).
 > - **15 Menit Koding**: Implementasi kalkulasi lengkap & breakdown tagihan.
 
 ---
@@ -947,7 +1109,7 @@ POST /cart/calculate
 ## 2. Requirement
 1. Jika \`items\` kosong, return \`HTTP 400\`.
 2. Hitung subtotal belanja.
-3. Ongkos Kirim: Standard Rp 15.000. Gratis ongkir (Rp 0) jika subtotal $\ge$ Rp 150.000.
+3. Ongkos Kirim: Standard Rp 15.000. Gratis ongkir (Rp 0) jika subtotal $\\ge$ Rp 150.000.
 4. Voucher:
    - \`FRESH50\`: Diskon 50% maksimal Rp 30.000 dengan minimum belanja Rp 100.000.
    - \`VEGGIE10\`: Diskon Rp 10.000 tanpa minimum belanja.
@@ -966,6 +1128,27 @@ app.post('/cart/calculate', (req, res) => {
 
 module.exports = app;`,
     bonusQuestion: "Bagaimana arsitektur microservices untuk promo engine yang menangani 50+ variasi voucher yang saling bertumpuk (stackable)?",
+    bonusRubric: {
+      title: "Bonus: Promo Engine Microservice Stackable Vouchers",
+      subtitle: "Jelaskan desain arsitektur rule engine promosi pada komentar kode Anda:",
+      points: [
+        "Rule Engine (Chain of Responsibility): Jalankan pipeline evaluasi (Item Level Promo -> Category Discount -> Basket Voucher -> Payment Method Promo).",
+        "Stackability Matrix: Validasi matriks kombinasi apakah dua voucher diizinkan digabung (is_stackable flag).",
+        "Dry-Run Simulation: Eksekusi simulasi perhitungan tanpa lock voucher untuk mempercepat preview di layar checkout."
+      ]
+    },
+    hints: [
+      "Periksa Array.isArray(items) && items.length > 0, return HTTP 400 jika kosong.",
+      "Iterasi setiap item, pastikan price dan quantity valid (> 0), hitung subtotal += price * quantity.",
+      "Tentukan deliveryFee: subtotal >= 150000 ? 0 : 15000.",
+      "Hitung voucherDiscount: jika FRESH50 (cek subtotal >= 100000, diskon 50% max 30000); jika VEGGIE10 (diskon min(subtotal, 10000)).",
+      "Kalkulasikan finalTotal = Math.max(0, subtotal - voucherDiscount) + deliveryFee."
+    ],
+    bestPractices: [
+      "Gunakan defensive checks untuk validasi harga dan kuantitas agar tidak menghasilkan nilai NaN.",
+      "Pisahkan kalkulasi diskon ke dalam fungsi helper terpisah untuk memudahkan penambahan jenis voucher baru.",
+      "Pastikan total akhir tidak bernilai negatif dengan memanfaatkan Math.max(0, ...)."
+    ],
     idealSolution: `const express = require('express');
 const app = express();
 app.use(express.json());
@@ -1068,6 +1251,27 @@ app.post('/slots/reserve', (req, res) => {
 
 module.exports = app;`,
     bonusQuestion: "Bagaimana cara menangani alokasi slot pengiriman skala besar menggunakan Redis distributed lock Redlock?",
+    bonusRubric: {
+      title: "Bonus: Anti-Overbooking dengan Redis Redlock",
+      subtitle: "Jelaskan strategi concurrency slot booking pada komentar kode Anda:",
+      points: [
+        "Distributed Lock Per Slot: Kunci lock:slot:{slotId} menggunakan algoritma Redlock saat proses alokasi.",
+        "Atomic Counter HINCRBY: Gunakan hash Redis untuk kuota slot dengan pengecekan kapasitas atomik.",
+        "Optimistic Locking: Gunakan versioning di SQL (WHERE version = @v) sebagai lapisan pertahanan kedua."
+      ]
+    },
+    hints: [
+      "Validasi Array.isArray(availableSlots) && Array.isArray(bookingRequests), return HTTP 400 jika invalid.",
+      "Buat Map() untuk availableSlots agar pencarian slot berdasarkan ID berkisar O(1).",
+      "Urutkan bookingRequests berdasarkan timestamp ascending (a.timestamp - b.timestamp).",
+      "Cek kondisi kegagalan berurutan: SLOT_NOT_FOUND, DUPLICATE_USER_IN_SLOT, dan SLOT_FULL.",
+      "Kembalikan response { confirmedBookings, failedBookings } dengan HTTP 200."
+    ],
+    bestPractices: [
+      "Gunakan Map() untuk merepresentasikan state slot dan array currentBookings per slot.",
+      "Urutkan request berdasarkan timestamp untuk menjamin keadilan alokasi FIFO (First-In, First-Out).",
+      "Sertakan alasan penolakan (reason code) yang terstandarisasi untuk setiap booking yang gagal."
+    ],
     idealSolution: `const express = require('express');
 const app = express();
 app.use(express.json());
@@ -1156,7 +1360,7 @@ POST /items/substitute
 \`\`\`
 
 > ⏱️ **Alokasi Waktu Live Coding (20 Menit)**:
-> - **5 Menit Pertama**: Memahami bobot skor: Kategori (+50), Rentang Harga $\pm 10\%$ (+30), Brand (+20).
+> - **5 Menit Pertama**: Memahami bobot skor: Kategori (+50), Rentang Harga $\\pm 10\%$ (+30), Brand (+20).
 > - **15 Menit Koding**: Implementasi filter stok dan perangkingan skor substitusi.
 
 ---
@@ -1181,6 +1385,27 @@ app.post('/items/substitute', (req, res) => {
 
 module.exports = app;`,
     bonusQuestion: "Bagaimana cara menggabungkan Semantic Vector Search (embeddings) dan Lexical BM25 untuk rekomendasi barang pengganti di katalog supermarket besar?",
+    bonusRubric: {
+      title: "Bonus: Hybrid Search (Vector Embeddings + BM25)",
+      subtitle: "Jelaskan strategi rekomendasi produk pengganti AI di katalog supermarket pada komentar kode Anda:",
+      points: [
+        "Dense Retrieval (Embeddings): Gunakan vector embeddings untuk memahami kemiripan semantik (misal 'Susu Rendah Lemak' mirip 'Low Fat Milk').",
+        "Sparse Retrieval (BM25): Gunakan keyword BM25 untuk kecocokan brand dan ukuran eksak (1L, 500g).",
+        "Reciprocal Rank Fusion (RRF): Gabungkan skor dense dan sparse untuk menghasilkan peringkat kandidat terbaik."
+      ]
+    },
+    hints: [
+      "Validasi targetItem dan Array.isArray(catalog), return HTTP 400 jika tidak ada.",
+      "Iterasi setiap item di catalog. Abaikan jika item.inStock === false atau item.id === targetItem.id.",
+      "Hitung skor heuristik: kategori sama (+50), Math.abs(item.price - targetItem.price) / targetItem.price <= 0.10 (+30), brand sama (+20).",
+      "Simpan kandidat dengan score >= 50, urutkan descending berdasarkan score, lalu selisih harga terkecil, lalu nama produk.",
+      "Jika tidak ada kandidat >= 50, return { substitute: null, score: 0 }."
+    ],
+    bestPractices: [
+      "Gunakan tie-breaking rules yang jelas (score -> price delta -> alphabetical name) untuk menjaga determinisme hasil.",
+      "Gunakan String.localeCompare() untuk pengurutan nama teks string secara konsisten.",
+      "Lakukan filter awal item yang Out of Stock sebelum menghitung skor kemiripan."
+    ],
     idealSolution: `const express = require('express');
 const app = express();
 app.use(express.json());
@@ -1316,6 +1541,27 @@ function queryCatalog(items, filters = {}, pagination = {}) {
 
 module.exports = { queryCatalog };`,
     bonusQuestion: "Bagaimana optimasi query indexing pada Elasticsearch atau PostgreSQL GIN Trigram index untuk pencarian multi-field dengan jutaan records?",
+    bonusRubric: {
+      title: "Bonus: Optimasi Search Indexing Jutaan Data",
+      subtitle: "Jelaskan strategi indexing database & search engine pada komentar kode Anda:",
+      points: [
+        "PostgreSQL pg_trgm & GIN Index: Buat GIN index pada lower(name) gin_trgm_ops untuk fast substring LIKE %kw% queries.",
+        "Elasticsearch / OpenSearch N-Gram: Gunakan edge_ngram analyzer untuk autocomplete dan typo-tolerant search.",
+        "Covering Composite Indexes: Buat multi-column index (category, price, stock) untuk menghindari full table scan."
+      ]
+    },
+    hints: [
+      "Duplikasi array items = [...items] agar tidak memutasi data asli.",
+      "Filter keyword: item.name.toLowerCase().includes(filters.keyword.trim().toLowerCase()).",
+      "Filter category: item.category === filters.category.",
+      "Filter price: item.price >= filters.minPrice dan item.price <= filters.maxPrice.",
+      "Hitung totalItems = result.length, totalPages = Math.ceil(totalItems / pageSize), dan ambil slice array sesuai page dan pageSize."
+    ],
+    bestPractices: [
+      "Gunakan Math.max(1, page) dan default pageSize untuk mencegah division by zero atau offset negatif.",
+      "Gunakan case-insensitive matching dengan toLowerCase() pada keyword search.",
+      "Sertakan metadata pagination lengkap (currentPage, pageSize, totalItems, totalPages)."
+    ],
     idealSolution: `function queryCatalog(items, filters = {}, pagination = {}) {
   let result = [...items];
 
@@ -1377,8 +1623,11 @@ module.exports = { queryCatalog };`,
           pagination: { page: 1, pageSize: 5 }
         },
         expectedOutput: {
-          data: [{ id: "2", name: "Apple Magic Mouse", category: "ELECTRONICS", price: 80, stock: 0 }],
-          pagination: { currentPage: 1, pageSize: 5, totalItems: 1, totalPages: 1 }
+          data: [
+            { id: "1", name: "Logitech MX Master", category: "ELECTRONICS", price: 100, stock: 5 },
+            { id: "2", name: "Apple Magic Mouse", category: "ELECTRONICS", price: 80, stock: 0 }
+          ],
+          pagination: { currentPage: 1, pageSize: 5, totalItems: 2, totalPages: 1 }
         }
       }
     ]

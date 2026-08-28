@@ -8,6 +8,9 @@ export interface Problem {
   description: string;
   starterCode: string;
   bonusQuestion: string;
+  bonusRubric?: { title: string; subtitle: string; points: string[] };
+  bestPractices?: string[];
+  hints?: string[];
   idealSolution: string;
   testCases: TestCase[];
   company?: string;
