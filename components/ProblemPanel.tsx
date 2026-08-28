@@ -63,11 +63,10 @@ export default function ProblemPanel({ problem }: ProblemPanelProps) {
             >
               <div className="flex items-center gap-2 font-bold text-amber-900 text-sm">
                 <Database className="w-4 h-4 text-amber-600" />
-                Bonus: Race Condition PostgreSQL
+                {problem.bonusRubric?.title || `Bonus: ${problem.title}`}
               </div>
               <p className="text-amber-800 leading-relaxed font-normal">
-                Di produksi, state in-memory tidak akan berskala di berbagai instance aplikasi, menyebabkan{' '}
-                <strong className="text-amber-950 font-semibold">race condition overselling</strong> saat ada request bersamaan.
+                {problem.bonusRubric?.subtitle || problem.bonusQuestion}
               </p>
             </div>
 
@@ -76,27 +75,25 @@ export default function ProblemPanel({ problem }: ProblemPanelProps) {
             >
               <h4 className="font-bold text-zinc-900 text-xs">Penjelasan Bonus yang Dibutuhkan dalam Komentar Kode</h4>
               <p className="text-zinc-600 leading-relaxed font-normal">
-                Jelaskan strategi concurrency database berikut dalam komentar kode kamu:
+                Jelaskan strategi dan pertimbangan arsitektural berikut dalam komentar kode Anda:
               </p>
               <ul className="space-y-2 text-zinc-700 list-disc list-inside font-normal">
-                <li>
-                  <strong className="text-zinc-900 font-semibold">SELECT FOR UPDATE (Row Locking)</strong>
-                  : Kunci baris voucher dalam transaksi DB selama pengecekan.
-                </li>
-                <li>
-                  <strong className="text-zinc-900 font-semibold">Database Unique Constraints</strong>
-                  : Unique index pada{' '}
-                  <code className="text-zinc-900 bg-zinc-200/80 px-1 py-0.5 rounded border border-zinc-300 font-mono">
-                    (user_id, voucher_code)
-                  </code>.
-                </li>
-                <li>
-                  <strong className="text-zinc-900 font-semibold">Atomic Update Query</strong>
-                  :{' '}
-                  <code className="text-zinc-900 bg-zinc-200/80 px-1 py-0.5 rounded border border-zinc-300 font-mono">
-                    UPDATE vouchers SET quota = quota - 1 WHERE code = $1 AND quota &gt; 0
-                  </code>.
-                </li>
+                {problem.bonusRubric?.points && problem.bonusRubric.points.length > 0 ? (
+                  problem.bonusRubric.points.map((pt, idx) => (
+                    <li key={idx} className="leading-relaxed">
+                      {pt}
+                    </li>
+                  ))
+                ) : (
+                  <>
+                    <li className="leading-relaxed">
+                      <strong className="text-zinc-900 font-semibold">Tuliskan solusi konseptual</strong> untuk pertanyaan: {problem.bonusQuestion}
+                    </li>
+                    <li className="leading-relaxed">
+                      <strong className="text-zinc-900 font-semibold">Trade-off & Skalabilitas</strong>: Jelaskan perbandingan efisiensi performa dan implikasi arsitektur di sistem produksi.
+                    </li>
+                  </>
+                )}
               </ul>
             </div>
           </div>
@@ -109,23 +106,45 @@ export default function ProblemPanel({ problem }: ProblemPanelProps) {
               className="p-4 rounded-xl space-y-2 bg-emerald-50 border border-emerald-200/90 text-emerald-900"
             >
               <div className="flex items-center gap-2 font-bold text-emerald-900 text-sm">
-                <Zap className="w-4 h-4 text-emerald-600" /> Rubrik Penilaian
+                <Zap className="w-4 h-4 text-emerald-600" /> Rubrik & Petunjuk Solusi
               </div>
               <ul className="space-y-2 text-emerald-800 list-disc list-inside font-normal">
-                <li>
-                  <strong className="text-emerald-950 font-semibold">HTTP Status Code</strong>: 400 untuk bad request/pelanggaran logika, 404 untuk resource tidak ditemukan, 200 untuk sukses.
-                </li>
-                <li>
-                  <strong className="text-emerald-950 font-semibold">Urutan Validasi</strong>: Validasi field payload terlebih dahulu, lalu keberadaan voucher, keunikan pengguna, dan ketersediaan kuota.
-                </li>
-                <li>
-                  <strong className="text-emerald-950 font-semibold">Mutasi In-Memory</strong>: Kurangi{' '}
-                  <code className="text-emerald-950 font-mono bg-emerald-100 px-1 py-0.5 rounded">voucher.quota -= 1</code>{' '}
-                  dan catat redemption di{' '}
-                  <code className="text-emerald-950 font-mono bg-emerald-100 px-1 py-0.5 rounded">redeemedVouchers</code>.
-                </li>
+                {problem.hints && problem.hints.length > 0 ? (
+                  problem.hints.map((hint, idx) => (
+                    <li key={idx} className="leading-relaxed">
+                      {hint}
+                    </li>
+                  ))
+                ) : (
+                  <>
+                    <li>
+                      <strong className="text-emerald-950 font-semibold">Validasi Input</strong>: Periksa kelengkapan dan tipe data parameter input sebelum melakukan pemrosesan.
+                    </li>
+                    <li>
+                      <strong className="text-emerald-950 font-semibold">Penanganan Edge Cases</strong>: Tangani kondisi kosong, data tidak ditemukan, atau batasan batas atas/bawah.
+                    </li>
+                    <li>
+                      <strong className="text-emerald-950 font-semibold">Format Kembalian</strong>: Pastikan tipe data dan struktur response/return value sesuai dengan spesifikasi soal.
+                    </li>
+                  </>
+                )}
               </ul>
             </div>
+
+            {problem.bestPractices && problem.bestPractices.length > 0 && (
+              <div className="p-4 rounded-xl space-y-2 bg-zinc-50 border border-zinc-200 text-zinc-800">
+                <div className="flex items-center gap-2 font-bold text-zinc-900 text-xs">
+                  <Lightbulb className="w-4 h-4 text-amber-500" /> Rekomendasi Best Practice
+                </div>
+                <ul className="space-y-1.5 text-zinc-600 list-disc list-inside font-normal text-xs">
+                  {problem.bestPractices.map((bp, idx) => (
+                    <li key={idx} className="leading-relaxed">
+                      {bp}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
           </div>
         )}
       </div>

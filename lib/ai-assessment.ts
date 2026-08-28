@@ -18,29 +18,39 @@ export function isRateLimitError(error: unknown): boolean {
 }
 
 /**
- * Generates dynamic best practice hints based on test outcomes.
+ * Generates dynamic best practice hints based on problem definition and test outcomes.
  */
-function generateBestPractices(failedTests: ReturnType<typeof runLocalTests>['results'], problemTitle: string): string[] {
-  return [
-    'Pastikan setiap endpoint memvalidasi request body secara ketat sebelum memproses data.',
-    'Gunakan HTTP status code yang tepat: 200 OK, 201 Created, 400 Bad Request, 404 Not Found, 409 Conflict, 422 Unprocessable Entity, 429 Too Many Requests.',
-    'Implementasikan penanganan error dengan try/catch dan kembalikan pesan error yang informatif.',
-    `Problem "${problemTitle}" mengharuskan penanganan edge case: ${
-      failedTests.length > 0
-        ? failedTests.map((r) => r.name).slice(0, 3).join(', ')
-        : 'semua sudah ditangani dengan baik'
-    }.`,
-  ];
+function generateBestPractices(
+  failedTests: ReturnType<typeof runLocalTests>['results'],
+  problem: Problem
+): string[] {
+  const list: string[] = [];
+
+  if (problem.bestPractices && problem.bestPractices.length > 0) {
+    list.push(...problem.bestPractices);
+  } else {
+    list.push('Pastikan setiap fungsi / endpoint memvalidasi parameter input dan request body secara ketat sebelum eksekusi.');
+    list.push('Gunakan struktur data dan algoritma optimal dengan kompleksitas waktu & memori terbaik.');
+    list.push('Implementasikan penanganan error (try/catch atau guard clauses) dengan feedback pesan yang jelas.');
+  }
+
+  if (failedTests.length > 0) {
+    list.push(
+      `Perhatikan edge case yang belum lolos pengujian: ${failedTests.map((r) => r.name).slice(0, 2).join('; ')}.`
+    );
+  }
+
+  return list;
 }
 
 /**
- * Builds a rich fallback AssessmentResult from local test execution only,
- * used when the Groq API key is absent or the daily token quota is exceeded.
+ * Builds a rich fallback AssessmentResult from local test execution and problem definitions,
+ * used when the Groq API key is absent or the daily token quota is exceeded or API fails.
  */
 export function buildFallbackAssessment(
   testRun: TestRunResult,
   problem: Problem,
-  reason: 'no_api_key' | 'rate_limited'
+  reason: 'no_api_key' | 'rate_limited' | 'api_error'
 ): AssessmentResult {
   const score = Math.round((testRun.passedCount / Math.max(testRun.totalCount, 1)) * 100);
   const status: 'PASS' | 'PARTIAL' | 'FAIL' =
@@ -49,30 +59,34 @@ export function buildFallbackAssessment(
   const failedTests = testRun.results.filter((r) => !r.passed);
   const passedTests = testRun.results.filter((r) => r.passed);
 
-  const rateLimitNote =
+  const note =
     reason === 'rate_limited'
-      ? '⚠️ Groq AI daily token quota (TPD) telah tercapai — penilaian ini menggunakan Local Test Engine saja. AI deep-review akan tersedia kembali hingga batas reset harian.'
-      : '⚠️ GROQ_API_KEY belum dikonfigurasi — menggunakan Local Test Engine. Set GROQ_API_KEY di .env.local untuk mengaktifkan AI deep-code review.';
+      ? '⚠️ Groq AI token harian (TPD) tercapai — penilaian disajikan oleh Local Test Engine & Solusi Ideal Terverifikasi.'
+      : reason === 'no_api_key'
+      ? '⚠️ GROQ_API_KEY belum terpasang — evaluasi dijalankan melalui Local Test Engine & Template Solusi Terverifikasi.'
+      : '⚠️ Terjadi kendala respon dari Groq AI — beralih otomatis ke evaluasi terstruktur Local Test Engine.';
 
   const summaryText =
     score >= 90
-      ? `Luar biasa! Kode Anda berhasil melewati ${testRun.passedCount} dari ${testRun.totalCount} automated test cases. Solusi Anda terlihat sudah benar secara logika.`
+      ? `Luar biasa! Kode Anda berhasil melewati ${testRun.passedCount} dari ${testRun.totalCount} automated test cases. Solusi Anda sudah tepat secara logika dan efisien.`
       : score >= 50
-      ? `Progres yang baik. Kode Anda melewati ${testRun.passedCount} dari ${testRun.totalCount} test cases. Masih terdapat ${failedTests.length} kasus yang perlu diperbaiki.`
-      : `Kode Anda melewati ${testRun.passedCount} dari ${testRun.totalCount} test cases. Perlu perbaikan signifikan pada validasi request body, pengecekan kondisi, dan HTTP status code yang tepat.`;
+      ? `Progres yang baik! Kode Anda melewati ${testRun.passedCount} dari ${testRun.totalCount} test cases. Periksa kembali ${failedTests.length} skenario pengujian yang belum terpenuhi.`
+      : `Kode Anda melewati ${testRun.passedCount} dari ${testRun.totalCount} test cases. Tinjau kembali aturan validasi, penanganan nilai batas/edge cases, dan format nilai kembalian.`;
 
   return {
     score,
     status,
-    summary: `${summaryText} ${rateLimitNote}`,
-    errors: failedTests.map((r) => `${r.name}: ${r.error || 'Failed'}`),
-    bestPractices: generateBestPractices(failedTests, problem.title),
+    summary: `${summaryText} (${note})`,
+    errors:
+      failedTests.length > 0
+        ? failedTests.map((r) => `${r.name}: ${r.error || 'Assertion failed'}`)
+        : [],
+    bestPractices: generateBestPractices(failedTests, problem),
     edgeCasesPassed: passedTests.map((r) => r.name),
     edgeCasesMissed: failedTests.map((r) => r.name),
-    bonusEvaluation:
-      reason === 'rate_limited'
-        ? `🤖 AI Bonus Evaluation tidak tersedia saat ini karena batas token harian Groq API telah tercapai. Jawaban bonus Anda akan dievaluasi secara AI setelah kuota reset. Pastikan Anda telah menuliskan penjelasan konseptual yang lengkap di komentar kode.`
-        : `🤖 Konfigurasi GROQ_API_KEY di .env.local untuk mendapatkan evaluasi AI mendalam atas pertanyaan bonus konseptual Anda (${problem.bonusQuestion}).`,
+    bonusEvaluation: problem.bonusRubric
+      ? `💡 Pertanyaan Bonus: "${problem.bonusQuestion}"\n\n📌 Poin Kunci Jawaban:\n${problem.bonusRubric.points.map(p => `• ${p}`).join('\n')}\n\nPastikan penjelasan ini dicantumkan dalam komentar kode Anda.`
+      : `💡 Pertanyaan Bonus: "${problem.bonusQuestion}"\n\nPastikan Anda menyertakan penjelasan konseptual mengenai strategi concurrency/optimasi algoritma di dalam komentar kode.`,
     idealSolution: problem.idealSolution,
   };
 }
@@ -87,7 +101,7 @@ function buildAssessmentPrompt(
   timeSpentMinutes: number
 ): string {
   return `
-You are a Senior Full Stack Engineer & Technical Interviewer evaluating a candidate's code submission for a Live-Coding Interview.
+You are a Senior Staff Engineer & Technical Interviewer conducting a Live-Coding Interview assessment.
 
 Problem Title: "${problem.title}"
 Target Role: ${problem.role} (${problem.level})
@@ -105,14 +119,17 @@ Automated Unit Test Results:
 - Passed: ${testRun.passedCount} / ${testRun.totalCount}
 ${testRun.results.map((r) => `- [${r.passed ? 'PASS' : 'FAIL'}] ${r.name}: ${r.error || 'OK'}`).join('\n')}
 
-Instructions:
-Evaluate the candidate's code thoroughly on:
-1. Correctness & Logical Errors: Check if all validation rules and business logic are correctly implemented.
-2. Edge Cases: Check if missing/invalid request body params are handled gracefully.
-3. Best Practices: Evaluate modularity, clean HTTP status code usage, proper array methods, and code readability.
-4. Conceptual Bonus Question Evaluation: Read the comments in the candidate's submitted code. Evaluate how well they answered the bonus conceptual question.
+Bonus Question Asked:
+"${problem.bonusQuestion}"
 
-Return ONLY a single valid JSON object matching this EXACT structure:
+Instructions:
+1. Score the submission between 0 and 100 based on test results, code quality, correctness, and bonus question explanation.
+2. Provide a list of specific issues/errors detected. If no issues, provide an empty array [].
+3. Provide actionable best practices (3-5 points) specific to this problem.
+4. Evaluate if the candidate answered the bonus conceptual question in their code comments.
+5. Provide the ideal clean solution in the "idealSolution" field.
+
+Return ONLY a single valid JSON object matching this EXACT structure with no extra markdown formatting outside JSON:
 {
   "score": <number between 0 and 100>,
   "status": "<PASS | PARTIAL | FAIL>",
@@ -121,8 +138,8 @@ Return ONLY a single valid JSON object matching this EXACT structure:
   "bestPractices": ["<list of actionable best practice recommendations>"],
   "edgeCasesPassed": ["<list of edge cases correctly handled>"],
   "edgeCasesMissed": ["<list of edge cases missed>"],
-  "bonusEvaluation": "<detailed assessment of the candidate's text answer regarding the bonus question>",
-  "idealSolution": "<the complete ideal refactored clean solution in JavaScript Express.js>"
+  "bonusEvaluation": "<detailed assessment of the candidate's answer regarding the bonus question>",
+  "idealSolution": "<the complete ideal clean solution in JavaScript>"
 }
 `;
 }
@@ -139,7 +156,7 @@ export async function evaluateCodeWithAI(params: {
 }): Promise<AssessmentResult> {
   const { problem, userCode, timeSpentSeconds, testRun, apiKey } = params;
 
-  if (!apiKey) {
+  if (!apiKey || apiKey.trim() === '' || apiKey === 'your_groq_api_key_here') {
     return buildFallbackAssessment(testRun, problem, 'no_api_key');
   }
 
@@ -167,12 +184,28 @@ export async function evaluateCodeWithAI(params: {
 
     const responseText = chatCompletion.choices[0]?.message?.content || '{}';
     const assessment: AssessmentResult = JSON.parse(responseText);
+
+    // Defensive fallback on fields if LLM returned partial JSON
+    if (!assessment.idealSolution || assessment.idealSolution.trim() === '') {
+      assessment.idealSolution = problem.idealSolution;
+    }
+    if (!Array.isArray(assessment.bestPractices) || assessment.bestPractices.length === 0) {
+      assessment.bestPractices = generateBestPractices(
+        testRun.results.filter((r) => !r.passed),
+        problem
+      );
+    }
+    if (!assessment.bonusEvaluation) {
+      assessment.bonusEvaluation = `Pertanyaan Bonus: ${problem.bonusQuestion}`;
+    }
+
     return assessment;
   } catch (error: unknown) {
     if (isRateLimitError(error)) {
       console.warn('[assess] Groq TPD rate limit reached — falling back to local evaluation.');
       return buildFallbackAssessment(testRun, problem, 'rate_limited');
     }
-    throw error;
+    console.warn('[assess] Groq API error — falling back to rich local evaluation:', error);
+    return buildFallbackAssessment(testRun, problem, 'api_error');
   }
 }
