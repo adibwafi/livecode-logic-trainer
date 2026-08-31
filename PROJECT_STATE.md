@@ -173,6 +173,7 @@ livecode-logic-trainer/
    - Live Monaco code editor with glass toolbar, smooth caret animation, and font ligatures.
 5. **Local Test Runner & Web Worker Sandbox**: Runs mock payload assertions and pure JavaScript function assertions across all 12 problem suites with Web Audio sound effects.
 6. **Dual-Engine AI Assessment Route & Badges**: Receives code, executes tests, calls Groq LLM with robust fallback to rich verified solutions and problem-specific best practices, calculates achievement badges, triggers celebratory confetti (violet/emerald palette) and fanfare audio on PASS.
+   - *Deterministic Ideal Solutions*: Always delivers the curated, clean, idiomatic JavaScript solutions from `lib/problems.ts` rather than relying on generative LLM outputs, preventing hallucinated/incomplete code and optimizing API token latency.
 7. **Vercel Telemetry & Performance Monitoring**: `@vercel/analytics` and `@vercel/speed-insights` integrated into root layout.
 
 ---

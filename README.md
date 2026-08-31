@@ -36,7 +36,8 @@ The UI is built on a **cinematic dark-mode design language** inspired by Sana La
 - **Achievement Badges System**: Unlockable post-assessment badges (`⚡ Speed Demon`, `🛡️ Zero Bug Ninja`, `🧠 Architecture Guru`, `🔥 Clutch Master`) with staggered entrance animations in the Results Modal.
 - **Local Unit Test Console**: Execute isolated unit test cases against your Monaco code in real-time before final submission across problem endpoints.
 - **Dual-Engine Assessment System**:
-  - **Primary**: Groq LLM (`llama-3.3-70b-versatile`) for deep AI code review, edge case evaluation, and conceptual bonus scoring.
+  - **Primary**: Groq LLM (`llama-3.3-70b-versatile`) for deep AI code review, specific logic error detection, edge case analysis, and conceptual bonus scoring.
+  - **Deterministic Curated Ideal Solutions**: Solusi Ideal is strictly sourced from curated, benchmark-tested, clean JavaScript best-practice implementations in `lib/problems.ts` (rather than non-deterministic AI generation), guaranteeing simple, consistent, and error-free reference solutions across every evaluation.
   - **Fallback (Rate Limit / No API Key)**: When Groq daily token quota (TPD) is exhausted or `GROQ_API_KEY` is not configured, the system **automatically falls back** to a rich local evaluation — returns problem-specific score, passed/failed test cases, best practice tips, and a detailed note explaining the AI fallback. No HTTP 500 errors.
   - Bonus topics: Argon2/bcrypt, Debouncing vs Throttling, QA EP & BVA, Feature Flags, PostgreSQL Race Conditions, Redis Rate Limiting, Idempotency, JWT Security, Webhook DLQ, Circuit Breakers, Pact Contract Testing, Kubernetes Probes, Blue-Green & Canary Deployments.
 - **Vercel Telemetry & Speed Insights**: Integrated `@vercel/analytics` and `@vercel/speed-insights` for real-time web performance metrics and user traffic monitoring.
