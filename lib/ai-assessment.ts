@@ -164,48 +164,104 @@ export async function evaluateCodeWithAI(params: {
   const timeSpentMinutes = Math.round((timeSpentSeconds || 0) / 60);
   const prompt = buildAssessmentPrompt(problem, userCode, testRun, timeSpentMinutes);
 
-  try {
-    const chatCompletion = await groq.chat.completions.create({
-      messages: [
-        {
-          role: 'system',
-          content:
-            'You are an expert technical interviewer API that returns strictly raw JSON responses conforming to requested schemas.',
-        },
-        {
-          role: 'user',
-          content: prompt,
-        },
-      ],
-      model: 'llama-3.3-70b-versatile',
-      temperature: 0.2,
-      response_format: { type: 'json_object' },
-    });
+  const candidateModels = [
+    process.env.GROQ_MODEL,
+    'openai/gpt-oss-120b',
+    'qwen/qwen3.8-27b',
+    'openai/gpt-oss-20b',
+    'llama-3.3-70b-versatile',
+    'llama-3.1-8b-instant',
+  ].filter((m): m is string => Boolean(m && m.trim().length > 0));
 
-    const responseText = chatCompletion.choices[0]?.message?.content || '{}';
-    const assessment: AssessmentResult = JSON.parse(responseText);
+  const uniqueModels = Array.from(new Set(candidateModels));
 
-    // Defensive fallback on fields if LLM returned partial JSON
-    if (!assessment.idealSolution || assessment.idealSolution.trim() === '') {
-      assessment.idealSolution = problem.idealSolution;
-    }
-    if (!Array.isArray(assessment.bestPractices) || assessment.bestPractices.length === 0) {
-      assessment.bestPractices = generateBestPractices(
-        testRun.results.filter((r) => !r.passed),
-        problem
-      );
-    }
-    if (!assessment.bonusEvaluation) {
-      assessment.bonusEvaluation = `Pertanyaan Bonus: ${problem.bonusQuestion}`;
-    }
+  for (const model of uniqueModels) {
+    try {
+      const chatCompletion = await groq.chat.completions.create({
+        messages: [
+          {
+            role: 'system',
+            content:
+              'You are an expert technical interviewer API that returns strictly raw JSON responses conforming to requested schemas.',
+          },
+          {
+            role: 'user',
+            content: prompt,
+          },
+        ],
+        model,
+        temperature: 0.2,
+        response_format: { type: 'json_object' },
+      });
 
-    return assessment;
-  } catch (error: unknown) {
-    if (isRateLimitError(error)) {
-      console.warn('[assess] Groq TPD rate limit reached — falling back to local evaluation.');
-      return buildFallbackAssessment(testRun, problem, 'rate_limited');
+      const rawContent = chatCompletion.choices[0]?.message?.content || '{}';
+      const cleanedJson = rawContent.replace(/^```json\s*/i, '').replace(/\s*```$/i, '').trim();
+      const rawAssessment = JSON.parse(cleanedJson);
+
+      const score = Math.max(0, Math.min(100, Math.round(Number(rawAssessment.score) || 0)));
+      let status: 'PASS' | 'PARTIAL' | 'FAIL' = 'FAIL';
+      const statusStr = String(rawAssessment.status || '').toUpperCase();
+      if (statusStr === 'PASS' || (score >= 90 && !statusStr.includes('FAIL') && !statusStr.includes('PARTIAL') && !statusStr.includes('ISSUE'))) {
+        status = 'PASS';
+      } else if (statusStr.includes('PARTIAL') || statusStr.includes('ISSUE') || (score >= 50 && score < 90)) {
+        status = 'PARTIAL';
+      } else {
+        status = 'FAIL';
+      }
+
+      const assessment: AssessmentResult = {
+        score,
+        status,
+        summary:
+          typeof rawAssessment.summary === 'string' && rawAssessment.summary.trim()
+            ? rawAssessment.summary
+            : `Evaluasi selesai dengan skor ${score}/100.`,
+        errors: Array.isArray(rawAssessment.errors) ? rawAssessment.errors.map(String) : [],
+        bestPractices:
+          Array.isArray(rawAssessment.bestPractices) && rawAssessment.bestPractices.length > 0
+            ? rawAssessment.bestPractices.map(String)
+            : generateBestPractices(
+                testRun.results.filter((r) => !r.passed),
+                problem
+              ),
+        edgeCasesPassed: Array.isArray(rawAssessment.edgeCasesPassed)
+          ? rawAssessment.edgeCasesPassed.map(String)
+          : testRun.results.filter((r) => r.passed).map((r) => r.name),
+        edgeCasesMissed: Array.isArray(rawAssessment.edgeCasesMissed)
+          ? rawAssessment.edgeCasesMissed.map(String)
+          : testRun.results.filter((r) => !r.passed).map((r) => r.name),
+        bonusEvaluation:
+          typeof rawAssessment.bonusEvaluation === 'string' && rawAssessment.bonusEvaluation.trim()
+            ? rawAssessment.bonusEvaluation
+            : `Pertanyaan Bonus: ${problem.bonusQuestion}`,
+        idealSolution:
+          typeof rawAssessment.idealSolution === 'string' && rawAssessment.idealSolution.trim()
+            ? rawAssessment.idealSolution
+            : problem.idealSolution,
+      };
+
+      return assessment;
+    } catch (error: unknown) {
+      if (isRateLimitError(error)) {
+        console.warn('[assess] Groq TPD rate limit reached — falling back to local evaluation.');
+        return buildFallbackAssessment(testRun, problem, 'rate_limited');
+      }
+
+      const isModelNotFoundError =
+        (error as { status?: number })?.status === 404 ||
+        String(error).toLowerCase().includes('model_not_found') ||
+        String(error).toLowerCase().includes('does not exist');
+
+      if (isModelNotFoundError) {
+        console.warn(`[assess] Model "${model}" is not available for this API key, trying next model...`);
+        continue;
+      }
+
+      console.warn(`[assess] Groq API error on model "${model}" — falling back to rich local evaluation:`, error);
+      return buildFallbackAssessment(testRun, problem, 'api_error');
     }
-    console.warn('[assess] Groq API error — falling back to rich local evaluation:', error);
-    return buildFallbackAssessment(testRun, problem, 'api_error');
   }
+
+  console.warn('[assess] All Groq candidate models exhausted — falling back to rich local evaluation.');
+  return buildFallbackAssessment(testRun, problem, 'api_error');
 }
