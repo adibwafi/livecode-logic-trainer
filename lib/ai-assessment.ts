@@ -127,7 +127,6 @@ Instructions:
 2. Provide a list of specific issues/errors detected. If no issues, provide an empty array [].
 3. Provide actionable best practices (3-5 points) specific to this problem.
 4. Evaluate if the candidate answered the bonus conceptual question in their code comments.
-5. Provide the ideal clean solution in the "idealSolution" field.
 
 Return ONLY a single valid JSON object matching this EXACT structure with no extra markdown formatting outside JSON:
 {
@@ -138,8 +137,7 @@ Return ONLY a single valid JSON object matching this EXACT structure with no ext
   "bestPractices": ["<list of actionable best practice recommendations>"],
   "edgeCasesPassed": ["<list of edge cases correctly handled>"],
   "edgeCasesMissed": ["<list of edge cases missed>"],
-  "bonusEvaluation": "<detailed assessment of the candidate's answer regarding the bonus question>",
-  "idealSolution": "<the complete ideal clean solution in JavaScript>"
+  "bonusEvaluation": "<detailed assessment of the candidate's answer regarding the bonus question>"
 }
 `;
 }
@@ -234,10 +232,7 @@ export async function evaluateCodeWithAI(params: {
           typeof rawAssessment.bonusEvaluation === 'string' && rawAssessment.bonusEvaluation.trim()
             ? rawAssessment.bonusEvaluation
             : `Pertanyaan Bonus: ${problem.bonusQuestion}`,
-        idealSolution:
-          typeof rawAssessment.idealSolution === 'string' && rawAssessment.idealSolution.trim()
-            ? rawAssessment.idealSolution
-            : problem.idealSolution,
+        idealSolution: problem.idealSolution,
       };
 
       return assessment;
