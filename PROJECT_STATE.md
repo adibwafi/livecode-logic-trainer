@@ -13,12 +13,12 @@
 - **Styling**: Tailwind CSS v4 (`@import "tailwindcss"` in `globals.css`) with **Sana Labs Pure White Light Design System** — see §Design System below.
 - **Code Editor**: `@monaco-editor/react` (`antigravity-dark` obsidian theme based on `vs-dark`, JS syntax highlighting, `fontLigatures`, `cursorBlinking: smooth`, `smoothScrolling`).
 - **Markdown Rendering**: `react-markdown` with GFM support (`prose-zinc`).
-- **AI Assessment Engine**: `groq-sdk` calling model `llama-3.3-70b-versatile` with `response_format: { type: "json_object" }`. Features **automatic rate-limit fallback** (TPD exhaustion detection) — returns rich local evaluation instead of HTTP 500.
+- **AI Assessment Engine**: `groq-sdk` calling models dynamically (`GROQ_MODEL` or default `openai/gpt-oss-120b`, `qwen/qwen3.8-27b`, with seamless multi-model fallback) with `response_format: { type: "json_object" }`. Features **automatic rate-limit fallback** (TPD exhaustion detection) & model 404 recovery — returns rich local evaluation instead of HTTP 500.
 - **Audio Synthesizer Engine**: Web Audio API oscillator/gain node synth (`lib/soundFX.ts`) for offline, zero-dependency sound cues.
 - **SEO & Production Readiness**: Complete Next.js 16 Metadata (`title`, `description`, `keywords`, `openGraph`, `twitter`, `icons`) and separate `Viewport` configuration (`themeColor: "#ffffff"`).
 - **Database / Storage**: **NONE (Strictly In-Memory)**. Seed data and session states use JavaScript objects/arrays.
 - **Visual FX**: `canvas-confetti` on successful assessment pass (violet/emerald palette).
-- **Environment Config**: `GROQ_API_KEY` defined in `.env.local` (ignored by git).
+- **Environment Config**: `GROQ_API_KEY` and optional `GROQ_MODEL` defined in `.env.local` (ignored by git).
 
 ---
 
