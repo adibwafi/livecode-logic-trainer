@@ -147,7 +147,7 @@ livecode-logic-trainer/
 ## 4. CURRENT IMPLEMENTATION STATE & DATA FLOW
 
 ### Built Modules & Active Features
-1. **Landing / Problem Discovery (`app/page.tsx`)**: Filterable catalog of **12 focused problems** (Mid-Level JavaScript Problem Solving & REST API Logic).
+1. **Landing / Problem Discovery (`app/page.tsx`)**: Filterable catalog of **15 focused problems** (Mid-Level JavaScript Problem Solving & REST API Logic).
 2. **Problem Seed Catalog (`lib/problems.ts`)**:
    - `voucher-redemption`: E-commerce Voucher Redemption API (Backend • Mid-Level • 20m)
    - `electronics-shop`: 🛒 HackerRank: Electronics Shop (Optimal Budget Purchasing) (Full Stack • Mid-Level • 20m)
@@ -161,7 +161,10 @@ livecode-logic-trainer/
    - `happyfresh-slot-reservation`: 🚚 HappyFresh: Delivery Slot Reservation & Anti-Overbooking (Backend • Mid-Level • 20m)
    - `happyfresh-item-substitution`: 🥦 HappyFresh: Picker Item Substitution Scoring Engine (Frontend • Mid-Level • 20m)
    - `catalog-search-pagination`: 🔍 E-commerce: Multi-Field Search & Pagination Engine (Full Stack • Mid-Level • 20m)
-   - *Enhancement*: All 12 problems include dynamic `hints`, `bestPractices`, `bonusRubric`, and benchmark-tested `idealSolution`.
+   - `html-tag-validator`: 🌐 HackerRank: HTML5 Tag Hierarchy & Structure Validator (Frontend • Mid-Level • 20m • Astra International)
+   - `climbing-the-leaderboard`: 🏆 HackerRank: Climbing the Leaderboard (Dense Ranking) (Full Stack • Mid-Level • 20m • Astra International)
+   - `fleet-schedule-merger`: 🚗 HackerRank: Vehicle Fleet Maintenance Slots (Merge Intervals) (Full Stack • Mid-Level • 20m • Astra International)
+   - *Enhancement*: All 15 problems include dynamic `hints`, `bestPractices`, `bonusRubric`, and benchmark-tested `idealSolution`.
 3. **Standalone Case Studies & Automated Unit Tests (`challenges/`)**:
    - `challenges/01-cart-promo-engine`: `README.md`, `index.ts`, `index.test.ts` (Jest)
    - `challenges/02-delivery-slot-reservation`: `README.md`, `index.ts`, `index.test.ts` (Jest)

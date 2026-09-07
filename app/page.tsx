@@ -73,6 +73,8 @@ export default function HomePage() {
   const roleFilters = [
     { key: 'ALL', label: t('allRoles') },
     { key: 'ProblemSolving', label: '⭐ HackerRank & Logic' },
+    { key: 'Astra', label: '🚗 Astra Track (3)' },
+    { key: 'Frontend', label: 'Frontend Engineer' },
     { key: 'Backend', label: 'Backend Engineer' },
     { key: 'Full Stack', label: 'Full Stack Engineer' },
     { key: 'HappyFresh', label: '🥑 HappyFresh Track (3)' },
@@ -81,7 +83,9 @@ export default function HomePage() {
   const filteredProblems = selectedRole === 'ALL'
     ? PROBLEMS
     : selectedRole === 'ProblemSolving'
-    ? PROBLEMS.filter((p) => p.id === 'electronics-shop' || p.category.toLowerCase().includes('problem solving') || p.category.toLowerCase().includes('algoritma'))
+    ? PROBLEMS.filter((p) => p.badge?.includes('HackerRank') || p.category.toLowerCase().includes('problem solving') || p.category.toLowerCase().includes('algoritma'))
+    : selectedRole === 'Astra'
+    ? PROBLEMS.filter((p) => p.company === 'Astra International')
     : selectedRole === 'HappyFresh'
     ? PROBLEMS.filter((p) => p.company === 'HappyFresh')
     : PROBLEMS.filter((p) => p.role.toLowerCase().includes(selectedRole.toLowerCase()));
@@ -232,6 +236,7 @@ export default function HomePage() {
               animate="show"
             >
               {paginatedProblems.map((prob) => {
+                const isAstra = prob.company === 'Astra International';
                 const isHappyFresh = prob.company === 'HappyFresh';
                 const isHackerRank = prob.id === 'electronics-shop' || prob.badge?.includes('HackerRank');
                 return (
@@ -240,7 +245,9 @@ export default function HomePage() {
                     variants={cardVariants}
                     layout
                     className={`group relative rounded-2xl p-6 flex flex-col justify-between glass-card transition-all duration-200 overflow-hidden ${
-                      isHackerRank
+                      isAstra
+                        ? 'bg-gradient-to-b from-blue-500/[0.03] to-white border-2 border-blue-400/80 shadow-sm hover:shadow-md hover:border-blue-500 ring-2 ring-blue-500/10'
+                        : isHackerRank
                         ? 'bg-gradient-to-b from-amber-500/[0.03] to-white border-2 border-amber-400/80 shadow-sm hover:shadow-md hover:border-amber-500 ring-2 ring-amber-500/10'
                         : isHappyFresh
                         ? 'bg-gradient-to-b from-emerald-500/[0.03] to-white border-2 border-emerald-400/80 shadow-sm hover:shadow-md hover:border-emerald-500 ring-2 ring-emerald-500/10'
@@ -250,7 +257,18 @@ export default function HomePage() {
 
                     <div className="space-y-4 relative">
                       {/* Special Top Tag */}
-                      {isHackerRank && (
+                      {isAstra && (
+                        <div className="flex items-center justify-between pb-0.5">
+                          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold tracking-wide uppercase bg-blue-600 text-white shadow-xs">
+                            <Award className="w-3 h-3 text-blue-100" />
+                            Astra • HackerRank Screening
+                          </span>
+                          <span className="text-[11px] font-semibold text-blue-800 bg-blue-100/90 px-2.5 py-0.5 rounded-full border border-blue-300">
+                            ⭐ 5m Prep + 15m Code
+                          </span>
+                        </div>
+                      )}
+                      {isHackerRank && !isAstra && (
                         <div className="flex items-center justify-between pb-0.5">
                           <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold tracking-wide uppercase bg-amber-600 text-white shadow-xs">
                             <Award className="w-3 h-3 text-amber-100" />
@@ -277,7 +295,9 @@ export default function HomePage() {
                       <div className="flex items-center justify-between text-xs">
                         <div className="flex items-center gap-2">
                           <span className={`px-3 py-1 rounded-full border font-medium ${
-                            isHackerRank
+                            isAstra
+                              ? 'bg-blue-50 border-blue-200 text-blue-900 font-semibold'
+                              : isHackerRank
                               ? 'bg-amber-50 border-amber-200 text-amber-900 font-semibold'
                               : isHappyFresh
                               ? 'bg-emerald-50 border-emerald-200 text-emerald-900 font-semibold'

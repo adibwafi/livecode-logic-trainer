@@ -1631,5 +1631,493 @@ module.exports = { queryCatalog };`,
         }
       }
     ]
+  },
+
+  // ─── 13. HACKERRANK: HTML5 TAG HIERARCHY & STRUCTURE VALIDATOR ───────────────
+  {
+    id: "html-tag-validator",
+    title: "🌐 HackerRank: HTML5 Tag Hierarchy & Structure Validator",
+    role: "Frontend Engineer",
+    level: "Mid-Level",
+    timeLimit: 20,
+    category: "Problem Solving, Stack & HTML5 Parsing",
+    badge: "⭐ HackerRank LiveCode (20m)",
+    company: "Astra International",
+    description: `## 1. Problem Statement
+Di portal web enterprise Astra International (seperti CMS portal dealer Astra & Auto2000), developer sering memproses template string HTML5 dinamis dari sistem backend. Sebelum template disuntikkan ke tampilan DOM, sistem membutuhkan parser ringan untuk memvalidasi apakah susunan tag HTML5 terformat dengan benar dan bersarang secara sah.
+
+Implementasikan fungsi:
+\`\`\`javascript
+function validateHtmlStructure(htmlStr)
+\`\`\`
+
+> ⏱️ **Alokasi Waktu Live Coding (20 Menit)**:
+> - **5 Menit Pertama**: Memahami aturan Stack (LIFO), daftar void/self-closing tags, dan penanganan atribut.
+> - **15 Menit Koding**: Implementasi tokenisasi tag regex & validasi struktur stack.
+
+---
+
+## 2. Requirement & Aturan Validasi
+1. **Aturan Tag Berpasangan (LIFO Stack)**:
+   - Tag pembuka \`<tag>\` harus ditutup dengan tag penutup pasangannya \`</tag>\` dalam urutan yang benar (Last-In-First-Out).
+   - Contoh valid: \`<div><p><span>Teks</span></p></div>\` (Return \`true\`).
+   - Contoh tidak valid: \`<div><span>Teks</div></span>\` (Return \`false\`).
+2. **Penanganan Self-Closing / Void Tags**:
+   - Tag self-closing berformat \`<tag/>\` atau tag void standar HTML5 (\`img\`, \`br\`, \`hr\`, \`input\`, \`meta\`, \`link\`) tidak memerlukan tag penutup dan **tidak boleh merusak susunan stack**.
+   - Contoh valid: \`<div class="card"><h3>Judul</h3><img src="car.png"/><br/></div>\` (Return \`true\`).
+3. **Tag dengan Atribut**:
+   - Tag pembuka dapat memiliki atribut seperti \`<div id="hero" class="p-4">\`. Nama tag yang diekstrak adalah \`div\`.
+4. **Case-Insensitive**:
+   - Tag bersifat case-insensitive: \`<DIV>\` dan \`</div>\` dianggap cocok.
+5. **Edge Cases**:
+   - Jika string kosong atau hanya teks tanpa tag, kembalikan \`true\`.
+   - Jika ada tag penutup tanpa pembuka (contoh \`</div>\`) atau masih ada tag terbuka di akhir string, kembalikan \`false\`.
+
+---
+
+## 3. Contoh & Penjelasan
+
+### Contoh 1 (Valid):
+- Input: \`"<div><p><span>Astra Fleet</span></p></div>"\`
+- Output: \`true\`
+
+### Contoh 2 (Invalid Nesting):
+- Input: \`"<div><span>Astra</div></span>"\`
+- Output: \`false\` (Tag span belum ditutup saat div ditutup)
+
+### Contoh 3 (Self-Closing Valid):
+- Input: \`"<section><h1>Mobil</h1><img src='avanza.jpg'/><br/></section>"\`
+- Output: \`true\`
+`,
+    starterCode: `/**
+ * Validasi hierarki dan penutupan tag HTML5 menggunakan struktur data Stack.
+ *
+ * @param {string} htmlStr - String template HTML5
+ * @returns {boolean} - true jika hierarki tag valid, false jika tidak valid
+ */
+function validateHtmlStructure(htmlStr) {
+  // TODO: Tuliskan logika parser stack di sini
+  // Alokasi: 5 menit pahami aturan LIFO & self-closing, 15 menit livecoding!
+
+  return false;
+}
+
+module.exports = { validateHtmlStructure };`,
+    bonusQuestion: "Bagaimana cara mencegah celah keamanan XSS (Cross-Site Scripting) ketika merender template HTML dinamis di aplikasi Front End (React dangerouslySetInnerHTML vs DOMPurify)?",
+    bonusRubric: {
+      title: "Bonus: Sanitasi DOM & Keamanan XSS Front End",
+      subtitle: "Jelaskan strategi pertahanan XSS pada komentar kode Anda:",
+      points: [
+        "DOMPurify Sanitization: Gunakan pustaka DOMPurify untuk membersihkan elemen berbahaya (<script>, onload, onerror attributes) sebelum render.",
+        "React Built-in Escaping: React secara default meng-escape string JSX untuk mencegah penyusupan skrip berbahaya kecuali memakai dangerouslySetInnerHTML.",
+        "Content Security Policy (CSP): Terapkan HTTP header CSP untuk membatasi eksekusi inline script dari sumber tidak tepercaya."
+      ]
+    },
+    hints: [
+      "Inisialisasi array stack = [] untuk menyimpan nama-nama tag pembuka.",
+      "Gunakan Regular Expression /<(\\/?)([a-zA-Z0-9]+)([^>]*?)(\\/?)/g untuk menangkap setiap tag HTML.",
+      "Identifikasi apakah tag tersebut adalah tag penutup (/), self-closing (berakhiran / atau termasuk void tags seperti img, br, hr, input), atau tag pembuka biasa.",
+      "Jika tag pembuka biasa, push nama tag (toLowerCase) ke dalam stack.",
+      "Jika tag penutup, pop dari stack dan pastikan cocok dengan nama tag penutup. Jika stack kosong atau tidak cocok, return false.",
+      "Di akhir, return true jika stack.length === 0, false jika masih ada sisa tag yang belum tertutup."
+    ],
+    bestPractices: [
+      "Normalisasi nama tag menjadi lowercase (toLowerCase()) untuk menangani case-insensitivity standar HTML5.",
+      "Simpan daftar void elements standar HTML5 dalam Set untuk pencarian O(1).",
+      "Hindari manipulasi regex yang terlalu serakah (greedy) agar tidak menyebabkan ReDoS (Regular Expression Denial of Service)."
+    ],
+    idealSolution: `function validateHtmlStructure(htmlStr) {
+  if (!htmlStr || typeof htmlStr !== 'string') return true;
+
+  const stack = [];
+  const voidTags = new Set([
+    'area', 'base', 'br', 'col', 'embed', 'hr', 'img',
+    'input', 'link', 'meta', 'param', 'source', 'track', 'wbr'
+  ]);
+
+  // Regex menangkap: 1: penutup '/', 2: nama tag, 3: atribut, 4: self-closing '/'
+  const tagRegex = /<(\\/?)([a-zA-Z0-9]+)([^>]*?)(\\/?)>/g;
+
+  let match;
+  while ((match = tagRegex.exec(htmlStr)) !== null) {
+    const isClosing = match[1] === '/';
+    const tagName = match[2].toLowerCase();
+    const isSelfClosing = match[4] === '/' || voidTags.has(tagName);
+
+    if (isSelfClosing) {
+      if (isClosing) return false; // Sintaks tidak valid seperti </br/>
+      continue;
+    }
+
+    if (isClosing) {
+      if (stack.length === 0) return false;
+      const lastTag = stack.pop();
+      if (lastTag !== tagName) return false;
+    } else {
+      stack.push(tagName);
+    }
+  }
+
+  return stack.length === 0;
+}
+
+module.exports = { validateHtmlStructure };`,
+    testCases: [
+      {
+        id: "tc_valid_nested",
+        name: "Valid Nested HTML Hierarchy -> true",
+        input: { htmlStr: "<div><p><span>Astra Portal</span></p></div>" },
+        expectedOutput: true
+      },
+      {
+        id: "tc_mismatched_tags",
+        name: "Mismatched Tag Nesting -> false",
+        input: { htmlStr: "<div><span>Astra</div></span>" },
+        expectedOutput: false
+      },
+      {
+        id: "tc_self_closing",
+        name: "Self-Closing & Void Tags -> true",
+        input: { htmlStr: "<div class=\"hero\"><h1>Welcome</h1><img src=\"banner.jpg\"/><br/></div>" },
+        expectedOutput: true
+      },
+      {
+        id: "tc_unclosed_tag",
+        name: "Unclosed Tag at End of String -> false",
+        input: { htmlStr: "<section><div><p>Incomplete</p></div>" },
+        expectedOutput: false
+      },
+      {
+        id: "tc_case_insensitive",
+        name: "Case-Insensitive Tag Names -> true",
+        input: { htmlStr: "<DIV><p>Test</P></Div>" },
+        expectedOutput: true
+      }
+    ]
+  },
+
+  // ─── 14. HACKERRANK: CLIMBING THE LEADERBOARD (DENSE RANKING) ─────────────────
+  {
+    id: "climbing-the-leaderboard",
+    title: "🏆 HackerRank: Climbing the Leaderboard (Dense Ranking Engine)",
+    role: "Full Stack Engineer",
+    level: "Mid-Level",
+    timeLimit: 20,
+    category: "Problem Solving, Binary Search & Dense Ranking",
+    badge: "⭐ HackerRank LiveCode (20m)",
+    company: "Astra International",
+    description: `## 1. Problem Statement
+Sistem leaderboard gamifikasi penjualan kendaraan Astra International memantau performa sales dealer menggunakan metode **Dense Ranking**:
+- Skor tertinggi selalu mendapatkan peringkat **1** (Rank 1).
+- Skor yang bernilai sama mendapatkan nomor peringkat yang sama.
+- Skor berikutnya mendapatkan peringkat tepat di bawahnya (misal: skor \`[100, 90, 90, 80]\` berturut-turut berperingkat \`1, 2, 2, 3\`).
+
+Diberikan daftar skor awal leaderboard \`ranked\` (terurut menurun) dan daftar skor baru dari seorang sales \`player\` sepanjang beberapa ronde penilaian (terurut menaik). Tentukan peringkat \`player\` setelah setiap ronde!
+
+> ⏱️ **Alokasi Waktu Live Coding (20 Menit)**:
+> - **5 Menit Pertama**: Memahami aturan Dense Ranking & strategi Two Pointers O(N + M) vs Brute Force O(N*M).
+> - **15 Menit Koding**: Implementasi deduplikasi & linear scan dari bawah papan peringkat.
+
+---
+
+## 2. Function Description
+Lengkapi fungsi \`climbingLeaderboard\` berikut:
+
+\`\`\`javascript
+function climbingLeaderboard(ranked, player)
+\`\`\`
+
+### Parameter:
+- \`int ranked[n]\`: skor di leaderboard saat ini, terurut menurun (\`descending\`).
+- \`int player[m]\`: skor yang diraih player di setiap ronde, terurut menaik (\`ascending\`).
+
+### Return:
+- \`int[m]\`: array berisi nomor peringkat player setelah masing-masing skor di \`player\` dimasukkan.
+
+---
+
+## 3. Constraints & Optimasi Waktu ⚡
+- $N \\le 200.000$, $M \\le 200.000$
+- Peringkat harus dihitung secara efisien. Pendekatan **Brute Force nested loop $O(N \\times M)$ akan mengalami Time Limit Exceeded (TLE)** pada HackerRank test cases.
+- Solusi optimal: $O(N + M)$ menggunakan Two Pointers atau $O(M \\log N)$ menggunakan Binary Search.
+
+---
+
+## 4. Contoh & Penjelasan
+
+### Contoh 1:
+- \`ranked = [100, 100, 50, 40, 40, 20, 10]\`
+- \`player = [5, 25, 50, 120]\`
+- Skor unik leaderboard: \`[100 (rank 1), 50 (rank 2), 40 (rank 3), 20 (rank 4), 10 (rank 5)]\`
+- Ronde 1: skor \`5\` < 10 -> Peringkat **6**.
+- Ronde 2: skor \`25\` di antara 20 dan 40 -> Peringkat **4**.
+- Ronde 3: skor \`50\` sama dengan rank 2 -> Peringkat **2**.
+- Ronde 4: skor \`120\` > 100 -> Peringkat **1**.
+- Kembalikan: \`[6, 4, 2, 1]\`.
+`,
+    starterCode: `/**
+ * Menghitung dense ranking player di leaderboard secara optimal.
+ *
+ * @param {number[]} ranked - Array skor leaderboard (descending)
+ * @param {number[]} player - Array skor player per ronde (ascending)
+ * @returns {number[]} - Array nomor peringkat player per ronde
+ */
+function climbingLeaderboard(ranked, player) {
+  // TODO: Tuliskan logika dense ranking di sini
+  // Alokasi: 5 menit pahami deduplikasi & two pointers, 15 menit livecoding!
+
+  return [];
+}
+
+module.exports = { climbingLeaderboard };`,
+    bonusQuestion: "Mengapa pendekatan Two Pointers berjalan dari bawah leaderboard mencapai kompleksitas linear O(N + M) jika array player sudah terurut menaik?",
+    bonusRubric: {
+      title: "Bonus: Kompleksitas Linear O(N + M) Two Pointers",
+      subtitle: "Jelaskan argumen efisiensi Two Pointers pada komentar kode Anda:",
+      points: [
+        "Monotonic Progression: Karena skor player terurut menaik, peringkat player berikutnya dijamin sama atau lebih tinggi dari ronde sebelumnya.",
+        "Single Pass Pointer: Pointer leaderboard bergerak ke atas (i--) hanya satu kali sepanjang keseluruhan eksekusi, tidak pernah di-reset ke bawah.",
+        "Eliminasi Redundant Work: Menghindari O(N*M) worst case sehingga mampu memproses 200.000 data dalam hitungan milidetik."
+      ]
+    },
+    hints: [
+      "Langkah 1: Hilangkan duplikasi dari array ranked menggunakan Array.from(new Set(ranked)) untuk membentuk unique leaderboard.",
+      "Indeks unik tersebut langsung merepresentasikan ranking: indeks 0 adalah Rank 1, indeks 1 adalah Rank 2, dst.",
+      "Langkah 2: Karena player terurut menaik, posisikan pointer i di bagian terbawah unique leaderboard (i = uniqueRanked.length - 1).",
+      "Langkah 3: Untuk setiap score di player, geser pointer i ke atas (i--) selama i >= 0 dan score >= uniqueRanked[i].",
+      "Peringkat player adalah i + 2 jika score < uniqueRanked[i], atau 1 jika i < 0."
+    ],
+    bestPractices: [
+      "Gunakan Set untuk memangkas skor duplikat menjadi representasi dense rank O(N).",
+      "Manfaatkan sifat monotonik (sorted) dari array input untuk menghindari binary search berulang bila two pointers memungkinkan.",
+      "Gunakan alokasi array hasil yang tepat untuk meminimalkan overhead garbage collection."
+    ],
+    idealSolution: `function climbingLeaderboard(ranked, player) {
+  // 1. Buat array skor unik (Dense Ranking)
+  const uniqueRanked = Array.from(new Set(ranked));
+  const ranks = [];
+
+  // 2. Pointer berjalan dari peringkat terbawah
+  let i = uniqueRanked.length - 1;
+
+  // 3. Scan setiap skor player
+  for (const score of player) {
+    while (i >= 0 && score >= uniqueRanked[i]) {
+      i--;
+    }
+
+    if (i < 0) {
+      ranks.push(1);
+    } else {
+      ranks.push(i + 2);
+    }
+  }
+
+  return ranks;
+}
+
+module.exports = { climbingLeaderboard };`,
+    testCases: [
+      {
+        id: "tc_sample_0",
+        name: "HackerRank Sample 0: [5, 25, 50, 120] -> [6, 4, 2, 1]",
+        input: {
+          ranked: [100, 100, 50, 40, 40, 20, 10],
+          player: [5, 25, 50, 120]
+        },
+        expectedOutput: [6, 4, 2, 1]
+      },
+      {
+        id: "tc_sample_1",
+        name: "HackerRank Sample 1: [50, 65, 77, 90, 102] -> [6, 5, 4, 2, 1]",
+        input: {
+          ranked: [100, 90, 90, 80, 75, 60],
+          player: [50, 65, 77, 90, 102]
+        },
+        expectedOutput: [6, 5, 4, 2, 1]
+      },
+      {
+        id: "tc_exact_tie",
+        name: "Exact Ties: [80, 90, 100] -> [3, 2, 1]",
+        input: {
+          ranked: [100, 90, 80],
+          player: [80, 90, 100]
+        },
+        expectedOutput: [3, 2, 1]
+      },
+      {
+        id: "tc_all_lower",
+        name: "All Scores Lower Than Board -> [4, 4, 4]",
+        input: {
+          ranked: [50, 40, 30],
+          player: [5, 10, 20]
+        },
+        expectedOutput: [4, 4, 4]
+      }
+    ]
+  },
+
+  // ─── 15. HACKERRANK: VEHICLE FLEET MAINTENANCE SLOTS (MERGE INTERVALS) ───────
+  {
+    id: "fleet-schedule-merger",
+    title: "🚗 HackerRank: Vehicle Fleet Maintenance Slots (Merge Overlapping Intervals)",
+    role: "Full Stack Engineer",
+    level: "Mid-Level",
+    timeLimit: 20,
+    category: "Problem Solving, Greedy & Interval Scheduling",
+    badge: "⭐ HackerRank LiveCode (20m)",
+    company: "Astra International",
+    description: `## 1. Problem Statement
+Bengkel resmi Astra (Auto2000 & Astra Motor) mengelola pemeliharaan berkala armada operasional kendaraan (*fleet*). Berbagai permintaan reservasi servis masuk dengan rentang waktu \`[startTime, endTime]\`. Karena sering terjadi tumpang tindih waktu di fasilitas servis (pit-stop), sistem backend harus menggabungkan (**merge**) semua interval waktu yang saling bertabrakan atau bersentuhan menjadi rentang waktu servis yang kontinu tanpa overlap.
+
+Implementasikan fungsi:
+\`\`\`javascript
+function mergeServiceIntervals(intervals)
+\`\`\`
+
+> ⏱️ **Alokasi Waktu Live Coding (20 Menit)**:
+> - **5 Menit Pertama**: Memahami aturan pengurutan array interval O(N log N) dan kondisi overlap.
+> - **15 Menit Koding**: Implementasi sorting & greedy interval merge loop.
+
+---
+
+## 2. Requirement & Aturan Penggabungan
+1. **Format Input**:
+   - \`intervals\` adalah array 2 dimensi, di mana tiap elemen berisi pasangan \`[start, end]\` (bilangan bulat integer, \`start <= end\`).
+2. **Kondisi Overlap & Touching**:
+   - Jika dua interval \`[A, B]\` dan \`[C, D]\` memiliki kondisi \`C <= B\` (artinya saling tumpang tindih atau bersentuhan tepat di batas waktu yang sama), gabungkan menjadi \`[A, Math.max(B, D)]\`.
+   - Contoh bersentuhan: \`[9, 11]\` dan \`[11, 13]\` harus digabungkan menjadi \`[9, 13]\`.
+3. **Array Input Tidak Terurut**:
+   - Input tidak dijamin terurut. Anda harus mengurutkan (\`sort\`) interval berdasarkan waktu \`start\` secara menaik terlebih dahulu.
+4. **Format Output**:
+   - Kembalikan array 2 dimensi berisi interval hasil penggabungan, terurut dari waktu mulai paling awal.
+
+---
+
+## 3. Contoh & Penjelasan
+
+### Contoh 1:
+- Input: \`[[1, 3], [2, 6], [8, 10], [15, 18]]\`
+- Analisis: \`[1, 3]\` dan \`[2, 6]\` overlap -> \`[1, 6]\`.
+- Output: \`[[1, 6], [8, 10], [15, 18]]\`
+
+### Contoh 2 (Menyentuh Batas Jam):
+- Input: \`[[9, 11], [11, 13], [14, 16]]\`
+- Output: \`[[9, 13], [14, 16]]\`
+
+### Contoh 3 (Input Acak & Enclosing):
+- Input: \`[[14, 16], [9, 15], [10, 12]]\`
+- Terurut: \`[9, 15], [10, 12], [14, 16]\` -> Semuanya menyatu ke dalam \`[9, 16]\`.
+- Output: \`[[9, 16]]\`
+`,
+    starterCode: `/**
+ * Menggabungkan interval slot servis armada kendaraan yang saling tumpang tindih.
+ *
+ * @param {number[][]} intervals - Array pasangan [start, end]
+ * @returns {number[][]} - Array interval yang telah digabungkan
+ */
+function mergeServiceIntervals(intervals) {
+  // TODO: Tuliskan logika interval merger di sini
+  // Alokasi: 5 menit pahami aturan sorting & overlap, 15 menit livecoding!
+
+  return [];
+}
+
+module.exports = { mergeServiceIntervals };`,
+    bonusQuestion: "Bagaimana cara menangani format ISO 8601 DateTime string (misal: '2026-09-08T09:00:00Z') di JavaScript tanpa terkena masalah timezone offset saat membandingkan interval waktu?",
+    bonusRubric: {
+      title: "Bonus: Penanganan Timezone & Timestamp Epoch",
+      subtitle: "Jelaskan strategi perbandingan waktu yang aman pada komentar kode Anda:",
+      points: [
+        "Unix Timestamp Conversion: Konversi setiap ISO string ke epoch milliseconds menggunakan Date.parse(isoStr) atau getTime() untuk perbandingan numerik murni.",
+        "UTC Normalization: Selalu simpan dan olah waktu dalam standar UTC di backend untuk mencegah mismatch antara zona waktu server dan browser klien.",
+        "Timezone-Aware Libraries: Gunakan Luxon atau date-fns-tz jika diperlukan kalkulasi jadwal operasional berdasarkan jam lokal bengkel (WIB/WITA/WIT)."
+      ]
+    },
+    hints: [
+      "Lakukan guard clause: jika intervals kosong atau bukan array, kembalikan [].",
+      "Lakukan sorting immutable: const sorted = [...intervals].sort((a, b) => a[0] - b[0] || a[1] - b[1]).",
+      "Inisialisasi merged = [sorted[0]].",
+      "Iterasi elemen sorted mulai dari index 1. Ambil last = merged[merged.length - 1].",
+      "Jika current[0] <= last[1], maka ada overlap/touch: perbarui last[1] = Math.max(last[1], current[1]).",
+      "Jika tidak overlap, push current ke dalam array merged.",
+      "Kembalikan array merged di akhir fungsi."
+    ],
+    bestPractices: [
+      "Gunakan immutable copy [...intervals].sort() agar parameter asli tidak termutasi.",
+      "Gunakan Math.max(last[1], current[1]) untuk menangani kasus di mana interval kedua berada sepenuhnya di dalam interval pertama.",
+      "Pastikan boundary case (input kosong, 1 interval, atau interval yang sama) ditangani secara elegan."
+    ],
+    idealSolution: `function mergeServiceIntervals(intervals) {
+  if (!Array.isArray(intervals) || intervals.length === 0) {
+    return [];
+  }
+
+  // 1. Urutkan intervals berdasarkan waktu mulai (ascending)
+  const sorted = [...intervals].sort((a, b) => a[0] - b[0] || a[1] - b[1]);
+
+  const merged = [sorted[0]];
+
+  // 2. Iterasi dan gabungkan interval yang tumpang tindih
+  for (let i = 1; i < sorted.length; i++) {
+    const current = sorted[i];
+    const last = merged[merged.length - 1];
+
+    if (current[0] <= last[1]) {
+      // Overlap atau bersinggungan di batas waktu yang sama
+      last[1] = Math.max(last[1], current[1]);
+    } else {
+      // Tidak overlap, tambahkan interval baru
+      merged.push(current);
+    }
+  }
+
+  return merged;
+}
+
+module.exports = { mergeServiceIntervals };`,
+    testCases: [
+      {
+        id: "tc_standard_overlap",
+        name: "Standard Overlapping Intervals -> [[1,6], [8,10], [15,18]]",
+        input: {
+          intervals: [[1, 3], [2, 6], [8, 10], [15, 18]]
+        },
+        expectedOutput: [[1, 6], [8, 10], [15, 18]]
+      },
+      {
+        id: "tc_touching_boundary",
+        name: "Touching Boundary Times (9-11 & 11-13) -> [[9, 13]]",
+        input: {
+          intervals: [[9, 11], [11, 13]]
+        },
+        expectedOutput: [[9, 13]]
+      },
+      {
+        id: "tc_unsorted_input",
+        name: "Unsorted Random Order -> [[9, 12], [14, 16]]",
+        input: {
+          intervals: [[14, 16], [9, 11], [10, 12]]
+        },
+        expectedOutput: [[9, 12], [14, 16]]
+      },
+      {
+        id: "tc_complete_containment",
+        name: "Complete Containment -> [[1, 10]]",
+        input: {
+          intervals: [[1, 10], [2, 5], [4, 8]]
+        },
+        expectedOutput: [[1, 10]]
+      },
+      {
+        id: "tc_empty_and_single",
+        name: "Single Interval Unchanged -> [[5, 8]]",
+        input: {
+          intervals: [[5, 8]]
+        },
+        expectedOutput: [[5, 8]]
+      }
+    ]
   }
 ];
+

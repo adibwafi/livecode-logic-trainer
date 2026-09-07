@@ -51,8 +51,18 @@ export function runLocalTests(userCode: string): TestRunResult {
     const hasFindReconciledPairs = typeof exportsObj?.findReconciledPairs === 'function' || userCode.includes('findReconciledPairs');
     const hasDetectSpikes = typeof exportsObj?.detectSpikes === 'function' || userCode.includes('detectSpikes');
     const hasQueryCatalog = typeof exportsObj?.queryCatalog === 'function' || userCode.includes('queryCatalog');
+    const hasValidateHtml = typeof exportsObj?.validateHtmlStructure === 'function' || userCode.includes('validateHtmlStructure');
+    const hasClimbingLeaderboard = typeof exportsObj?.climbingLeaderboard === 'function' || userCode.includes('climbingLeaderboard');
+    const hasMergeIntervals = typeof exportsObj?.mergeServiceIntervals === 'function' || userCode.includes('mergeServiceIntervals');
 
-    const isPureFunction = hasGetMoneySpent || hasFindReconciledPairs || hasDetectSpikes || hasQueryCatalog;
+    const isPureFunction =
+      hasGetMoneySpent ||
+      hasFindReconciledPairs ||
+      hasDetectSpikes ||
+      hasQueryCatalog ||
+      hasValidateHtml ||
+      hasClimbingLeaderboard ||
+      hasMergeIntervals;
 
     if (activePaths.length === 0 && !isPureFunction) {
       return {
@@ -179,6 +189,102 @@ export function runLocalTests(userCode: string): TestRunResult {
         assert('tc_search_filter', 'Filter by Keyword & Category with Pagination', pass1, out1, `Expected 2 matching items`);
       } else {
         assert('err_fn_missing', 'queryCatalog Definition', false, undefined, 'function queryCatalog is not exported or defined.');
+      }
+    }
+
+    // ── 5. HTML5 Tag Hierarchy Validator (validateHtmlStructure) ────────────
+    if (hasValidateHtml) {
+      let fn = typeof exportsObj?.validateHtmlStructure === 'function' ? exportsObj.validateHtmlStructure : null;
+      if (!fn) {
+        try {
+          const evalFn = new Function(`${userCode}; return typeof validateHtmlStructure === 'function' ? validateHtmlStructure : null;`);
+          fn = evalFn();
+        } catch { /* ignore */ }
+      }
+
+      if (typeof fn === 'function') {
+        const out1 = fn("<div><p><span>Astra Portal</span></p></div>");
+        assert('tc_valid_nested', 'Valid Nested HTML Hierarchy -> true', out1 === true, out1, `Expected true, got ${out1}`);
+
+        const out2 = fn("<div><span>Astra</div></span>");
+        assert('tc_mismatched_tags', 'Mismatched Tag Nesting -> false', out2 === false, out2, `Expected false, got ${out2}`);
+
+        const out3 = fn('<div class="hero"><h1>Welcome</h1><img src="banner.jpg"/><br/></div>');
+        assert('tc_self_closing', 'Self-Closing & Void Tags -> true', out3 === true, out3, `Expected true, got ${out3}`);
+
+        const out4 = fn("<section><div><p>Incomplete</p></div>");
+        assert('tc_unclosed_tag', 'Unclosed Tag at End of String -> false', out4 === false, out4, `Expected false, got ${out4}`);
+
+        const out5 = fn("<DIV><p>Test</P></Div>");
+        assert('tc_case_insensitive', 'Case-Insensitive Tag Names -> true', out5 === true, out5, `Expected true, got ${out5}`);
+      } else {
+        assert('err_fn_missing', 'validateHtmlStructure Definition', false, undefined, 'function validateHtmlStructure is not exported or defined.');
+      }
+    }
+
+    // ── 6. Climbing the Leaderboard (climbingLeaderboard) ────────────────────
+    if (hasClimbingLeaderboard) {
+      let fn = typeof exportsObj?.climbingLeaderboard === 'function' ? exportsObj.climbingLeaderboard : null;
+      if (!fn) {
+        try {
+          const evalFn = new Function(`${userCode}; return typeof climbingLeaderboard === 'function' ? climbingLeaderboard : null;`);
+          fn = evalFn();
+        } catch { /* ignore */ }
+      }
+
+      if (typeof fn === 'function') {
+        const out1 = fn([100, 100, 50, 40, 40, 20, 10], [5, 25, 50, 120]);
+        const pass1 = JSON.stringify(out1) === JSON.stringify([6, 4, 2, 1]);
+        assert('tc_sample_0', 'HackerRank Sample 0: [5, 25, 50, 120] -> [6, 4, 2, 1]', pass1, out1, `Expected [6,4,2,1], got ${JSON.stringify(out1)}`);
+
+        const out2 = fn([100, 90, 90, 80, 75, 60], [50, 65, 77, 90, 102]);
+        const pass2 = JSON.stringify(out2) === JSON.stringify([6, 5, 4, 2, 1]);
+        assert('tc_sample_1', 'HackerRank Sample 1: [50, 65, 77, 90, 102] -> [6, 5, 4, 2, 1]', pass2, out2, `Expected [6,5,4,2,1], got ${JSON.stringify(out2)}`);
+
+        const out3 = fn([100, 90, 80], [80, 90, 100]);
+        const pass3 = JSON.stringify(out3) === JSON.stringify([3, 2, 1]);
+        assert('tc_exact_tie', 'Exact Ties: [80, 90, 100] -> [3, 2, 1]', pass3, out3, `Expected [3,2,1], got ${JSON.stringify(out3)}`);
+
+        const out4 = fn([50, 40, 30], [5, 10, 20]);
+        const pass4 = JSON.stringify(out4) === JSON.stringify([4, 4, 4]);
+        assert('tc_all_lower', 'All Scores Lower Than Board -> [4, 4, 4]', pass4, out4, `Expected [4,4,4], got ${JSON.stringify(out4)}`);
+      } else {
+        assert('err_fn_missing', 'climbingLeaderboard Definition', false, undefined, 'function climbingLeaderboard is not exported or defined.');
+      }
+    }
+
+    // ── 7. Vehicle Fleet Maintenance Slots (mergeServiceIntervals) ───────────
+    if (hasMergeIntervals) {
+      let fn = typeof exportsObj?.mergeServiceIntervals === 'function' ? exportsObj.mergeServiceIntervals : null;
+      if (!fn) {
+        try {
+          const evalFn = new Function(`${userCode}; return typeof mergeServiceIntervals === 'function' ? mergeServiceIntervals : null;`);
+          fn = evalFn();
+        } catch { /* ignore */ }
+      }
+
+      if (typeof fn === 'function') {
+        const out1 = fn([[1, 3], [2, 6], [8, 10], [15, 18]]);
+        const pass1 = JSON.stringify(out1) === JSON.stringify([[1, 6], [8, 10], [15, 18]]);
+        assert('tc_standard_overlap', 'Standard Overlapping Intervals -> [[1,6], [8,10], [15,18]]', pass1, out1, `Expected [[1,6],[8,10],[15,18]], got ${JSON.stringify(out1)}`);
+
+        const out2 = fn([[9, 11], [11, 13]]);
+        const pass2 = JSON.stringify(out2) === JSON.stringify([[9, 13]]);
+        assert('tc_touching_boundary', 'Touching Boundary Times (9-11 & 11-13) -> [[9, 13]]', pass2, out2, `Expected [[9,13]], got ${JSON.stringify(out2)}`);
+
+        const out3 = fn([[14, 16], [9, 11], [10, 12]]);
+        const pass3 = JSON.stringify(out3) === JSON.stringify([[9, 12], [14, 16]]);
+        assert('tc_unsorted_input', 'Unsorted Random Order -> [[9, 12], [14, 16]]', pass3, out3, `Expected [[9,12],[14,16]], got ${JSON.stringify(out3)}`);
+
+        const out4 = fn([[1, 10], [2, 5], [4, 8]]);
+        const pass4 = JSON.stringify(out4) === JSON.stringify([[1, 10]]);
+        assert('tc_complete_containment', 'Complete Containment -> [[1, 10]]', pass4, out4, `Expected [[1,10]], got ${JSON.stringify(out4)}`);
+
+        const out5 = fn([[5, 8]]);
+        const pass5 = JSON.stringify(out5) === JSON.stringify([[5, 8]]);
+        assert('tc_empty_and_single', 'Single Interval Unchanged -> [[5, 8]]', pass5, out5, `Expected [[5,8]], got ${JSON.stringify(out5)}`);
+      } else {
+        assert('err_fn_missing', 'mergeServiceIntervals Definition', false, undefined, 'function mergeServiceIntervals is not exported or defined.');
       }
     }
 
