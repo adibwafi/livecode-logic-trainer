@@ -2216,6 +2216,279 @@ module.exports = { buildNavigationTree };`,
         expectedOutput: []
       }
     ]
+  },
+
+  // ─── 16. HACKERRANK: POKEMON 1-151 DYNAMIC FETCHER & PAGINATION ──────────────
+  {
+    id: "pokemon-pagination-viewer",
+    title: "⚡ HackerRank: Pokemon 1-151 Dynamic Fetcher & Pagination (React useEffect)",
+    role: "Frontend Engineer",
+    level: "Mid-Level",
+    timeLimit: 20,
+    category: "React Hooks, Asynchronous Fetch & State Management",
+    badge: "⭐ Astra LiveCode (20m)",
+    company: "Astra International",
+    description: `## 1. Problem Statement
+Dalam sesi live coding technical interview posisi **Frontend Engineer (HTML5 / React)** di **Astra International** via platform **HackerRank**, Anda diminta mengimplementasikan komponen penampil data Pokemon (Generasi 1, ID 1 sampai 151) yang mem-fetch data dari REST API secara dinamis menggunakan React Hook \`useEffect\`.
+
+Ketika pengguna menekan tombol **"Next"** atau **"Before" (Previous)**, komponen harus mengubah parameter ID, memicu HTTP fetch baru secara otomatis, dan memperbarui tampilan UI (.tsx) tanpa reload halaman.
+
+\`\`\`
+[ ← Sebelum / Before ]    Pokemon #001: Bulbasaur    [ Berikutnya / Next → ]
+\`\`\`
+
+> ⏱️ **Alokasi Waktu Live Coding (20 Menit - Astra LiveCode)**:
+> - **5 Menit Pertama**: Memahami state machine (\`currentId\`, \`pokemon\`, \`loading\`, \`error\`) & boundary disable logic (ID 1 & ID 151).
+> - **15 Menit Koding**: Implementasi async fetcher, navigasi next/prev, dan mitigasi race condition menggunakan \`AbortController\`.
+
+---
+
+## 2. Requirement & Aturan Bisnis
+
+1. **Rentang ID & Initial State**:
+   - Rentang ID valid: **1 sampai 151** (Generasi 1).
+   - Nilai awal \`currentId\` adalah **\`1\`** (Bulbasaur).
+   - Saat inisialisasi / mount, panggil fetcher untuk ID 1.
+
+2. **Boundary Guards (Syarat Kelulusan Test Case HackerRank)**:
+   - **Tombol "Before" / "Previous"**:
+     - Mengurangi \`currentId\` sebesar 1.
+     - **Wajib DISABLED** (\`canGoPrev === false\`) jika \`currentId <= 1\` ATAU sedang \`loading === true\`.
+   - **Tombol "Next"**:
+     - Menambah \`currentId\` sebesar 1.
+     - **Wajib DISABLED** (\`canGoNext === false\`) jika \`currentId >= 151\` ATAU sedang \`loading === true\`.
+
+3. **Lifecycle & Asynchronous Fetch**:
+   - Setiap kali ID berubah, ubah \`loading = true\` dan \`error = null\`.
+   - Lakukan HTTP GET ke endpoint API: \`https://pokeapi.co/api/v2/pokemon/:id\`.
+   - Saat respons tiba, simpan data ke state dan ubah \`loading = false\`.
+   - Jika request gagal, set pesan error dan pastikan \`loading = false\`.
+
+4. **Pencegahan Race Condition (AbortController)**:
+   - Jika user menekan Next/Prev berkali-kali secara cepat, request sebelumnya yang masih *in-flight* harus dibatalkan (*aborted*) agar respons yang terlambat tidak menimpa data yang lebih baru.
+
+---
+
+## 3. Contoh Implementasi Komponen React (.tsx)
+
+\`\`\`tsx
+import React, { useState, useEffect } from 'react';
+
+export function PokemonViewer({ initialId = 1 }) {
+  const [currentId, setCurrentId] = useState(initialId);
+  const [pokemon, setPokemon] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    const { signal } = controller;
+
+    setLoading(true);
+    setError(null);
+
+    fetch(\`https://pokeapi.co/api/v2/pokemon/\${currentId}\`, { signal })
+      .then(res => {
+        if (!res.ok) throw new Error(\`Failed to fetch Pokemon #\${currentId}\`);
+        return res.json();
+      })
+      .then(data => {
+        setPokemon(data);
+        setLoading(false);
+      })
+      .catch(err => {
+        if (err.name === 'AbortError') return; // Abaikan jika sengaja dibatalkan
+        setError(err.message);
+        setLoading(false);
+      });
+
+    return () => controller.abort(); // Cleanup on ID change / unmount!
+  }, [currentId]);
+
+  return (
+    <div className="pokemon-card">
+      {loading && <p data-testid="loading">Loading...</p>}
+      {error && <p data-testid="error">{error}</p>}
+      {pokemon && !loading && (
+        <>
+          <img src={pokemon.sprites.front_default} alt={pokemon.name} />
+          <h2>#{pokemon.id} {pokemon.name}</h2>
+        </>
+      )}
+      <button 
+        data-testid="btn-prev" 
+        disabled={currentId <= 1 || loading}
+        onClick={() => setCurrentId(prev => Math.max(1, prev - 1))}
+      >
+        Before
+      </button>
+      <button 
+        data-testid="btn-next" 
+        disabled={currentId >= 151 || loading}
+        onClick={() => setCurrentId(prev => Math.min(151, prev + 1))}
+      >
+        Next
+      </button>
+    </div>
+  );
+}
+\`\`\`
+`,
+    starterCode: `/**
+ * Controller Logika Pagination & Dynamic Fetcher untuk HackerRank LiveCode
+ *
+ * @param {Object} options
+ * @param {number} [options.minId=1]
+ * @param {number} [options.maxId=151]
+ * @param {Function} options.fetcher - async (id, { signal }) => Promise<Pokemon>
+ */
+function createPokemonPaginationManager({ minId = 1, maxId = 151, fetcher } = {}) {
+  // TODO: Tuliskan controller state machine di sini
+  // 1. State: currentId, pokemon, loading, error
+  // 2. Bounds: canGoPrev (currentId > minId && !loading), canGoNext (currentId < maxId && !loading)
+  // 3. Batalkan request sebelumnya menggunakan AbortController jika ada fetch baru
+
+  return {
+    getState: () => ({
+      currentId: minId,
+      pokemon: null,
+      loading: false,
+      error: null,
+      canGoPrev: false,
+      canGoNext: true
+    }),
+    loadInitial: async () => {},
+    next: async () => {},
+    prev: async () => {},
+    goTo: async (id) => {}
+  };
+}
+
+module.exports = { createPokemonPaginationManager };`,
+    bonusQuestion: "Mengapa AbortController sangat krusial di dalam useEffect ketika user mengklik tombol Next/Previous secara beruntun, dan apa dampaknya jika tidak di-abort?",
+    bonusRubric: {
+      title: "Bonus: Race Condition & Memory Leak Prevention di Frontend",
+      subtitle: "Jelaskan aspek performa & kestabilan asynchronous pada komentar kode Anda:",
+      points: [
+        "Pencegahan Race Condition: Network response tidak terjamin datang berurutan (Network Jitter); request ID 2 bisa tiba setelah ID 3 jika tidak dibatalkan.",
+        "Pembersihan Sumber Daya: Menghentikan transmisi download payload data yang tidak lagi diperlukan browser.",
+        "Penanganan React StrictMode / Unmount: Menghindari state update pada komponen yang sudah tidak aktif (unmounted component warning)."
+      ]
+    },
+    hints: [
+      "Inisialisasi variabel internal: let currentId = minId, pokemon = null, loading = false, error = null, abortController = null.",
+      "Buat helper async loadPokemon(id): batalkan abortController aktif sebelumnya dengan abortController.abort(), lalu buat new AbortController().",
+      "Pada blok catch, periksa if (err.name === 'AbortError') return; agar request yang dibatalkan tidak dianggap error aplikasi.",
+      "Periksa guard pada method next(): hanya eksekusi jika currentId < maxId && !loading.",
+      "Periksa guard pada method prev(): hanya eksekusi jika currentId > minId && !loading."
+    ],
+    bestPractices: [
+      "Selalu gunakan AbortController pada setiap pemanggilan async fetch di dalam useEffect untuk mencegah race condition.",
+      "Pastikan tombol navigasi disabled secara otomatis saat loading agar user tidak mengirim spam request.",
+      "Gunakan Math.min dan Math.max untuk menjamin ID tidak pernah melompat keluar dari batas 1 - 151."
+    ],
+    idealSolution: `function createPokemonPaginationManager({ minId = 1, maxId = 151, fetcher } = {}) {
+  let currentId = minId;
+  let pokemon = null;
+  let loading = false;
+  let error = null;
+  let activeAbortController = null;
+
+  async function loadPokemon(id) {
+    if (id < minId || id > maxId) {
+      error = \`ID Pokemon harus di antara \${minId} dan \${maxId}\`;
+      return;
+    }
+
+    if (activeAbortController) {
+      activeAbortController.abort();
+    }
+    activeAbortController = new AbortController();
+    const signal = activeAbortController.signal;
+
+    loading = true;
+    error = null;
+    currentId = id;
+
+    try {
+      const data = await fetcher(id, { signal });
+      if (!signal.aborted) {
+        pokemon = data;
+        loading = false;
+      }
+    } catch (err) {
+      if (err.name === 'AbortError') return;
+      if (!signal.aborted) {
+        error = err.message || 'Gagal mengambil data Pokemon';
+        pokemon = null;
+        loading = false;
+      }
+    }
+  }
+
+  return {
+    getState: () => ({
+      currentId,
+      pokemon,
+      loading,
+      error,
+      canGoPrev: currentId > minId && !loading,
+      canGoNext: currentId < maxId && !loading
+    }),
+    loadInitial: async () => {
+      await loadPokemon(minId);
+    },
+    next: async () => {
+      if (currentId < maxId && !loading) {
+        await loadPokemon(currentId + 1);
+      }
+    },
+    prev: async () => {
+      if (currentId > minId && !loading) {
+        await loadPokemon(currentId - 1);
+      }
+    },
+    goTo: async (targetId) => {
+      if (targetId >= minId && targetId <= maxId && !loading) {
+        await loadPokemon(targetId);
+      }
+    }
+  };
+}
+
+module.exports = { createPokemonPaginationManager };`,
+    testCases: [
+      {
+        id: "tc_initial_state",
+        name: "Initial Load: Memuat ID 1 (Bulbasaur) & canGoPrev disabled",
+        input: { action: "loadInitial" },
+        expectedOutput: { currentId: 1, name: "bulbasaur", canGoPrev: false, canGoNext: true }
+      },
+      {
+        id: "tc_next_navigation",
+        name: "Next Navigation: Berpindah ke ID 2 & canGoPrev aktif",
+        input: { action: "next" },
+        expectedOutput: { currentId: 2, name: "ivysaur", canGoPrev: true, canGoNext: true }
+      },
+      {
+        id: "tc_prev_navigation",
+        name: "Prev Navigation: Kembali ke ID 1 & canGoPrev kembali nonaktif",
+        input: { action: "prev" },
+        expectedOutput: { currentId: 1, name: "bulbasaur", canGoPrev: false, canGoNext: true }
+      },
+      {
+        id: "tc_upper_boundary",
+        name: "Upper Boundary: Pada ID 151 (Mew) canGoNext wajib disabled",
+        input: { action: "goTo", targetId: 151 },
+        expectedOutput: { currentId: 151, name: "mew", canGoPrev: true, canGoNext: false }
+      },
+      {
+        id: "tc_error_resiliency",
+        name: "Error Resiliency: Menangani HTTP 500 error tanpa crash",
+        input: { action: "triggerError" },
+        expectedOutput: { hasError: true, loading: false }
+      }
+    ]
   }
 ];
 

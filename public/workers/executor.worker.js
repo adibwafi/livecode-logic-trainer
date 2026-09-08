@@ -105,7 +105,7 @@ function simulateRequest(handler, body, headers) {
 
 // ── Problem-specific test suites ─────────────────────────────────────────────
 
-function runProblemTests(postRoutes, exportsObj, userCode) {
+async function runProblemTests(postRoutes, exportsObj, userCode) {
   const results = [];
 
   function assert(id, name, cond, actualStatus, errorMsg) {
@@ -327,21 +327,22 @@ function runProblemTests(postRoutes, exportsObj, userCode) {
     }
 
     if (typeof fn === 'function') {
-      const originalSetTimeout = self.setTimeout;
-      const originalClearTimeout = self.clearTimeout;
+      const globalScope = typeof globalThis !== 'undefined' ? globalThis : self;
+      const originalSetTimeout = globalScope.setTimeout;
+      const originalClearTimeout = globalScope.clearTimeout;
 
       try {
         let virtualTime = 0;
         let timerCounter = 1;
         const timers = new Map();
 
-        self.setTimeout = (callback, delay = 0) => {
+        globalScope.setTimeout = (callback, delay = 0) => {
           const id = timerCounter++;
           timers.set(id, { callback, due: virtualTime + delay });
           return id;
         };
 
-        self.clearTimeout = (id) => {
+        globalScope.clearTimeout = (id) => {
           timers.delete(id);
         };
 
@@ -423,8 +424,8 @@ function runProblemTests(postRoutes, exportsObj, userCode) {
         );
 
       } finally {
-        self.setTimeout = originalSetTimeout;
-        self.clearTimeout = originalClearTimeout;
+        globalScope.setTimeout = originalSetTimeout;
+        globalScope.clearTimeout = originalClearTimeout;
       }
     } else {
       assert('err_fn_missing', 'createDebounce Definition', false, undefined, 'function createDebounce is not exported or defined.');
@@ -490,6 +491,73 @@ function runProblemTests(postRoutes, exportsObj, userCode) {
       assert('tc_empty_input', 'Edge Case: Input kosong menghasilkan array kosong []', pass4, out4, 'Expected [] for empty input');
     } else {
       assert('err_fn_missing', 'buildNavigationTree Definition', false, undefined, 'function buildNavigationTree is not exported or defined.');
+    }
+  }
+
+  // ── Pokemon 1-151 Dynamic Fetcher & Pagination (createPokemonPaginationManager) ──
+  const hasPokemonPagination = typeof exportsObj?.createPokemonPaginationManager === 'function' || (userCode && userCode.includes('createPokemonPaginationManager'));
+  if (hasPokemonPagination) {
+    let factory = typeof exportsObj?.createPokemonPaginationManager === 'function'
+      ? exportsObj.createPokemonPaginationManager
+      : null;
+    if (!factory) {
+      try {
+        const evalFn = new Function(`${userCode}; return typeof createPokemonPaginationManager === 'function' ? createPokemonPaginationManager : null;`);
+        factory = evalFn();
+      } catch { /* ignore */ }
+    }
+
+    if (typeof factory === 'function') {
+      const mockPokedex = {
+        1: { id: 1, name: 'bulbasaur', types: ['grass'] },
+        2: { id: 2, name: 'ivysaur', types: ['grass'] },
+        151: { id: 151, name: 'mew', types: ['psychic'] }
+      };
+
+      const mockFetcher = async (id, options) => {
+        if (options?.signal?.aborted) {
+          const err = new Error('Aborted');
+          err.name = 'AbortError';
+          throw err;
+        }
+        if (mockPokedex[id]) return mockPokedex[id];
+        return { id, name: `pokemon-${id}` };
+      };
+
+      // Test Case 1: Initial Load
+      const mgr1 = factory({ minId: 1, maxId: 151, fetcher: mockFetcher });
+      if (typeof mgr1.loadInitial === 'function') await mgr1.loadInitial();
+      const st1 = mgr1.getState();
+      const pass1 = st1?.currentId === 1 && st1?.pokemon?.name === 'bulbasaur' && st1?.canGoPrev === false && st1?.canGoNext === true;
+      assert('tc_initial_state', 'Initial Load: Memuat ID 1 (Bulbasaur) & canGoPrev disabled', pass1, st1?.currentId, `Expected ID 1 with canGoPrev=false, got ID ${st1?.currentId}`);
+
+      // Test Case 2: Next Navigation
+      if (typeof mgr1.next === 'function') await mgr1.next();
+      const st2 = mgr1.getState();
+      const pass2 = st2?.currentId === 2 && st2?.pokemon?.name === 'ivysaur' && st2?.canGoPrev === true;
+      assert('tc_next_navigation', 'Next Navigation: Berpindah ke ID 2 & canGoPrev aktif', pass2, st2?.currentId, `Expected ID 2 with canGoPrev=true, got ID ${st2?.currentId}`);
+
+      // Test Case 3: Prev Navigation
+      if (typeof mgr1.prev === 'function') await mgr1.prev();
+      const st3 = mgr1.getState();
+      const pass3 = st3?.currentId === 1 && st3?.pokemon?.name === 'bulbasaur' && st3?.canGoPrev === false;
+      assert('tc_prev_navigation', 'Prev Navigation: Kembali ke ID 1 & canGoPrev kembali nonaktif', pass3, st3?.currentId, `Expected ID 1 with canGoPrev=false, got ID ${st3?.currentId}`);
+
+      // Test Case 4: Upper Boundary
+      if (typeof mgr1.goTo === 'function') await mgr1.goTo(151);
+      const st4 = mgr1.getState();
+      const pass4 = st4?.currentId === 151 && st4?.canGoNext === false;
+      assert('tc_upper_boundary', 'Upper Boundary: Pada ID 151 (Mew) canGoNext wajib disabled', pass4, st4?.currentId, `Expected ID 151 with canGoNext=false, got ID ${st4?.currentId}`);
+
+      // Test Case 5: Error Resiliency
+      const failingFetcher = async () => { throw new Error('HTTP 500 Network Error'); };
+      const mgrFail = factory({ minId: 1, maxId: 151, fetcher: failingFetcher });
+      if (typeof mgrFail.loadInitial === 'function') await mgrFail.loadInitial();
+      const stFail = mgrFail.getState();
+      const pass5 = stFail?.loading === false && Boolean(stFail?.error);
+      assert('tc_error_resiliency', 'Error Resiliency: Menangani HTTP 500 error tanpa crash', pass5, stFail?.error, 'Expected state.error to be set and loading to be false');
+    } else {
+      assert('err_fn_missing', 'createPokemonPaginationManager Definition', false, undefined, 'function createPokemonPaginationManager is not exported or defined.');
     }
   }
 
@@ -603,7 +671,7 @@ function runProblemTests(postRoutes, exportsObj, userCode) {
 
 // ── Main test runner ──────────────────────────────────────────────────────────
 
-function runTests(code) {
+async function runTests(code) {
   const logs = [];
 
   try {
@@ -620,6 +688,7 @@ function runTests(code) {
       typeof exportsObj?.buildNavigationTree === 'function' ||
       typeof exportsObj?.climbingLeaderboard === 'function' ||
       typeof exportsObj?.mergeServiceIntervals === 'function' ||
+      typeof exportsObj?.createPokemonPaginationManager === 'function' ||
       code.includes('getMoneySpent') ||
       code.includes('findReconciledPairs') ||
       code.includes('detectSpikes') ||
@@ -628,7 +697,8 @@ function runTests(code) {
       code.includes('createDebounce') ||
       code.includes('buildNavigationTree') ||
       code.includes('climbingLeaderboard') ||
-      code.includes('mergeServiceIntervals');
+      code.includes('mergeServiceIntervals') ||
+      code.includes('createPokemonPaginationManager');
 
     if (activePaths.length === 0 && !hasPureFn) {
       return {
@@ -644,7 +714,7 @@ function runTests(code) {
       };
     }
 
-    const results = runProblemTests(postRoutes, exportsObj, code);
+    const results = await runProblemTests(postRoutes, exportsObj, code);
     const passedCount = results.filter(r => r.passed).length;
 
     logs.push(`[Worker] Execution complete. ${passedCount}/${results.length} passed.`);
@@ -668,14 +738,14 @@ function runTests(code) {
 
 // ── Message Handler ───────────────────────────────────────────────────────────
 
-self.onmessage = (event) => {
+self.onmessage = async (event) => {
   const { type, payload } = event.data;
 
   if (type === 'RUN') {
     resetWatchdog();
 
     try {
-      const testResult = runTests(payload.code);
+      const testResult = await runTests(payload.code);
       clearTimeout(watchdog);
       self.postMessage({ type: 'RESULT', payload: testResult });
     } catch (err) {

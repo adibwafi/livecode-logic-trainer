@@ -38,7 +38,7 @@ export async function POST(req: NextRequest) {
     const problem = PROBLEMS.find((p) => p.id === problemId) || PROBLEMS[0];
 
     // 3. Isolated Unit Test Execution
-    const testRun = runLocalTests(userCode);
+    const testRun = await runLocalTests(userCode);
 
     // 4. AI Deep Assessment with Fallback
     const assessment = await evaluateCodeWithAI({

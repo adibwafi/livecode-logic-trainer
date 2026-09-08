@@ -1,6 +1,6 @@
 import Groq from 'groq-sdk';
 import { runLocalTests } from './evaluator';
-import { AssessmentResult, Problem, TestRunResult } from './types';
+import { AssessmentResult, Problem, TestRunResult, TestResultItem } from './types';
 
 /**
  * Checks whether a Groq API error is a daily token rate limit error (TPD exhausted).
@@ -8,9 +8,8 @@ import { AssessmentResult, Problem, TestRunResult } from './types';
 export function isRateLimitError(error: unknown): boolean {
   if (!error) return false;
   const msg = error instanceof Error ? error.message : String(error);
-  const status = (error as { status?: number }).status;
   return (
-    status === 429 ||
+    msg.includes('429') ||
     msg.toLowerCase().includes('rate limit') ||
     msg.toLowerCase().includes('tokens per day') ||
     msg.toLowerCase().includes('tpd')
@@ -21,7 +20,7 @@ export function isRateLimitError(error: unknown): boolean {
  * Generates dynamic best practice hints based on problem definition and test outcomes.
  */
 function generateBestPractices(
-  failedTests: ReturnType<typeof runLocalTests>['results'],
+  failedTests: TestResultItem[],
   problem: Problem
 ): string[] {
   const list: string[] = [];

@@ -158,8 +158,8 @@ export default function ProblemSessionPage() {
         setTimeout(() => playErrorSound(), 120);
       }
     } catch {
-      // Worker failed — fallback to synchronous evaluator
-      const res = runLocalTests(code);
+      // Worker failed — fallback to evaluator
+      const res = await runLocalTests(code);
       setTestRun(res);
       if (res.passedCount === res.totalCount && res.totalCount > 0) {
         setTimeout(() => playSuccessSound(), 120);

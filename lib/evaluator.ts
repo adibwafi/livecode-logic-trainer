@@ -4,7 +4,7 @@ import { TestRunResult, TestResultItem } from './types';
 /**
  * Isolated unit test runner for JavaScript Live Coding Problem Solving & REST API Logic.
  */
-export function runLocalTests(userCode: string): TestRunResult {
+export async function runLocalTests(userCode: string): Promise<TestRunResult> {
   const logs: string[] = [];
   const results: TestResultItem[] = [];
 
@@ -56,6 +56,7 @@ export function runLocalTests(userCode: string): TestRunResult {
     const hasNavigationTree = typeof exportsObj?.buildNavigationTree === 'function' || userCode.includes('buildNavigationTree');
     const hasClimbingLeaderboard = typeof exportsObj?.climbingLeaderboard === 'function' || userCode.includes('climbingLeaderboard');
     const hasMergeIntervals = typeof exportsObj?.mergeServiceIntervals === 'function' || userCode.includes('mergeServiceIntervals');
+    const hasPokemonPagination = typeof exportsObj?.createPokemonPaginationManager === 'function' || userCode.includes('createPokemonPaginationManager');
 
     const isPureFunction =
       hasGetMoneySpent ||
@@ -66,7 +67,8 @@ export function runLocalTests(userCode: string): TestRunResult {
       hasDebounce ||
       hasNavigationTree ||
       hasClimbingLeaderboard ||
-      hasMergeIntervals;
+      hasMergeIntervals ||
+      hasPokemonPagination;
 
     if (activePaths.length === 0 && !isPureFunction) {
       return {
@@ -469,6 +471,72 @@ export function runLocalTests(userCode: string): TestRunResult {
         assert('tc_empty_input', 'Edge Case: Input kosong menghasilkan array kosong []', pass4, out4, 'Expected [] for empty input');
       } else {
         assert('err_fn_missing', 'buildNavigationTree Definition', false, undefined, 'function buildNavigationTree is not exported or defined.');
+      }
+    }
+
+    // ── 10. Pokemon 1-151 Dynamic Fetcher & Pagination (createPokemonPaginationManager)
+    if (hasPokemonPagination) {
+      let factory = typeof exportsObj?.createPokemonPaginationManager === 'function'
+        ? exportsObj.createPokemonPaginationManager
+        : null;
+      if (!factory) {
+        try {
+          const evalFn = new Function(`${userCode}; return typeof createPokemonPaginationManager === 'function' ? createPokemonPaginationManager : null;`);
+          factory = evalFn();
+        } catch { /* ignore */ }
+      }
+
+      if (typeof factory === 'function') {
+        const mockPokedex: Record<number, any> = {
+          1: { id: 1, name: 'bulbasaur', types: ['grass'] },
+          2: { id: 2, name: 'ivysaur', types: ['grass'] },
+          151: { id: 151, name: 'mew', types: ['psychic'] }
+        };
+
+        const mockFetcher = async (id: number, options?: { signal?: AbortSignal }) => {
+          if (options?.signal?.aborted) {
+            const err = new Error('Aborted');
+            err.name = 'AbortError';
+            throw err;
+          }
+          if (mockPokedex[id]) return mockPokedex[id];
+          return { id, name: `pokemon-${id}` };
+        };
+
+        // Test Case 1: Initial Load
+        const mgr1 = factory({ minId: 1, maxId: 151, fetcher: mockFetcher });
+        if (typeof mgr1.loadInitial === 'function') await mgr1.loadInitial();
+        const st1 = mgr1.getState();
+        const pass1 = st1?.currentId === 1 && st1?.pokemon?.name === 'bulbasaur' && st1?.canGoPrev === false && st1?.canGoNext === true;
+        assert('tc_initial_state', 'Initial Load: Memuat ID 1 (Bulbasaur) & canGoPrev disabled', pass1, st1?.currentId, `Expected ID 1 with canGoPrev=false, got ID ${st1?.currentId}`);
+
+        // Test Case 2: Next Navigation
+        if (typeof mgr1.next === 'function') await mgr1.next();
+        const st2 = mgr1.getState();
+        const pass2 = st2?.currentId === 2 && st2?.pokemon?.name === 'ivysaur' && st2?.canGoPrev === true;
+        assert('tc_next_navigation', 'Next Navigation: Berpindah ke ID 2 & canGoPrev aktif', pass2, st2?.currentId, `Expected ID 2 with canGoPrev=true, got ID ${st2?.currentId}`);
+
+        // Test Case 3: Prev Navigation
+        if (typeof mgr1.prev === 'function') await mgr1.prev();
+        const st3 = mgr1.getState();
+        const pass3 = st3?.currentId === 1 && st3?.pokemon?.name === 'bulbasaur' && st3?.canGoPrev === false;
+        assert('tc_prev_navigation', 'Prev Navigation: Kembali ke ID 1 & canGoPrev kembali nonaktif', pass3, st3?.currentId, `Expected ID 1 with canGoPrev=false, got ID ${st3?.currentId}`);
+
+        // Test Case 4: Upper Boundary
+        if (typeof mgr1.goTo === 'function') await mgr1.goTo(151);
+        const st4 = mgr1.getState();
+        const pass4 = st4?.currentId === 151 && st4?.canGoNext === false;
+        assert('tc_upper_boundary', 'Upper Boundary: Pada ID 151 (Mew) canGoNext wajib disabled', pass4, st4?.currentId, `Expected ID 151 with canGoNext=false, got ID ${st4?.currentId}`);
+
+        // Test Case 5: Error Resiliency
+        const failingFetcher = async () => { throw new Error('HTTP 500 Network Error'); };
+        const mgrFail = factory({ minId: 1, maxId: 151, fetcher: failingFetcher });
+        if (typeof mgrFail.loadInitial === 'function') await mgrFail.loadInitial();
+        const stFail = mgrFail.getState();
+        const pass5 = stFail?.loading === false && Boolean(stFail?.error);
+        assert('tc_error_resiliency', 'Error Resiliency: Menangani HTTP 500 error tanpa crash', pass5, stFail?.error, 'Expected state.error to be set and loading to be false');
+      } else {
+        assert('err_fn_missing', 'createPokemonPaginationManager Definition', false, undefined, 'function createPokemonPaginationManager is not exported or defined.');
       }
     }
 
