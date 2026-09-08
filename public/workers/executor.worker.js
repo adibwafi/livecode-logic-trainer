@@ -315,6 +315,184 @@ function runProblemTests(postRoutes, exportsObj, userCode) {
     }
   }
 
+  // ── 7.5 Custom Debounce Engine (createDebounce) ───────────────────────────
+  const hasDebounce = typeof exportsObj?.createDebounce === 'function' || (userCode && userCode.includes('createDebounce'));
+  if (hasDebounce) {
+    let fn = typeof exportsObj?.createDebounce === 'function' ? exportsObj.createDebounce : null;
+    if (!fn) {
+      try {
+        const evalFn = new Function(`${userCode}; return typeof createDebounce === 'function' ? createDebounce : null;`);
+        fn = evalFn();
+      } catch { /* ignore */ }
+    }
+
+    if (typeof fn === 'function') {
+      const originalSetTimeout = self.setTimeout;
+      const originalClearTimeout = self.clearTimeout;
+
+      try {
+        let virtualTime = 0;
+        let timerCounter = 1;
+        const timers = new Map();
+
+        self.setTimeout = (callback, delay = 0) => {
+          const id = timerCounter++;
+          timers.set(id, { callback, due: virtualTime + delay });
+          return id;
+        };
+
+        self.clearTimeout = (id) => {
+          timers.delete(id);
+        };
+
+        const advanceTime = (ms) => {
+          virtualTime += ms;
+          const dueTimers = [];
+          for (const [id, t] of timers.entries()) {
+            if (t.due <= virtualTime) {
+              dueTimers.push({ id, callback: t.callback });
+            }
+          }
+          dueTimers.forEach(({ id, callback }) => {
+            timers.delete(id);
+            callback();
+          });
+        };
+
+        // Test Case 1: Trailing Edge Delay
+        let callCount = 0;
+        let lastArg = '';
+        const debouncedFn = fn((val) => {
+          callCount++;
+          lastArg = val;
+        }, 100);
+
+        debouncedFn('A');
+        debouncedFn('B');
+        debouncedFn('C');
+        advanceTime(50);
+        const passPending = callCount === 0;
+        advanceTime(60);
+        const passTrailing = callCount === 1 && lastArg === 'C';
+        assert(
+          'tc_delay_execution',
+          'Trailing Edge: Menunda eksekusi & meneruskan argumen terakhir',
+          passPending && passTrailing,
+          callCount,
+          `Expected 1 execution with 'C', got ${callCount} with '${lastArg}'`
+        );
+
+        // Test Case 2: Cancel Method
+        let cancelCount = 0;
+        const debouncedCancel = fn(() => { cancelCount++; }, 100);
+        debouncedCancel();
+        if (typeof debouncedCancel?.cancel === 'function') {
+          debouncedCancel.cancel();
+          advanceTime(150);
+          assert('tc_cancel_execution', 'Cancel Method: debounced.cancel() membatalkan eksekusi tertunda', cancelCount === 0, cancelCount, `Expected 0 executions after cancel(), got ${cancelCount}`);
+        } else {
+          assert('tc_cancel_execution', 'Cancel Method: debounced.cancel() membatalkan eksekusi tertunda', false, 0, 'debounced function does not have a .cancel() method');
+        }
+
+        // Test Case 3: Immediate Leading Edge
+        let immediateCount = 0;
+        const debouncedImm = fn(() => { immediateCount++; }, 100, true);
+        debouncedImm();
+        const passImmLeading = immediateCount === 1;
+        debouncedImm();
+        advanceTime(50);
+        debouncedImm();
+        const passImmSuppressed = immediateCount === 1;
+        assert(
+          'tc_immediate_leading',
+          'Immediate Leading Edge: Eksekusi instan di panggilan pertama',
+          passImmLeading && passImmSuppressed,
+          immediateCount,
+          `Expected leading edge immediate execution (count=1), got ${immediateCount}`
+        );
+
+        // Test Case 4: Immediate Re-trigger After Delay
+        advanceTime(120);
+        debouncedImm();
+        assert(
+          'tc_repeated_immediate',
+          'Immediate Re-trigger: Dapat dipanggil kembali setelah delay berlalu',
+          immediateCount === 2,
+          immediateCount,
+          `Expected 2 total executions after delay reset, got ${immediateCount}`
+        );
+
+      } finally {
+        self.setTimeout = originalSetTimeout;
+        self.clearTimeout = originalClearTimeout;
+      }
+    } else {
+      assert('err_fn_missing', 'createDebounce Definition', false, undefined, 'function createDebounce is not exported or defined.');
+    }
+  }
+
+  // ── 7.6 Multilevel Navigation Tree Builder (buildNavigationTree) ───────────
+  const hasNavigationTree = typeof exportsObj?.buildNavigationTree === 'function' || (userCode && userCode.includes('buildNavigationTree'));
+  if (hasNavigationTree) {
+    let fn = typeof exportsObj?.buildNavigationTree === 'function' ? exportsObj.buildNavigationTree : null;
+    if (!fn) {
+      try {
+        const evalFn = new Function(`${userCode}; return typeof buildNavigationTree === 'function' ? buildNavigationTree : null;`);
+        fn = evalFn();
+      } catch { /* ignore */ }
+    }
+
+    if (typeof fn === 'function') {
+      const sample1 = [
+        { id: "parent", parentId: null, title: "Dealer Astra", order: 1 },
+        { id: "child2", parentId: "parent", title: "Bengkel B", order: 2 },
+        { id: "child1", parentId: "parent", title: "Bengkel A", order: 1 }
+      ];
+      const out1 = fn(sample1);
+      const pass1 =
+        Array.isArray(out1) &&
+        out1.length === 1 &&
+        out1[0]?.id === 'parent' &&
+        Array.isArray(out1[0]?.children) &&
+        out1[0].children.length === 2 &&
+        out1[0].children[0]?.id === 'child1' &&
+        out1[0].children[1]?.id === 'child2';
+      assert('tc_single_hierarchy', 'Single Hierarchy: 1 Root dengan 2 Children terurut', pass1, out1, 'Expected parent with 2 ordered children (child1 then child2)');
+
+      const sample2 = [
+        { id: "cabang1", parentId: "dki", title: "Sunter", order: 1 },
+        { id: "root", parentId: null, title: "Portal Auto2000", order: 1 },
+        { id: "dki", parentId: "root", title: "Wilayah DKI", order: 1 }
+      ];
+      const out2 = fn(sample2);
+      const pass2 =
+        Array.isArray(out2) &&
+        out2.length === 1 &&
+        out2[0]?.id === 'root' &&
+        out2[0]?.children?.[0]?.id === 'dki' &&
+        out2[0]?.children?.[0]?.children?.[0]?.id === 'cabang1';
+      assert('tc_deep_nesting', 'Deep Nesting: 3 Tingkat Kedalaman (Root -> Wilayah -> Cabang)', pass2, out2, 'Expected 3-tier nested hierarchy: root -> dki -> cabang1');
+
+      const sample3 = [
+        { id: "menu2", parentId: null, title: "Layanan Servis", order: 2 },
+        { id: "menu1", parentId: null, title: "Katalog Mobil", order: 1 }
+      ];
+      const out3 = fn(sample3);
+      const pass3 =
+        Array.isArray(out3) &&
+        out3.length === 2 &&
+        out3[0]?.id === 'menu1' &&
+        out3[1]?.id === 'menu2';
+      assert('tc_multiple_roots', 'Multiple Roots: 2 Root Node terurut sesuai nilai order', pass3, out3, 'Expected roots sorted: menu1 (order 1), then menu2 (order 2)');
+
+      const out4 = fn([]);
+      const pass4 = Array.isArray(out4) && out4.length === 0;
+      assert('tc_empty_input', 'Edge Case: Input kosong menghasilkan array kosong []', pass4, out4, 'Expected [] for empty input');
+    } else {
+      assert('err_fn_missing', 'buildNavigationTree Definition', false, undefined, 'function buildNavigationTree is not exported or defined.');
+    }
+  }
+
   // ── 8. Voucher Redemption (/redeem) ──────────────────────────────────────
   if (postRoutes['/redeem']) {
     const h = postRoutes['/redeem'];
@@ -438,6 +616,8 @@ function runTests(code) {
       typeof exportsObj?.detectSpikes === 'function' ||
       typeof exportsObj?.queryCatalog === 'function' ||
       typeof exportsObj?.validateHtmlStructure === 'function' ||
+      typeof exportsObj?.createDebounce === 'function' ||
+      typeof exportsObj?.buildNavigationTree === 'function' ||
       typeof exportsObj?.climbingLeaderboard === 'function' ||
       typeof exportsObj?.mergeServiceIntervals === 'function' ||
       code.includes('getMoneySpent') ||
@@ -445,6 +625,8 @@ function runTests(code) {
       code.includes('detectSpikes') ||
       code.includes('queryCatalog') ||
       code.includes('validateHtmlStructure') ||
+      code.includes('createDebounce') ||
+      code.includes('buildNavigationTree') ||
       code.includes('climbingLeaderboard') ||
       code.includes('mergeServiceIntervals');
 

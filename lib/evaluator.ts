@@ -52,6 +52,8 @@ export function runLocalTests(userCode: string): TestRunResult {
     const hasDetectSpikes = typeof exportsObj?.detectSpikes === 'function' || userCode.includes('detectSpikes');
     const hasQueryCatalog = typeof exportsObj?.queryCatalog === 'function' || userCode.includes('queryCatalog');
     const hasValidateHtml = typeof exportsObj?.validateHtmlStructure === 'function' || userCode.includes('validateHtmlStructure');
+    const hasDebounce = typeof exportsObj?.createDebounce === 'function' || userCode.includes('createDebounce');
+    const hasNavigationTree = typeof exportsObj?.buildNavigationTree === 'function' || userCode.includes('buildNavigationTree');
     const hasClimbingLeaderboard = typeof exportsObj?.climbingLeaderboard === 'function' || userCode.includes('climbingLeaderboard');
     const hasMergeIntervals = typeof exportsObj?.mergeServiceIntervals === 'function' || userCode.includes('mergeServiceIntervals');
 
@@ -61,6 +63,8 @@ export function runLocalTests(userCode: string): TestRunResult {
       hasDetectSpikes ||
       hasQueryCatalog ||
       hasValidateHtml ||
+      hasDebounce ||
+      hasNavigationTree ||
       hasClimbingLeaderboard ||
       hasMergeIntervals;
 
@@ -285,6 +289,186 @@ export function runLocalTests(userCode: string): TestRunResult {
         assert('tc_empty_and_single', 'Single Interval Unchanged -> [[5, 8]]', pass5, out5, `Expected [[5,8]], got ${JSON.stringify(out5)}`);
       } else {
         assert('err_fn_missing', 'mergeServiceIntervals Definition', false, undefined, 'function mergeServiceIntervals is not exported or defined.');
+      }
+    }
+
+    // ── 8. Custom Debounce Engine (createDebounce) ───────────────────────────
+    if (hasDebounce) {
+      let fn = typeof exportsObj?.createDebounce === 'function' ? exportsObj.createDebounce : null;
+      if (!fn) {
+        try {
+          const evalFn = new Function(`${userCode}; return typeof createDebounce === 'function' ? createDebounce : null;`);
+          fn = evalFn();
+        } catch { /* ignore */ }
+      }
+
+      if (typeof fn === 'function') {
+        const originalSetTimeout = globalThis.setTimeout;
+        const originalClearTimeout = globalThis.clearTimeout;
+
+        try {
+          let virtualTime = 0;
+          let timerCounter = 1;
+          const timers = new Map<number, { callback: Function; due: number }>();
+
+          (globalThis as any).setTimeout = (callback: Function, delay: number = 0) => {
+            const id = timerCounter++;
+            timers.set(id, { callback, due: virtualTime + delay });
+            return id;
+          };
+
+          (globalThis as any).clearTimeout = (id: number) => {
+            timers.delete(id);
+          };
+
+          const advanceTime = (ms: number) => {
+            virtualTime += ms;
+            const dueTimers: { id: number; callback: Function }[] = [];
+            for (const [id, t] of timers.entries()) {
+              if (t.due <= virtualTime) {
+                dueTimers.push({ id, callback: t.callback });
+              }
+            }
+            dueTimers.forEach(({ id, callback }) => {
+              timers.delete(id);
+              callback();
+            });
+          };
+
+          // Test Case 1: Trailing Edge Delay & Last Argument
+          let callCount = 0;
+          let lastArg = '';
+          const debouncedFn = fn((val: string) => {
+            callCount++;
+            lastArg = val;
+          }, 100);
+
+          debouncedFn('A');
+          debouncedFn('B');
+          debouncedFn('C');
+          advanceTime(50);
+          const passPending = callCount === 0;
+          advanceTime(60);
+          const passTrailing = callCount === 1 && lastArg === 'C';
+          assert(
+            'tc_delay_execution',
+            'Trailing Edge: Menunda eksekusi & meneruskan argumen terakhir',
+            passPending && passTrailing,
+            { callCount, lastArg },
+            `Expected 1 execution with argument 'C', got ${callCount} with '${lastArg}'`
+          );
+
+          // Test Case 2: Cancel Method
+          let cancelCount = 0;
+          const debouncedCancel = fn(() => { cancelCount++; }, 100);
+          debouncedCancel();
+          if (typeof debouncedCancel.cancel === 'function') {
+            debouncedCancel.cancel();
+            advanceTime(150);
+            assert('tc_cancel_execution', 'Cancel Method: debounced.cancel() membatalkan eksekusi tertunda', cancelCount === 0, cancelCount, `Expected 0 executions after cancel(), got ${cancelCount}`);
+          } else {
+            assert('tc_cancel_execution', 'Cancel Method: debounced.cancel() membatalkan eksekusi tertunda', false, undefined, 'debounced function does not have a .cancel() method');
+          }
+
+          // Test Case 3: Immediate Leading Edge
+          let immediateCount = 0;
+          const debouncedImm = fn(() => { immediateCount++; }, 100, true);
+          debouncedImm();
+          const passImmLeading = immediateCount === 1;
+          debouncedImm();
+          advanceTime(50);
+          debouncedImm();
+          const passImmSuppressed = immediateCount === 1;
+          assert(
+            'tc_immediate_leading',
+            'Immediate Leading Edge: Eksekusi instan di panggilan pertama',
+            passImmLeading && passImmSuppressed,
+            { immediateCount },
+            `Expected leading edge immediate execution (count=1), got ${immediateCount}`
+          );
+
+          // Test Case 4: Immediate Re-trigger After Delay Expiry
+          advanceTime(120);
+          debouncedImm();
+          assert(
+            'tc_repeated_immediate',
+            'Immediate Re-trigger: Dapat dipanggil kembali setelah delay berlalu',
+            immediateCount === 2,
+            immediateCount,
+            `Expected 2 total executions after delay window reset, got ${immediateCount}`
+          );
+
+        } finally {
+          globalThis.setTimeout = originalSetTimeout;
+          globalThis.clearTimeout = originalClearTimeout;
+        }
+      } else {
+        assert('err_fn_missing', 'createDebounce Definition', false, undefined, 'function createDebounce is not exported or defined.');
+      }
+    }
+
+    // ── 9. Multilevel Navigation Tree Builder (buildNavigationTree) ───────────
+    if (hasNavigationTree) {
+      let fn = typeof exportsObj?.buildNavigationTree === 'function' ? exportsObj.buildNavigationTree : null;
+      if (!fn) {
+        try {
+          const evalFn = new Function(`${userCode}; return typeof buildNavigationTree === 'function' ? buildNavigationTree : null;`);
+          fn = evalFn();
+        } catch { /* ignore */ }
+      }
+
+      if (typeof fn === 'function') {
+        // Test Case 1: Single Hierarchy
+        const sample1 = [
+          { id: "parent", parentId: null, title: "Dealer Astra", order: 1 },
+          { id: "child2", parentId: "parent", title: "Bengkel B", order: 2 },
+          { id: "child1", parentId: "parent", title: "Bengkel A", order: 1 }
+        ];
+        const out1 = fn(sample1);
+        const pass1 =
+          Array.isArray(out1) &&
+          out1.length === 1 &&
+          out1[0]?.id === 'parent' &&
+          Array.isArray(out1[0]?.children) &&
+          out1[0].children.length === 2 &&
+          out1[0].children[0]?.id === 'child1' &&
+          out1[0].children[1]?.id === 'child2';
+        assert('tc_single_hierarchy', 'Single Hierarchy: 1 Root dengan 2 Children terurut', pass1, out1, 'Expected parent with 2 ordered children (child1 then child2)');
+
+        // Test Case 2: Deep Nesting (3 Levels)
+        const sample2 = [
+          { id: "cabang1", parentId: "dki", title: "Sunter", order: 1 },
+          { id: "root", parentId: null, title: "Portal Auto2000", order: 1 },
+          { id: "dki", parentId: "root", title: "Wilayah DKI", order: 1 }
+        ];
+        const out2 = fn(sample2);
+        const pass2 =
+          Array.isArray(out2) &&
+          out2.length === 1 &&
+          out2[0]?.id === 'root' &&
+          out2[0]?.children?.[0]?.id === 'dki' &&
+          out2[0]?.children?.[0]?.children?.[0]?.id === 'cabang1';
+        assert('tc_deep_nesting', 'Deep Nesting: 3 Tingkat Kedalaman (Root -> Wilayah -> Cabang)', pass2, out2, 'Expected 3-tier nested hierarchy: root -> dki -> cabang1');
+
+        // Test Case 3: Multiple Roots
+        const sample3 = [
+          { id: "menu2", parentId: null, title: "Layanan Servis", order: 2 },
+          { id: "menu1", parentId: null, title: "Katalog Mobil", order: 1 }
+        ];
+        const out3 = fn(sample3);
+        const pass3 =
+          Array.isArray(out3) &&
+          out3.length === 2 &&
+          out3[0]?.id === 'menu1' &&
+          out3[1]?.id === 'menu2';
+        assert('tc_multiple_roots', 'Multiple Roots: 2 Root Node terurut sesuai nilai order', pass3, out3, 'Expected roots sorted: menu1 (order 1), then menu2 (order 2)');
+
+        // Test Case 4: Empty Input
+        const out4 = fn([]);
+        const pass4 = Array.isArray(out4) && out4.length === 0;
+        assert('tc_empty_input', 'Edge Case: Input kosong menghasilkan array kosong []', pass4, out4, 'Expected [] for empty input');
+      } else {
+        assert('err_fn_missing', 'buildNavigationTree Definition', false, undefined, 'function buildNavigationTree is not exported or defined.');
       }
     }
 
