@@ -113,12 +113,11 @@ livecode-logic-trainer/
 │   └── ResultsModal.tsx            # Assessment modal: status-keyed glow ring, staggered badges
 ├── lib/                            # Core Logic & Utilities
 │   ├── types.ts                    # TypeScript interfaces (Problem, AssessmentResult, Achievement, Persona)
-│   ├── problems.ts                 # 17 In-memory problem seed definitions across 5 roles + HappyFresh track
+│   ├── problems.ts                 # 15 In-memory problem seed definitions across 5 roles + Astra x Sigma Tech track
 │   ├── soundFX.ts                  # Web Audio API synthesizer for test run, chime, error & fanfare cues
 │   ├── store.ts                    # Zustand persistent client store (drafts, metrics, history)
 │   ├── ai-assessment.ts            # LLM evaluation service (Groq Llama 3.3 + auto TPD rate-limit fallback)
-│   └── evaluator.ts                # Isolated JS function sandbox & dynamic unit test assertion runner (17 suites)
-├── public/
+│   └── evaluator.ts                # Isolated JS function sandbox & dynamic unit test assertion runner (15 suites)
 │   └── workers/
 │       └── executor.worker.js      # Web Worker sandbox for secure client-side code execution (problem-specific dispatch)
 ├── .env.local                      # Secret keys (GROQ_API_KEY - Git Ignored)
@@ -173,7 +172,7 @@ livecode-logic-trainer/
    - Dynamic `ProblemPanel` displaying problem-specific hints, best practices, and bonus architectural rubrics.
    - Recruiter Mood Meter glass pill HUD with animated commentary fade-in and emoji drop-shadow glow.
    - Live Monaco code editor with glass toolbar, smooth caret animation, and font ligatures.
-5. **Local Test Runner & Web Worker Sandbox**: Runs mock payload assertions and pure JavaScript function assertions across all 12 problem suites with Web Audio sound effects.
+5. **Local Test Runner & Web Worker Sandbox**: Runs mock payload assertions and pure JavaScript function assertions across all 15 problem suites with Web Audio sound effects.
 6. **Dual-Engine AI Assessment Route & Badges**: Receives code, executes tests, calls Groq LLM with robust fallback to rich verified solutions and problem-specific best practices, calculates achievement badges, triggers celebratory confetti (violet/emerald palette) and fanfare audio on PASS.
    - *Deterministic Ideal Solutions*: Always delivers the curated, clean, idiomatic JavaScript solutions from `lib/problems.ts` rather than relying on generative LLM outputs, preventing hallucinated/incomplete code and optimizing API token latency.
 7. **Vercel Telemetry & Performance Monitoring**: `@vercel/analytics` and `@vercel/speed-insights` integrated into root layout.
