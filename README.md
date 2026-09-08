@@ -45,9 +45,9 @@ The UI is built on a **cinematic dark-mode design language** inspired by Sana La
 
 ---
 
-## 📚 Problem Catalog (Mid-Level JavaScript & REST API, 20 Mins) — 12 Problems
+## 📚 Problem Catalog (Mid-Level JavaScript & REST API, 20 Mins) — 16 Problems
 
-All 12 problems are crafted with **simple, production-grade ideal solutions**, step-by-step hints, actionable best practice guidelines, and comprehensive bonus conceptual rubrics.
+All 16 problems are crafted with **simple, production-grade ideal solutions**, step-by-step hints, actionable best practice guidelines, and comprehensive bonus conceptual rubrics.
 
 ### 🛠️ Practical REST API & Business Logic Problems (Express.js)
 1. **E-commerce Voucher Redemption API** (`Backend Engineer` • `Mid-Level` • 20 mins)
@@ -112,6 +112,27 @@ All 12 problems are crafted with **simple, production-grade ideal solutions**, s
     - Key Logic: Case-insensitive keyword search, category & price range filtering, pagination offset calculation.
     - Bonus: Elasticsearch index mappings & PostgreSQL GIN Trigram indexing.
 
+### 🏢 Astra International & Sigma Tech Track (Frontend Engineer / HackerRank)
+13. **🌐 HackerRank: HTML5 Tag Hierarchy & Structure Validator** (`Frontend Engineer` • `Mid-Level` • 20 mins • Astra x Sigma Tech)
+    - Function: `validateHtmlStructure(htmlString)`
+    - Key Logic: Stack-based HTML tag parser, self-closing void elements, attribute stripping, and unmatched tag detection.
+    - Bonus: Streaming HTML tokenizer & HTML Sanitization against XSS.
+
+14. **⚡ HackerRank: Custom Debounce Engine with Immediate & Cancel** (`Frontend Engineer` • `Mid-Level` • 20 mins • Astra x Sigma Tech)
+    - Function: `createDebounce(fn, delay, immediate)`
+    - Key Logic: Higher-order function closure, leading edge (`immediate`), trailing edge timer reset, and `.cancel()` cleanup.
+    - Bonus: Debouncing vs Throttling event execution frequency on high-throughput browser scrolls.
+
+15. **🌳 HackerRank: Multilevel Navigation Tree Builder (Flat to Nested Hierarchy)** (`Frontend Engineer` • `Mid-Level` • 20 mins • Astra x Sigma Tech)
+    - Function: `buildNavigationTree(items)`
+    - Key Logic: $O(N)$ Hash Map pointer referencing, flat array to recursive tree transformation, hierarchical sorting by `order`.
+    - Bonus: Recursive React components with arbitrary depth, reconciliation keys, and virtualization.
+
+16. **⚡ HackerRank: Pokemon 1-151 Dynamic Fetcher & Pagination (React useEffect)** (`Frontend Engineer` • `Mid-Level` • 20 mins • Astra International)
+    - Function / Controller: `createPokemonPaginationManager({ minId, maxId, fetcher })` + `PokemonViewer.tsx`
+    - Key Logic: React `useEffect` dynamic API fetch by ID (1-151), boundary disable logic (ID 1 & 151), loading/error UI state, and race condition prevention with `AbortController`.
+    - Bonus: Network jitter mitigation, memory leak prevention on unmount, and accessible ARIA attributes.
+
 ---
 
 ## 🧪 Standalone Challenge Practice Suites
@@ -119,10 +140,11 @@ All 12 problems are crafted with **simple, production-grade ideal solutions**, s
 In addition to the in-browser live playground, standalone test suites (TypeScript/Jest) are available under `challenges/`:
 
 ```bash
-# ─── TypeScript & Jest Challenges (HappyFresh Track) ───
+# ─── HappyFresh & Astra LiveCode Challenges (TypeScript & Jest) ───
 npm test challenges/01-cart-promo-engine/index.test.ts
 npm test challenges/02-delivery-slot-reservation/index.test.ts
 npm test challenges/03-item-substitution/index.test.ts
+npm test challenges/04-pokemon-pagination-viewer/index.test.ts
 ```
 
 ---
@@ -143,7 +165,8 @@ livecode-logic-trainer/
 ├── challenges/                     # Standalone Interview Case Studies & Test Suites
 │   ├── 01-cart-promo-engine/       # HappyFresh Cart & Promo Calculation (TypeScript / Jest)
 │   ├── 02-delivery-slot-reservation/# HappyFresh Delivery Slot Reservation (TypeScript / Jest)
-│   └── 03-item-substitution/       # HappyFresh Item Substitution Engine (TypeScript / Jest)
+│   ├── 03-item-substitution/       # HappyFresh Item Substitution Engine (TypeScript / Jest)
+│   └── 04-pokemon-pagination-viewer/# Astra x HackerRank Pokemon Dynamic Fetcher (React TSX / Jest)
 ├── components/
 │   ├── SessionHeader.tsx           # Glass nav, recruiter HUD, timer & audio toggle
 │   ├── RecruiterMoodMeter.tsx      # Glass HUD pill, persona selector, animated commentary
@@ -154,7 +177,7 @@ livecode-logic-trainer/
 │   └── ResultsModal.tsx            # Status-keyed glow modal, staggered achievement badges
 ├── lib/
 │   ├── types.ts                    # TypeScript interface definitions
-│   ├── problems.ts                 # 18 In-memory problem seed definitions (JS Problem Solving)
+│   ├── problems.ts                 # 16 In-memory problem seed definitions (JS Problem Solving)
 │   ├── soundFX.ts                  # Web Audio API sound synthesizer
 │   └── evaluator.ts                # Isolated JS unit test runner (REST API + Pure Functions)
 ├── public/
