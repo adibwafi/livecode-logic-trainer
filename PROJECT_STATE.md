@@ -160,10 +160,9 @@ livecode-logic-trainer/
    - `happyfresh-cart-engine`: 🛒 HappyFresh: Complex Cart & Promo Calculation Engine (Full Stack • Mid-Level • 20m)
    - `happyfresh-slot-reservation`: 🚚 HappyFresh: Delivery Slot Reservation & Anti-Overbooking (Backend • Mid-Level • 20m)
    - `happyfresh-item-substitution`: 🥦 HappyFresh: Picker Item Substitution Scoring Engine (Frontend • Mid-Level • 20m)
-   - `catalog-search-pagination`: 🔍 E-commerce: Multi-Field Search & Pagination Engine (Full Stack • Mid-Level • 20m)
-   - `html-tag-validator`: 🌐 HackerRank: HTML5 Tag Hierarchy & Structure Validator (Frontend • Mid-Level • 20m • Astra International)
-   - `climbing-the-leaderboard`: 🏆 HackerRank: Climbing the Leaderboard (Dense Ranking) (Full Stack • Mid-Level • 20m • Astra International)
-   - `fleet-schedule-merger`: 🚗 HackerRank: Vehicle Fleet Maintenance Slots (Merge Intervals) (Full Stack • Mid-Level • 20m • Astra International)
+   - `html-tag-validator`: 🌐 HackerRank: HTML5 Tag Hierarchy & Structure Validator (Frontend • Mid-Level • 20m • Astra x Sigma Tech)
+   - `custom-debounce-engine`: ⚡ HackerRank: Custom Debounce Engine with Immediate & Cancel (Frontend • Mid-Level • 20m • Astra x Sigma Tech)
+   - `dealer-navigation-tree`: 🌳 HackerRank: Multilevel Navigation Tree Builder (Frontend • Mid-Level • 20m • Astra x Sigma Tech)
    - *Enhancement*: All 15 problems include dynamic `hints`, `bestPractices`, `bonusRubric`, and benchmark-tested `idealSolution`.
 3. **Standalone Case Studies & Automated Unit Tests (`challenges/`)**:
    - `challenges/01-cart-promo-engine`: `README.md`, `index.ts`, `index.test.ts` (Jest)

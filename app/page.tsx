@@ -73,7 +73,7 @@ export default function HomePage() {
   const roleFilters = [
     { key: 'ALL', label: t('allRoles') },
     { key: 'ProblemSolving', label: '⭐ HackerRank & Logic' },
-    { key: 'Astra', label: '🚗 Astra Track (3)' },
+    { key: 'Astra', label: '🚗 Astra x Sigma Tech (3)' },
     { key: 'Frontend', label: 'Frontend Engineer' },
     { key: 'Backend', label: 'Backend Engineer' },
     { key: 'Full Stack', label: 'Full Stack Engineer' },
