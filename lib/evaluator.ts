@@ -309,9 +309,9 @@ export function runLocalTests(userCode: string): TestRunResult {
         try {
           let virtualTime = 0;
           let timerCounter = 1;
-          const timers = new Map<number, { callback: Function; due: number }>();
+          const timers = new Map<number, { callback: (...args: any[]) => void; due: number }>();
 
-          (globalThis as any).setTimeout = (callback: Function, delay: number = 0) => {
+          (globalThis as any).setTimeout = (callback: (...args: any[]) => void, delay: number = 0) => {
             const id = timerCounter++;
             timers.set(id, { callback, due: virtualTime + delay });
             return id;
@@ -323,7 +323,7 @@ export function runLocalTests(userCode: string): TestRunResult {
 
           const advanceTime = (ms: number) => {
             virtualTime += ms;
-            const dueTimers: { id: number; callback: Function }[] = [];
+            const dueTimers: { id: number; callback: (...args: any[]) => void }[] = [];
             for (const [id, t] of timers.entries()) {
               if (t.due <= virtualTime) {
                 dueTimers.push({ id, callback: t.callback });
