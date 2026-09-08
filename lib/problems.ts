@@ -1641,18 +1641,18 @@ module.exports = { queryCatalog };`,
     level: "Mid-Level",
     timeLimit: 20,
     category: "Problem Solving, Stack & HTML5 Parsing",
-    badge: "⭐ HackerRank LiveCode (20m)",
+    badge: "⭐ Sigma Tech LiveCode (20m)",
     company: "Astra International",
     description: `## 1. Problem Statement
-Di portal web enterprise Astra International (seperti CMS portal dealer Astra & Auto2000), developer sering memproses template string HTML5 dinamis dari sistem backend. Sebelum template disuntikkan ke tampilan DOM, sistem membutuhkan parser ringan untuk memvalidasi apakah susunan tag HTML5 terformat dengan benar dan bersarang secara sah.
+Di portal web enterprise Astra International (CMS portal dealer Auto2000 & Astra Motor yang dikembangkan oleh Sigma Tech), developer memproses template string HTML5 dinamis dari sistem backend. Sebelum template disuntikkan ke tampilan DOM, sistem membutuhkan parser ringan untuk memvalidasi apakah susunan tag HTML5 terformat dengan benar dan bersarang secara sah.
 
 Implementasikan fungsi:
 \`\`\`javascript
 function validateHtmlStructure(htmlStr)
 \`\`\`
 
-> ⏱️ **Alokasi Waktu Live Coding (20 Menit)**:
-> - **5 Menit Pertama**: Memahami aturan Stack (LIFO), daftar void/self-closing tags, dan penanganan atribut.
+> ⏱️ **Alokasi Waktu Live Coding (20 Menit - Sigma Tech Interview)**:
+> - **5 Menit Pertama**: Pahami aturan LIFO Stack, daftar void/self-closing tags standar HTML5, dan penanganan atribut.
 > - **15 Menit Koding**: Implementasi tokenisasi tag regex & validasi struktur stack.
 
 ---
@@ -1796,328 +1796,427 @@ module.exports = { validateHtmlStructure };`,
     ]
   },
 
-  // ─── 14. HACKERRANK: CLIMBING THE LEADERBOARD (DENSE RANKING) ─────────────────
+  // ─── 14. HACKERRANK: CUSTOM DEBOUNCE ENGINE WITH IMMEDIATE & CANCEL ───────────
   {
-    id: "climbing-the-leaderboard",
-    title: "🏆 HackerRank: Climbing the Leaderboard (Dense Ranking Engine)",
-    role: "Full Stack Engineer",
+    id: "custom-debounce-engine",
+    title: "⚡ HackerRank: Custom Debounce Engine with Immediate & Cancel (UI Event Optimizer)",
+    role: "Frontend Engineer",
     level: "Mid-Level",
     timeLimit: 20,
-    category: "Problem Solving, Binary Search & Dense Ranking",
-    badge: "⭐ HackerRank LiveCode (20m)",
+    category: "JavaScript Core, Closures & Event Optimization",
+    badge: "⭐ Sigma Tech LiveCode (20m)",
     company: "Astra International",
     description: `## 1. Problem Statement
-Sistem leaderboard gamifikasi penjualan kendaraan Astra International memantau performa sales dealer menggunakan metode **Dense Ranking**:
-- Skor tertinggi selalu mendapatkan peringkat **1** (Rank 1).
-- Skor yang bernilai sama mendapatkan nomor peringkat yang sama.
-- Skor berikutnya mendapatkan peringkat tepat di bawahnya (misal: skor \`[100, 90, 90, 80]\` berturut-turut berperingkat \`1, 2, 2, 3\`).
+Pada portal katalog kendaraan Astra x Sigma Tech (pencarian unit dealer & filter realtime), event listener input search berisiko membombardir server jika setiap ketikan keyboard langsung mengirim request API. 
 
-Diberikan daftar skor awal leaderboard \`ranked\` (terurut menurun) dan daftar skor baru dari seorang sales \`player\` sepanjang beberapa ronde penilaian (terurut menaik). Tentukan peringkat \`player\` setelah setiap ronde!
+Sebagai Frontend Web Developer, Anda diminta membuat fungsi utilitas **\`createDebounce\`** murni (tanpa library eksternal seperti Lodash) untuk mengoptimalkan frekuensi pemanggilan event handler.
 
-> ⏱️ **Alokasi Waktu Live Coding (20 Menit)**:
-> - **5 Menit Pertama**: Memahami aturan Dense Ranking & strategi Two Pointers O(N + M) vs Brute Force O(N*M).
-> - **15 Menit Koding**: Implementasi deduplikasi & linear scan dari bawah papan peringkat.
-
----
-
-## 2. Function Description
-Lengkapi fungsi \`climbingLeaderboard\` berikut:
-
+Implementasikan fungsi:
 \`\`\`javascript
-function climbingLeaderboard(ranked, player)
+function createDebounce(fn, delay, immediate = false)
 \`\`\`
 
-### Parameter:
-- \`int ranked[n]\`: skor di leaderboard saat ini, terurut menurun (\`descending\`).
-- \`int player[m]\`: skor yang diraih player di setiap ronde, terurut menaik (\`ascending\`).
-
-### Return:
-- \`int[m]\`: array berisi nomor peringkat player setelah masing-masing skor di \`player\` dimasukkan.
+> ⏱️ **Alokasi Waktu Live Coding (20 Menit - Sigma Tech Interview)**:
+> - **5 Menit Pertama**: Memahami mekanisme closure timer, leading edge (\`immediate\`), dan method \`cancel()\`.
+> - **15 Menit Koding**: Implementasi timer wrapper, binding \`this\`, dan argumen forwarding.
 
 ---
 
-## 3. Constraints & Optimasi Waktu ⚡
-- $N \\le 200.000$, $M \\le 200.000$
-- Peringkat harus dihitung secara efisien. Pendekatan **Brute Force nested loop $O(N \\times M)$ akan mengalami Time Limit Exceeded (TLE)** pada HackerRank test cases.
-- Solusi optimal: $O(N + M)$ menggunakan Two Pointers atau $O(M \\log N)$ menggunakan Binary Search.
+## 2. Requirement & Spesifikasi
+1. **Delay Execution (Trailing Edge)**:
+   - Fungsi target \`fn\` hanya dieksekusi setelah tidak ada lagi pemanggilan selama \`delay\` milidetik.
+   - Jika dipanggil berulang kali sebelum jeda \`delay\` selesai, timer harus di-reset (hanya panggilan terakhir yang dieksekusi).
+2. **Metode Pembatalan (\`debounced.cancel()\`)**:
+   - Fungsi pengembali (*wrapper*) harus memiliki method \`.cancel()\` untuk membatalkan eksekusi yang sedang tertunda dan membersihkan timer.
+3. **Leading Edge Option (\`immediate = true\`)**:
+   - Jika \`immediate === true\`, fungsi target \`fn\` harus dieksekusi **langsung pada pemanggilan pertama** (leading edge). Pemanggilan selanjutnya selama jeda \`delay\` tidak boleh memicu eksekusi baru hingga \`delay\` benar-benar berlalu.
+4. **Preservasi Context & Argumen**:
+   - Fungsi target \`fn\` harus menerima argumen (\`...args\`) dan konteks \`this\` yang sesuai saat fungsi debounced dipanggil.
 
 ---
 
-## 4. Contoh & Penjelasan
+## 3. Contoh Skenario & Penjelasan
 
-### Contoh 1:
-- \`ranked = [100, 100, 50, 40, 40, 20, 10]\`
-- \`player = [5, 25, 50, 120]\`
-- Skor unik leaderboard: \`[100 (rank 1), 50 (rank 2), 40 (rank 3), 20 (rank 4), 10 (rank 5)]\`
-- Ronde 1: skor \`5\` < 10 -> Peringkat **6**.
-- Ronde 2: skor \`25\` di antara 20 dan 40 -> Peringkat **4**.
-- Ronde 3: skor \`50\` sama dengan rank 2 -> Peringkat **2**.
-- Ronde 4: skor \`120\` > 100 -> Peringkat **1**.
-- Kembalikan: \`[6, 4, 2, 1]\`.
+### Contoh 1 (Trailing Default):
+\`\`\`javascript
+const log = createDebounce((text) => console.log(text), 300);
+log("A");
+log("B");
+log("C");
+// Setelah 300ms dari panggilan "C":
+// Output: "C" (Panggilan "A" dan "B" tereliminasi)
+\`\`\`
+
+### Contoh 2 (Cancel Method):
+\`\`\`javascript
+const search = createDebounce(fetchAPI, 500);
+search("avanza");
+search.cancel(); 
+// Timer dibatalkan, fetchAPI tidak pernah dipanggil.
+\`\`\`
+
+### Contoh 3 (Leading / Immediate):
+\`\`\`javascript
+const submitBtn = createDebounce(submitForm, 1000, true);
+submitBtn(); // Langsung dieksekusi detik 0!
+submitBtn(); // Diabaikan (masih dalam jendela 1000ms)
+\`\`\`
 `,
     starterCode: `/**
- * Menghitung dense ranking player di leaderboard secara optimal.
+ * Custom Debounce implementation with cancel & immediate execution support.
  *
- * @param {number[]} ranked - Array skor leaderboard (descending)
- * @param {number[]} player - Array skor player per ronde (ascending)
- * @returns {number[]} - Array nomor peringkat player per ronde
+ * @param {Function} fn - Target function yang akan didebounce
+ * @param {number} delay - Waktu jeda dalam milidetik
+ * @param {boolean} immediate - Jika true, eksekusi pada leading edge
+ * @returns {Function} - Debounced function yang memiliki method .cancel()
  */
-function climbingLeaderboard(ranked, player) {
-  // TODO: Tuliskan logika dense ranking di sini
-  // Alokasi: 5 menit pahami deduplikasi & two pointers, 15 menit livecoding!
+function createDebounce(fn, delay, immediate = false) {
+  // TODO: Tuliskan logika debounce closure di sini
+  // Alokasi: 5 menit pahami leading edge & cancel, 15 menit livecoding!
 
-  return [];
+  const debounced = function (...args) {
+    // Implementasi timer
+  };
+
+  debounced.cancel = function () {
+    // Implementasi pembatalan timer
+  };
+
+  return debounced;
 }
 
-module.exports = { climbingLeaderboard };`,
-    bonusQuestion: "Mengapa pendekatan Two Pointers berjalan dari bawah leaderboard mencapai kompleksitas linear O(N + M) jika array player sudah terurut menaik?",
+module.exports = { createDebounce };`,
+    bonusQuestion: "Apa perbedaan fundamental antara Debounce dan Throttle, dan pada kasus UI apa masing-masing paling tepat digunakan di web browser modern?",
     bonusRubric: {
-      title: "Bonus: Kompleksitas Linear O(N + M) Two Pointers",
-      subtitle: "Jelaskan argumen efisiensi Two Pointers pada komentar kode Anda:",
+      title: "Bonus: Debounce vs Throttle & UI Event Loop",
+      subtitle: "Jelaskan perbedaan arsitektur event di komentar kode Anda:",
       points: [
-        "Monotonic Progression: Karena skor player terurut menaik, peringkat player berikutnya dijamin sama atau lebih tinggi dari ronde sebelumnya.",
-        "Single Pass Pointer: Pointer leaderboard bergerak ke atas (i--) hanya satu kali sepanjang keseluruhan eksekusi, tidak pernah di-reset ke bawah.",
-        "Eliminasi Redundant Work: Menghindari O(N*M) worst case sehingga mampu memproses 200.000 data dalam hitungan milidetik."
+        "Debounce: Menunda eksekusi sampai aktivitas berhenti (cocok untuk Search Input Autocomplete, Window Resize).",
+        "Throttle: Membatasi eksekusi maksimal sekali per interval waktu konstan (cocok untuk Infinite Scroll, Mouse Move, Gaming Loop).",
+        "requestAnimationFrame Alternative: Untuk animasi rendering UI, rAF sering lebih dianjurkan daripada throttle berbasis setTimeout."
       ]
     },
     hints: [
-      "Langkah 1: Hilangkan duplikasi dari array ranked menggunakan Array.from(new Set(ranked)) untuk membentuk unique leaderboard.",
-      "Indeks unik tersebut langsung merepresentasikan ranking: indeks 0 adalah Rank 1, indeks 1 adalah Rank 2, dst.",
-      "Langkah 2: Karena player terurut menaik, posisikan pointer i di bagian terbawah unique leaderboard (i = uniqueRanked.length - 1).",
-      "Langkah 3: Untuk setiap score di player, geser pointer i ke atas (i--) selama i >= 0 dan score >= uniqueRanked[i].",
-      "Peringkat player adalah i + 2 jika score < uniqueRanked[i], atau 1 jika i < 0."
+      "Deklarasikan variabel timerId = null di dalam closure scope createDebounce.",
+      "Di dalam fungsi debounced, tangkap context this dan arguments (...args).",
+      "Periksa kondisi callNow = immediate && !timerId.",
+      "Jika timerId sudah ada, panggil clearTimeout(timerId) untuk me-reset hitungan mundur.",
+      "Setel timerId baru dengan setTimeout yang akan mengeksekusi fn jika !immediate dan me-reset timerId = null saat timeout selesai.",
+      "Jika callNow bernilai true, eksekusi fn.apply(context, args) secara langsung.",
+      "Pada method debounced.cancel, panggil clearTimeout(timerId) dan ubah timerId = null."
     ],
     bestPractices: [
-      "Gunakan Set untuk memangkas skor duplikat menjadi representasi dense rank O(N).",
-      "Manfaatkan sifat monotonik (sorted) dari array input untuk menghindari binary search berulang bila two pointers memungkinkan.",
-      "Gunakan alokasi array hasil yang tepat untuk meminimalkan overhead garbage collection."
+      "Pastikan timerId selalu di-clear menggunakan clearTimeout untuk mencegah memory leak.",
+      "Gunakan fn.apply(this, args) agar nilai 'this' dari event target DOM tetap terjaga.",
+      "Jangan lupa me-reset timerId menjadi null di dalam callback setTimeout agar status eksekusi berikutnya bersih."
     ],
-    idealSolution: `function climbingLeaderboard(ranked, player) {
-  // 1. Buat array skor unik (Dense Ranking)
-  const uniqueRanked = Array.from(new Set(ranked));
-  const ranks = [];
+    idealSolution: `function createDebounce(fn, delay, immediate = false) {
+  let timerId = null;
 
-  // 2. Pointer berjalan dari peringkat terbawah
-  let i = uniqueRanked.length - 1;
+  const debounced = function (...args) {
+    const context = this;
+    const callNow = immediate && !timerId;
 
-  // 3. Scan setiap skor player
-  for (const score of player) {
-    while (i >= 0 && score >= uniqueRanked[i]) {
-      i--;
+    if (timerId) {
+      clearTimeout(timerId);
     }
 
-    if (i < 0) {
-      ranks.push(1);
-    } else {
-      ranks.push(i + 2);
-    }
-  }
+    timerId = setTimeout(() => {
+      timerId = null;
+      if (!immediate) {
+        fn.apply(context, args);
+      }
+    }, delay);
 
-  return ranks;
+    if (callNow) {
+      fn.apply(context, args);
+    }
+  };
+
+  debounced.cancel = function () {
+    if (timerId) {
+      clearTimeout(timerId);
+      timerId = null;
+    }
+  };
+
+  return debounced;
 }
 
-module.exports = { climbingLeaderboard };`,
+module.exports = { createDebounce };`,
     testCases: [
       {
-        id: "tc_sample_0",
-        name: "HackerRank Sample 0: [5, 25, 50, 120] -> [6, 4, 2, 1]",
-        input: {
-          ranked: [100, 100, 50, 40, 40, 20, 10],
-          player: [5, 25, 50, 120]
-        },
-        expectedOutput: [6, 4, 2, 1]
+        id: "tc_delay_execution",
+        name: "Trailing Edge: Menunda eksekusi & meneruskan argumen terakhir",
+        input: { actions: ["call_A", "call_B", "call_C"], delay: 100 },
+        expectedOutput: { executedCount: 1, lastArgument: "C" }
       },
       {
-        id: "tc_sample_1",
-        name: "HackerRank Sample 1: [50, 65, 77, 90, 102] -> [6, 5, 4, 2, 1]",
-        input: {
-          ranked: [100, 90, 90, 80, 75, 60],
-          player: [50, 65, 77, 90, 102]
-        },
-        expectedOutput: [6, 5, 4, 2, 1]
+        id: "tc_cancel_execution",
+        name: "Cancel Method: debounced.cancel() membatalkan eksekusi tertunda",
+        input: { actions: ["call_A", "cancel"], delay: 100 },
+        expectedOutput: { executedCount: 0 }
       },
       {
-        id: "tc_exact_tie",
-        name: "Exact Ties: [80, 90, 100] -> [3, 2, 1]",
-        input: {
-          ranked: [100, 90, 80],
-          player: [80, 90, 100]
-        },
-        expectedOutput: [3, 2, 1]
+        id: "tc_immediate_leading",
+        name: "Immediate Leading Edge: Eksekusi instan di panggilan pertama",
+        input: { immediate: true, actions: ["call_1", "call_2"], delay: 100 },
+        expectedOutput: { immediateExecuted: true, totalExecuted: 1 }
       },
       {
-        id: "tc_all_lower",
-        name: "All Scores Lower Than Board -> [4, 4, 4]",
-        input: {
-          ranked: [50, 40, 30],
-          player: [5, 10, 20]
-        },
-        expectedOutput: [4, 4, 4]
+        id: "tc_repeated_immediate",
+        name: "Immediate Re-trigger: Dapat dipanggil kembali setelah delay berlalu",
+        input: { immediate: true, delay: 50, waitAndRecall: true },
+        expectedOutput: { totalExecuted: 2 }
       }
     ]
   },
 
-  // ─── 15. HACKERRANK: VEHICLE FLEET MAINTENANCE SLOTS (MERGE INTERVALS) ───────
+  // ─── 15. HACKERRANK: MULTILEVEL NAVIGATION TREE BUILDER (FLAT TO TREE) ───────
   {
-    id: "fleet-schedule-merger",
-    title: "🚗 HackerRank: Vehicle Fleet Maintenance Slots (Merge Overlapping Intervals)",
-    role: "Full Stack Engineer",
+    id: "dealer-navigation-tree",
+    title: "🌳 HackerRank: Multilevel Navigation Tree Builder (Flat to Nested Hierarchy)",
+    role: "Frontend Engineer",
     level: "Mid-Level",
     timeLimit: 20,
-    category: "Problem Solving, Greedy & Interval Scheduling",
-    badge: "⭐ HackerRank LiveCode (20m)",
+    category: "Frontend Data Pipeline, Hash Map & Tree Recursion",
+    badge: "⭐ Sigma Tech LiveCode (20m)",
     company: "Astra International",
     description: `## 1. Problem Statement
-Bengkel resmi Astra (Auto2000 & Astra Motor) mengelola pemeliharaan berkala armada operasional kendaraan (*fleet*). Berbagai permintaan reservasi servis masuk dengan rentang waktu \`[startTime, endTime]\`. Karena sering terjadi tumpang tindih waktu di fasilitas servis (pit-stop), sistem backend harus menggabungkan (**merge**) semua interval waktu yang saling bertabrakan atau bersentuhan menjadi rentang waktu servis yang kontinu tanpa overlap.
+Layanan backend REST API Sigma Tech untuk portal enterprise Astra mengembalikan daftar navigasi menu dealer dalam format flat array berelasi \`parentId\`:
+\`\`\`json
+[
+  { "id": "dealers", "parentId": null, "title": "Jaringan Dealer", "order": 1 },
+  { "id": "dki", "parentId": "dealers", "title": "DKI Jakarta", "order": 2 },
+  { "id": "jabar", "parentId": "dealers", "title": "Jawa Barat", "order": 1 }
+]
+\`\`\`
+
+Untuk merender komponen HTML5 Nested Sidebar & Accordion Menu, Frontend Web harus mentransformasikan flat array tersebut menjadi struktur data **Hierarchical Nested Tree**:
+\`\`\`json
+[
+  {
+    "id": "dealers",
+    "title": "Jaringan Dealer",
+    "order": 1,
+    "children": [
+      { "id": "jabar", "title": "Jawa Barat", "order": 1, "children": [] },
+      { "id": "dki", "title": "DKI Jakarta", "order": 2, "children": [] }
+    ]
+  }
+]
+\`\`\`
 
 Implementasikan fungsi:
 \`\`\`javascript
-function mergeServiceIntervals(intervals)
+function buildNavigationTree(items)
 \`\`\`
 
-> ⏱️ **Alokasi Waktu Live Coding (20 Menit)**:
-> - **5 Menit Pertama**: Memahami aturan pengurutan array interval O(N log N) dan kondisi overlap.
-> - **15 Menit Koding**: Implementasi sorting & greedy interval merge loop.
+> ⏱️ **Alokasi Waktu Live Coding (20 Menit - Sigma Tech Interview)**:
+> - **5 Menit Pertama**: Memahami representasi Hash Map O(N) untuk pointer relasi parent-child dan aturan ordering.
+> - **15 Menit Koding**: Implementasi map creation, tree assembly & ascending sorting per level.
 
 ---
 
-## 2. Requirement & Aturan Penggabungan
-1. **Format Input**:
-   - \`intervals\` adalah array 2 dimensi, di mana tiap elemen berisi pasangan \`[start, end]\` (bilangan bulat integer, \`start <= end\`).
-2. **Kondisi Overlap & Touching**:
-   - Jika dua interval \`[A, B]\` dan \`[C, D]\` memiliki kondisi \`C <= B\` (artinya saling tumpang tindih atau bersentuhan tepat di batas waktu yang sama), gabungkan menjadi \`[A, Math.max(B, D)]\`.
-   - Contoh bersentuhan: \`[9, 11]\` dan \`[11, 13]\` harus digabungkan menjadi \`[9, 13]\`.
-3. **Array Input Tidak Terurut**:
-   - Input tidak dijamin terurut. Anda harus mengurutkan (\`sort\`) interval berdasarkan waktu \`start\` secara menaik terlebih dahulu.
-4. **Format Output**:
-   - Kembalikan array 2 dimensi berisi interval hasil penggabungan, terurut dari waktu mulai paling awal.
+## 2. Requirement & Aturan Transformasi
+1. **Root Nodes**:
+   - Item dengan \`parentId === null\` atau \`parentId === undefined\` (atau \`parentId\` yang tidak ditemukan di array) dianggap sebagai **Root Node** tingkat teratas.
+2. **Properti Children**:
+   - Setiap elemen dalam output tree harus memiliki properti \`children\` bertipe array. Jika tidak memiliki anak, nilai \`children\` adalah array kosong \`[]\`.
+3. **Sorting Berdasarkan Order**:
+   - Node root dan seluruh tingkatan anak (\`children\`) harus terurut menaik (*ascending*) berdasarkan properti numerik \`order\`.
+4. **Efisiensi Algoritma**:
+   - Optimalkan menggunakan satu atau dua pass Hash Map dengan kompleksitas waktu $O(N)$ atau $O(N \\log N)$ karena sorting, hindari nested loop $O(N^2)$.
+5. **Edge Cases**:
+   - Jika input kosong atau bukan array, kembalikan \`[]\`.
 
 ---
 
 ## 3. Contoh & Penjelasan
 
-### Contoh 1:
-- Input: \`[[1, 3], [2, 6], [8, 10], [15, 18]]\`
-- Analisis: \`[1, 3]\` dan \`[2, 6]\` overlap -> \`[1, 6]\`.
-- Output: \`[[1, 6], [8, 10], [15, 18]]\`
+### Input:
+\`\`\`javascript
+[
+  { id: "servis", parentId: null, title: "Booking Servis", order: 2 },
+  { id: "mobil", parentId: null, title: "Katalog Mobil", order: 1 },
+  { id: "suv", parentId: "mobil", title: "SUV & Crossover", order: 2 },
+  { id: "mpv", parentId: "mobil", title: "MPV Keluarga", order: 1 }
+]
+\`\`\`
 
-### Contoh 2 (Menyentuh Batas Jam):
-- Input: \`[[9, 11], [11, 13], [14, 16]]\`
-- Output: \`[[9, 13], [14, 16]]\`
-
-### Contoh 3 (Input Acak & Enclosing):
-- Input: \`[[14, 16], [9, 15], [10, 12]]\`
-- Terurut: \`[9, 15], [10, 12], [14, 16]\` -> Semuanya menyatu ke dalam \`[9, 16]\`.
-- Output: \`[[9, 16]]\`
+### Output:
+\`\`\`javascript
+[
+  {
+    id: "mobil",
+    title: "Katalog Mobil",
+    order: 1,
+    children: [
+      { id: "mpv", title: "MPV Keluarga", order: 1, children: [] },
+      { id: "suv", title: "SUV & Crossover", order: 2, children: [] }
+    ]
+  },
+  {
+    id: "servis",
+    title: "Booking Servis",
+    order: 2,
+    children: []
+  }
+]
+\`\`\`
 `,
     starterCode: `/**
- * Menggabungkan interval slot servis armada kendaraan yang saling tumpang tindih.
+ * Mengubah flat array relasi parent-child menjadi nested hierarchical tree terurut.
  *
- * @param {number[][]} intervals - Array pasangan [start, end]
- * @returns {number[][]} - Array interval yang telah digabungkan
+ * @param {Array<{ id: string|number, parentId: string|number|null, title: string, order: number }>} items
+ * @returns {Array<Object>} - Nested hierarchical tree
  */
-function mergeServiceIntervals(intervals) {
-  // TODO: Tuliskan logika interval merger di sini
-  // Alokasi: 5 menit pahami aturan sorting & overlap, 15 menit livecoding!
+function buildNavigationTree(items) {
+  // TODO: Tuliskan transformasi data tree di sini
+  // Alokasi: 5 menit pahami mapping referensi objek O(N), 15 menit livecoding!
 
   return [];
 }
 
-module.exports = { mergeServiceIntervals };`,
-    bonusQuestion: "Bagaimana cara menangani format ISO 8601 DateTime string (misal: '2026-09-08T09:00:00Z') di JavaScript tanpa terkena masalah timezone offset saat membandingkan interval waktu?",
+module.exports = { buildNavigationTree };`,
+    bonusQuestion: "Bagaimana cara merender struktur tree bertingkat tak terbatas (arbitrary depth) secara elegan di komponen UI Front End (misal: Recursive React Component)?",
     bonusRubric: {
-      title: "Bonus: Penanganan Timezone & Timestamp Epoch",
-      subtitle: "Jelaskan strategi perbandingan waktu yang aman pada komentar kode Anda:",
+      title: "Bonus: Rendering Recursive UI Component di Frontend",
+      subtitle: "Jelaskan pola arsitektur recursive component pada komentar kode Anda:",
       points: [
-        "Unix Timestamp Conversion: Konversi setiap ISO string ke epoch milliseconds menggunakan Date.parse(isoStr) atau getTime() untuk perbandingan numerik murni.",
-        "UTC Normalization: Selalu simpan dan olah waktu dalam standar UTC di backend untuk mencegah mismatch antara zona waktu server dan browser klien.",
-        "Timezone-Aware Libraries: Gunakan Luxon atau date-fns-tz jika diperlukan kalkulasi jadwal operasional berdasarkan jam lokal bengkel (WIB/WITA/WIT)."
+        "Recursive Component Pattern: Komponen <NavItem item={node} /> merender dirinya sendiri jika item.children.length > 0.",
+        "Base Case & Key Prop: Sediakan kondisi penghenti (children kosong) dan selalu pasang unique key (item.id) untuk rekonsiliasi Virtual DOM.",
+        "Performance Optimization: Gunakan React.memo atau virtualization jika tree memiliki ribuan node."
       ]
     },
     hints: [
-      "Lakukan guard clause: jika intervals kosong atau bukan array, kembalikan [].",
-      "Lakukan sorting immutable: const sorted = [...intervals].sort((a, b) => a[0] - b[0] || a[1] - b[1]).",
-      "Inisialisasi merged = [sorted[0]].",
-      "Iterasi elemen sorted mulai dari index 1. Ambil last = merged[merged.length - 1].",
-      "Jika current[0] <= last[1], maka ada overlap/touch: perbarui last[1] = Math.max(last[1], current[1]).",
-      "Jika tidak overlap, push current ke dalam array merged.",
-      "Kembalikan array merged di akhir fungsi."
+      "Guard clause: jika !Array.isArray(items) || items.length === 0, return [].",
+      "Gunakan Map untuk menyimpan salinan setiap item: id => { id, title, order, children: [] }.",
+      "Lakukan iterasi pertama untuk memasukkan semua item ke dalam Map dengan array children kosong.",
+      "Lakukan iterasi kedua: ambil node dari Map. Jika node memiliki parentId dan parent ada di Map, push node ke parent.children. Jika tidak, push ke array roots.",
+      "Buat fungsi helper rekursif untuk menyortir children berdasarkan properti order secara ascending: (a, b) => a.order - b.order."
     ],
     bestPractices: [
-      "Gunakan immutable copy [...intervals].sort() agar parameter asli tidak termutasi.",
-      "Gunakan Math.max(last[1], current[1]) untuk menangani kasus di mana interval kedua berada sepenuhnya di dalam interval pertama.",
-      "Pastikan boundary case (input kosong, 1 interval, atau interval yang sama) ditangani secara elegan."
+      "Manfaatkan referensi objek JavaScript dalam Hash Map sehingga penyisipan anak ke array parent.children secara otomatis tercermin pada tree root.",
+      "Hindari memutasi objek input asli; buat salinan objek baru dengan properti { id, title, order, children }.",
+      "Gunakan Map daripada plain object {} untuk penanganan ID numerik maupun string yang konsisten."
     ],
-    idealSolution: `function mergeServiceIntervals(intervals) {
-  if (!Array.isArray(intervals) || intervals.length === 0) {
-    return [];
+    idealSolution: `function buildNavigationTree(items) {
+  if (!Array.isArray(items) || items.length === 0) return [];
+
+  const map = new Map();
+  const roots = [];
+
+  // 1. Inisialisasi map dengan clone item ber-children kosong
+  for (const item of items) {
+    map.set(item.id, {
+      id: item.id,
+      title: item.title,
+      order: item.order ?? 0,
+      children: []
+    });
   }
 
-  // 1. Urutkan intervals berdasarkan waktu mulai (ascending)
-  const sorted = [...intervals].sort((a, b) => a[0] - b[0] || a[1] - b[1]);
+  // 2. Bentuk relasi tree (referensi objek)
+  for (const item of items) {
+    const node = map.get(item.id);
+    const parentId = item.parentId;
 
-  const merged = [sorted[0]];
-
-  // 2. Iterasi dan gabungkan interval yang tumpang tindih
-  for (let i = 1; i < sorted.length; i++) {
-    const current = sorted[i];
-    const last = merged[merged.length - 1];
-
-    if (current[0] <= last[1]) {
-      // Overlap atau bersinggungan di batas waktu yang sama
-      last[1] = Math.max(last[1], current[1]);
+    if (parentId !== null && parentId !== undefined && map.has(parentId)) {
+      map.get(parentId).children.push(node);
     } else {
-      // Tidak overlap, tambahkan interval baru
-      merged.push(current);
+      roots.push(node);
     }
   }
 
-  return merged;
+  // 3. Sort ascending berdasarkan order untuk setiap level
+  const sortHierarchy = (nodes) => {
+    nodes.sort((a, b) => a.order - b.order);
+    for (const node of nodes) {
+      if (node.children.length > 0) {
+        sortHierarchy(node.children);
+      }
+    }
+  };
+
+  sortHierarchy(roots);
+  return roots;
 }
 
-module.exports = { mergeServiceIntervals };`,
+module.exports = { buildNavigationTree };`,
     testCases: [
       {
-        id: "tc_standard_overlap",
-        name: "Standard Overlapping Intervals -> [[1,6], [8,10], [15,18]]",
+        id: "tc_single_hierarchy",
+        name: "Single Hierarchy: 1 Root dengan 2 Children terurut",
         input: {
-          intervals: [[1, 3], [2, 6], [8, 10], [15, 18]]
+          items: [
+            { id: "parent", parentId: null, title: "Dealer Astra", order: 1 },
+            { id: "child2", parentId: "parent", title: "Bengkel B", order: 2 },
+            { id: "child1", parentId: "parent", title: "Bengkel A", order: 1 }
+          ]
         },
-        expectedOutput: [[1, 6], [8, 10], [15, 18]]
+        expectedOutput: [
+          {
+            id: "parent",
+            title: "Dealer Astra",
+            order: 1,
+            children: [
+              { id: "child1", title: "Bengkel A", order: 1, children: [] },
+              { id: "child2", title: "Bengkel B", order: 2, children: [] }
+            ]
+          }
+        ]
       },
       {
-        id: "tc_touching_boundary",
-        name: "Touching Boundary Times (9-11 & 11-13) -> [[9, 13]]",
+        id: "tc_deep_nesting",
+        name: "Deep Nesting: 3 Tingkat Kedalaman (Root -> Wilayah -> Cabang)",
         input: {
-          intervals: [[9, 11], [11, 13]]
+          items: [
+            { id: "cabang1", parentId: "dki", title: "Sunter", order: 1 },
+            { id: "root", parentId: null, title: "Portal Auto2000", order: 1 },
+            { id: "dki", parentId: "root", title: "Wilayah DKI", order: 1 }
+          ]
         },
-        expectedOutput: [[9, 13]]
+        expectedOutput: [
+          {
+            id: "root",
+            title: "Portal Auto2000",
+            order: 1,
+            children: [
+              {
+                id: "dki",
+                title: "Wilayah DKI",
+                order: 1,
+                children: [
+                  { id: "cabang1", title: "Sunter", order: 1, children: [] }
+                ]
+              }
+            ]
+          }
+        ]
       },
       {
-        id: "tc_unsorted_input",
-        name: "Unsorted Random Order -> [[9, 12], [14, 16]]",
+        id: "tc_multiple_roots",
+        name: "Multiple Roots: 2 Root Node terurut sesuai nilai order",
         input: {
-          intervals: [[14, 16], [9, 11], [10, 12]]
+          items: [
+            { id: "menu2", parentId: null, title: "Layanan Servis", order: 2 },
+            { id: "menu1", parentId: null, title: "Katalog Mobil", order: 1 }
+          ]
         },
-        expectedOutput: [[9, 12], [14, 16]]
+        expectedOutput: [
+          { id: "menu1", title: "Katalog Mobil", order: 1, children: [] },
+          { id: "menu2", title: "Layanan Servis", order: 2, children: [] }
+        ]
       },
       {
-        id: "tc_complete_containment",
-        name: "Complete Containment -> [[1, 10]]",
-        input: {
-          intervals: [[1, 10], [2, 5], [4, 8]]
-        },
-        expectedOutput: [[1, 10]]
-      },
-      {
-        id: "tc_empty_and_single",
-        name: "Single Interval Unchanged -> [[5, 8]]",
-        input: {
-          intervals: [[5, 8]]
-        },
-        expectedOutput: [[5, 8]]
+        id: "tc_empty_input",
+        name: "Edge Case: Input kosong menghasilkan array kosong []",
+        input: { items: [] },
+        expectedOutput: []
       }
     ]
   }
 ];
+
 
