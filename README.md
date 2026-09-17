@@ -42,6 +42,7 @@ The UI is built on a **cinematic dark-mode design language** inspired by Sana La
   - Bonus topics: Argon2/bcrypt, Debouncing vs Throttling, QA EP & BVA, Feature Flags, PostgreSQL Race Conditions, Redis Rate Limiting, Idempotency, JWT Security, Webhook DLQ, Circuit Breakers, Pact Contract Testing, Kubernetes Probes, Blue-Green & Canary Deployments.
 - **Vercel Telemetry & Speed Insights**: Integrated `@vercel/analytics` and `@vercel/speed-insights` for real-time web performance metrics and user traffic monitoring.
 - **Results Modal**: Status-keyed glow ring (emerald/amber/rose), color-coded score with text-shadow glow, confetti (violet/emerald palette), glass tab navigation, staggered achievement badge entrance.
+- **Kahoot-Style Technical Screening Quiz Arena (`/quiz`)**: 25-question multiple choice arena with per-question 45s tension countdown, 30m global limit, speed scoring, streak combos, timeout tracking, Indonesian Tech Readiness Tiers, detailed explanations, and persistent leaderboard.
 
 ---
 
@@ -145,7 +146,25 @@ npm test challenges/01-cart-promo-engine/index.test.ts
 npm test challenges/02-delivery-slot-reservation/index.test.ts
 npm test challenges/03-item-substitution/index.test.ts
 npm test challenges/04-pokemon-pagination-viewer/index.test.ts
+npm test challenges/quiz-engine.test.ts
 ```
+
+---
+
+## 🎮 Kahoot-Style Technical Screening Quiz Arena (`/quiz`)
+
+A gamified Online Assessment (OA) simulator built to prepare engineers for initial technical screenings at top Indonesian tech companies (Tokopedia, GoTo, Traveloka, Shopee, Blibli, BCA Digital, DANA):
+
+- **Dual Specialization Tracks**:
+  - **☕ Backend Engineering**: 35+ question bank covering Node.js event loop & async queues, composite B-Tree indexing (leftmost prefix), query N+1, Kafka partition key ordering, Redis cache stampede & Bloom filters, ACID transactions, optimistic vs pessimistic locking, and RFC 9110 idempotent methods.
+  - **⚡ Frontend Engineering**: 30+ question bank covering JavaScript runtime quirks, closures in loops, `this` context binding, React 18/19 rendering triggers & batching, `useEffect` cleanups, DOM event capturing vs bubbling, Reflow vs Repaint, CSS specificity scoring, and Core Web Vitals (CLS, INP, LCP).
+- **Gamified Kahoot Mechanics**:
+  - 4 distinct colored cards (▲ Red, ◆ Blue, ● Yellow, ■ Green) with keyboard shortcuts `1, 2, 3, 4` or `A, B, C, D`.
+  - **Per-Question 45s Tension Timer**: Color-shifting bar (Green $\rightarrow$ Yellow $\rightarrow$ pulsing Red) + ticking audio.
+  - **30-Minute Global Limit**: Maximum session limit enforcing realistic screening pressure.
+  - **Speed Scoring & Combo Streaks**: Up to 1,000 pts per question with bonus multipliers for streaks.
+  - **Detailed Review & Analytics**: Exact tracking of **Timeout**, **Benar**, **Salah**, **Akurasi %**, Readiness Tier, and full technical explanations.
+  - **National Leaderboard**: Track-filtered competitive high score rankings persisted in `localStorage`.
 
 ---
 
@@ -154,11 +173,13 @@ npm test challenges/04-pokemon-pagination-viewer/index.test.ts
 ```
 livecode-logic-trainer/
 ├── app/
-│   ├── page.tsx                    # Landing page, role filters, paginated problem grid
+│   ├── page.tsx                    # Landing page, role filters, paginated problem grid & Kahoot banner
 │   ├── layout.tsx                  # Root HTML layout, SEO metadata, OpenGraph & themeColor
 │   ├── globals.css                 # Tailwind CSS v4 + Sana Labs motion tokens & utility classes
 │   ├── session/[problemId]/
 │   │   └── page.tsx                # Split-pane interactive live coding session
+│   ├── quiz/
+│   │   └── page.tsx                # Kahoot-style Technical Screening Quiz Arena (25 questions, 30m limit)
 │   └── api/
 │       └── assess/
 │           └── route.ts            # POST /api/assess (Groq LLM & Evaluator API)
@@ -166,7 +187,8 @@ livecode-logic-trainer/
 │   ├── 01-cart-promo-engine/       # HappyFresh Cart & Promo Calculation (TypeScript / Jest)
 │   ├── 02-delivery-slot-reservation/# HappyFresh Delivery Slot Reservation (TypeScript / Jest)
 │   ├── 03-item-substitution/       # HappyFresh Item Substitution Engine (TypeScript / Jest)
-│   └── 04-pokemon-pagination-viewer/# Astra x HackerRank Pokemon Dynamic Fetcher (React TSX / Jest)
+│   ├── 04-pokemon-pagination-viewer/# Astra x HackerRank Pokemon Dynamic Fetcher (React TSX / Jest)
+│   └── quiz-engine.test.ts         # Unit tests for Quiz Engine, scoring, and question banks (Jest)
 ├── components/
 │   ├── SessionHeader.tsx           # Glass nav, recruiter HUD, timer & audio toggle
 │   ├── RecruiterMoodMeter.tsx      # Glass HUD pill, persona selector, animated commentary
@@ -174,12 +196,23 @@ livecode-logic-trainer/
 │   ├── ProblemPanel.tsx            # Problem description, constraints & tabbed bonus/hints
 │   ├── EditorPanel.tsx             # Monaco Editor with glass toolbar & spring interactions
 │   ├── ConsolePanel.tsx            # Local isolated test runner drawer
-│   └── ResultsModal.tsx            # Status-keyed glow modal, staggered achievement badges
+│   ├── ResultsModal.tsx            # Status-keyed glow modal, staggered achievement badges
+│   └── quiz/                       # Kahoot Quiz Arena Components
+│       ├── QuizArena.tsx           # Active gameplay HUD, 45s tension countdown, 4 Kahoot option buttons
+│       ├── QuizResults.tsx         # Post-session podium, stats breakdown (timeout/correct/wrong), answer review
+│       └── QuizLeaderboardModal.tsx# Track-filtered competitive national leaderboard modal
 ├── lib/
 │   ├── types.ts                    # TypeScript interface definitions
 │   ├── problems.ts                 # 16 In-memory problem seed definitions (JS Problem Solving)
-│   ├── soundFX.ts                  # Web Audio API sound synthesizer
-│   └── evaluator.ts                # Isolated JS unit test runner (REST API + Pure Functions)
+│   ├── soundFX.ts                  # Web Audio API sound synthesizer (livecode + quiz sound effects)
+│   ├── store.ts                    # Zustand persistent client store (drafts, metrics, history)
+│   ├── evaluator.ts                # Isolated JS unit test runner (REST API + Pure Functions)
+│   └── quiz/                       # Quiz Engine & Question Banks
+│       ├── types.ts                # QuizQuestion, QuizOption, QuizSessionState, LeaderboardEntry
+│       ├── backend-bank.ts         # 35+ high-frequency Indonesian tech screening questions (Tokopedia, GoTo, BCA)
+│       ├── frontend-bank.ts        # 30+ high-frequency Indonesian tech screening questions (Traveloka, Shopee, Blibli)
+│       ├── quiz-engine.ts          # Fisher-Yates randomizer, Kahoot speed scoring, streak combo & readiness tiers
+│       └── leaderboard.ts          # LocalStorage leaderboard manager with realistic Indonesian engineer seeds
 ├── public/
 │   └── workers/
 │       └── executor.worker.js      # Web Worker code execution sandbox

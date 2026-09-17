@@ -95,11 +95,13 @@
 ```
 livecode-logic-trainer/
 ├── app/                            # Next.js App Router root
-│   ├── page.tsx                    # Landing page, role filter, problem cards & gamification banner
+│   ├── page.tsx                    # Landing page, role filter, problem cards & Kahoot Quiz banner
 │   ├── layout.tsx                  # Root HTML layout, SEO metadata, OpenGraph & themeColor
 │   ├── globals.css                 # Tailwind CSS v4 directives, Sana Labs design system tokens
 │   ├── session/[problemId]/
 │   │   └── page.tsx                # Interactive split-pane live coding session (30-min limit)
+│   ├── quiz/
+│   │   └── page.tsx                # Kahoot-style Tech Quiz Arena (25-question screening session, 30m cap)
 │   └── api/
 │       └── assess/
 │           └── route.ts            # POST /api/assess (Groq LLM + local evaluator route)
@@ -110,16 +112,26 @@ livecode-logic-trainer/
 │   ├── ProblemPanel.tsx            # Left dark panel: Markdown description, bonus, rubric
 │   ├── EditorPanel.tsx             # Right panel: Monaco Editor with glass toolbar
 │   ├── ConsolePanel.tsx            # Bottom drawer: Local unit test runner & execution logs
-│   └── ResultsModal.tsx            # Assessment modal: status-keyed glow ring, staggered badges
+│   ├── ResultsModal.tsx            # Assessment modal: status-keyed glow ring, staggered badges
+│   └── quiz/                       # Kahoot Quiz Arena Components
+│       ├── QuizArena.tsx           # Active gameplay HUD, 45s tension countdown, 4 Kahoot option buttons
+│       ├── QuizResults.tsx         # Post-session podium, stats breakdown (timeout/correct/wrong), answer review
+│       └── QuizLeaderboardModal.tsx# Track-filtered competitive national leaderboard modal
 ├── lib/                            # Core Logic & Utilities
 │   ├── types.ts                    # TypeScript interfaces (Problem, AssessmentResult, Achievement, Persona)
 │   ├── problems.ts                 # 15 In-memory problem seed definitions across 5 roles + Astra x Sigma Tech track
-│   ├── soundFX.ts                  # Web Audio API synthesizer for test run, chime, error & fanfare cues
+│   ├── soundFX.ts                  # Web Audio API synthesizer (tests, chimes, quiz ticks, streaks, timeout gong)
 │   ├── store.ts                    # Zustand persistent client store (drafts, metrics, history)
 │   ├── ai-assessment.ts            # LLM evaluation service (Groq Llama 3.3 + auto TPD rate-limit fallback)
-│   └── evaluator.ts                # Isolated JS function sandbox & dynamic unit test assertion runner (15 suites)
+│   ├── evaluator.ts                # Isolated JS function sandbox & dynamic unit test assertion runner (15 suites)
+│   ├── quiz/                       # Quiz Engine & Question Banks
+│   │   ├── types.ts                # QuizQuestion, QuizOption, QuizSessionState, LeaderboardEntry
+│   │   ├── backend-bank.ts         # 35+ high-frequency Indonesian tech screening questions (Tokopedia, GoTo, BCA)
+│   │   ├── frontend-bank.ts        # 30+ high-frequency Indonesian tech screening questions (Traveloka, Shopee, Blibli)
+│   │   ├── quiz-engine.ts          # Fisher-Yates randomizer, Kahoot speed scoring, streak combo & readiness tiers
+│   │   └── leaderboard.ts          # LocalStorage leaderboard manager with realistic Indonesian engineer seeds
 │   └── workers/
-│       └── executor.worker.js      # Web Worker sandbox for secure client-side code execution (problem-specific dispatch)
+│       └── executor.worker.js      # Web Worker sandbox for secure client-side code execution
 ├── .env.local                      # Secret keys (GROQ_API_KEY - Git Ignored)
 ├── .env.local.example              # Key template for development
 ├── README.md                       # Developer documentation & quickstart
@@ -178,6 +190,15 @@ livecode-logic-trainer/
 6. **Dual-Engine AI Assessment Route & Badges**: Receives code, executes tests, calls Groq LLM with robust fallback to rich verified solutions and problem-specific best practices, calculates achievement badges, triggers celebratory confetti (violet/emerald palette) and fanfare audio on PASS.
    - *Deterministic Ideal Solutions*: Always delivers the curated, clean, idiomatic JavaScript solutions from `lib/problems.ts` rather than relying on generative LLM outputs, preventing hallucinated/incomplete code and optimizing API token latency.
 7. **Vercel Telemetry & Performance Monitoring**: `@vercel/analytics` and `@vercel/speed-insights` integrated into root layout.
+8. **Kahoot-Style Technical Screening Quiz Arena (`/quiz`)**:
+   - Multiple choice Online Assessment (OA) quiz arena gamified ala Kahoot with Web Audio tension ticks, option select pops, streak combo chords, timeout gongs, and fanfare.
+   - Dual specialization tracks: **Backend Engineering Track** & **Frontend Engineering Track**.
+   - Curated question banks (~65+ realistic questions) tailored to the highest-frequency screening tests at Indonesian tech giants (Tokopedia, GoTo, Traveloka, Shopee, Blibli, BCA Digital, DANA). Includes console.log traps, event loop queues, composite B-Tree indexing, Kafka partition keys, Redis cache stampedes, React 18/19 rendering triggers, and DOM reflow.
+   - Per-question tension timer (45 seconds with dynamic green -> amber -> pulsing red progression) + 30-minute global session limit.
+   - Comprehensive end-of-session breakdown: exact counts of **Timeout**, **Benar**, **Salah**, **Akurasi %**, average response time, and total Kahoot score with streak multipliers.
+   - Indonesian Tech Readiness Tier evaluation (Unicorn Staff Ready, Solid Mid-Senior Passed, Junior-Mid Contender, Needs Review).
+   - In-depth question-by-question review drawer explaining the technical reasoning and interview rationale for all 25 questions.
+   - Persistent track-filtered Leaderboard stored in localStorage with seeded realistic tech contenders and candidate score submission.
 
 ---
 
