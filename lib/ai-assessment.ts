@@ -1,5 +1,4 @@
 import Groq from 'groq-sdk';
-import { runLocalTests } from './evaluator';
 import { AssessmentResult, Problem, TestRunResult, TestResultItem } from './types';
 
 /**
