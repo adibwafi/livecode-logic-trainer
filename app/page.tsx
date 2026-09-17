@@ -18,7 +18,6 @@ import {
   ChevronLeft,
   ChevronRight,
   Flame,
-  Zap,
 } from 'lucide-react';
 
 // ─── Framer Motion variants ────────────────────────────────────────────────────
