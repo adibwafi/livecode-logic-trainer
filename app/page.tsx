@@ -17,6 +17,8 @@ import {
   Award,
   ChevronLeft,
   ChevronRight,
+  Flame,
+  Zap,
 } from 'lucide-react';
 
 // ─── Framer Motion variants ────────────────────────────────────────────────────
@@ -128,7 +130,16 @@ export default function HomePage() {
             </span>
           </div>
 
-          <div className="flex items-center gap-3 text-xs">
+          <div className="flex items-center gap-2.5 text-xs">
+            <Link
+              href="/quiz"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-gradient-to-r from-amber-500 to-rose-500 text-white font-bold text-xs shadow-sm hover:opacity-95 hover-lift transition-all duration-200"
+              aria-label="Buka Kahoot Quiz Arena"
+            >
+              <Flame className="w-3.5 h-3.5 fill-white" />
+              <span>Kahoot Quiz</span>
+            </Link>
+
             <span className="hidden sm:inline-flex glow-badge bg-zinc-100/80 text-zinc-700 border-zinc-200">
               <Sparkles className="w-3.5 h-3.5 text-emerald-600" />
               {t('navBadge')}
@@ -199,6 +210,46 @@ export default function HomePage() {
             ))}
           </m.div>
         </m.header>
+
+        {/* ── NEW FEATURE BANNER: Kahoot Tech Quiz Arena ── */}
+        <section className="pb-10">
+          <Link
+            href="/quiz"
+            className="group relative block p-6 md:p-8 rounded-3xl bg-gradient-to-r from-zinc-950 via-zinc-900 to-zinc-950 border border-zinc-800 shadow-xl overflow-hidden hover:border-amber-500/50 hover:shadow-2xl hover:shadow-amber-500/5 transition-all duration-300"
+          >
+            {/* Ambient Background Gradient */}
+            <div className="absolute -top-16 -right-16 w-64 h-64 bg-gradient-to-br from-amber-500/20 via-rose-500/20 to-transparent rounded-full blur-3xl pointer-events-none group-hover:scale-125 transition-transform duration-500" />
+
+            <div className="relative flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+              <div className="space-y-2.5 max-w-2xl">
+                <div className="flex items-center gap-2">
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-extrabold uppercase tracking-wider bg-gradient-to-r from-amber-500 to-rose-500 text-white shadow-xs">
+                    <Flame className="w-3.5 h-3.5 fill-current" />
+                    NEW: Kahoot Mode
+                  </span>
+                  <span className="text-xs font-semibold text-amber-300 px-2.5 py-0.5 rounded-full bg-amber-500/10 border border-amber-500/20">
+                    ⭐ 25 Soal Curated Screening
+                  </span>
+                </div>
+
+                <h2 className="text-xl md:text-2xl font-black text-white tracking-tight leading-snug group-hover:text-amber-300 transition-colors">
+                  Technical Screening Quiz Arena: Uji Pemahaman Backend & Frontend
+                </h2>
+
+                <p className="text-xs md:text-sm text-zinc-400 leading-relaxed">
+                  Latih kecepatan & ketelitian menjawab jebakan console.log, event loop, SQL indexing, Kafka, React re-renders, dan closures dengan format pilihan ganda interaktif Kahoot (45s/soal + 30m sesi). Cocok untuk persiapan tes online Tokopedia, GoTo, Traveloka, Shopee, dan Bank Digital!
+                </p>
+              </div>
+
+              <div className="shrink-0 flex items-center gap-3">
+                <div className="flex items-center gap-2 px-6 py-3 rounded-full bg-white text-zinc-950 font-extrabold text-xs shadow-xl group-hover:bg-amber-300 group-hover:scale-105 transition-all duration-200">
+                  <span>Mulai Kahoot Quiz</span>
+                  <Play className="w-3.5 h-3.5 fill-current" />
+                </div>
+              </div>
+            </div>
+          </Link>
+        </section>
 
         {/* ── Role Filter Pills ── */}
         <section id="problem-catalog" className="pb-10 scroll-mt-24">
