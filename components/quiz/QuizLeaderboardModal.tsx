@@ -23,9 +23,11 @@ export function QuizLeaderboardModal({
   const [entries, setEntries] = useState<LeaderboardEntry[]>([]);
 
   useEffect(() => {
-    if (isOpen) {
+    if (!isOpen) return;
+    const timer = setTimeout(() => {
       setEntries(getLeaderboard(selectedTrack));
-    }
+    }, 0);
+    return () => clearTimeout(timer);
   }, [isOpen, selectedTrack]);
 
   if (!isOpen) return null;
