@@ -91,7 +91,8 @@ export function QuizArena({
   onFinishSession,
   onExit,
 }: QuizArenaProps) {
-  const currentQuestion = session.questions[session.currentIndex];
+  const [currentIndex, setCurrentIndex] = useState<number>(session.currentIndex ?? 0);
+  const currentQuestion = session.questions[currentIndex];
   const [selectedOptionId, setSelectedOptionId] = useState<string | null>(null);
   const [hasAnswered, setHasAnswered] = useState<boolean>(false);
   const [isTimeout, setIsTimeout] = useState<boolean>(false);
@@ -100,12 +101,16 @@ export function QuizArena({
   const [muted, setMutedState] = useState<boolean>(false);
   const [earnedFeedback, setEarnedFeedback] = useState<{ points: number; streakBonus: number } | null>(null);
 
-  const startTimeRef = useRef<number>(Date.now());
+  const startTimeRef = useRef<number>(0);
   const timerIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const hasAnsweredRef = useRef<boolean>(false);
 
   useEffect(() => {
-    setMutedState(isSoundMuted());
+    startTimeRef.current = Date.now();
+    const timer = setTimeout(() => {
+      setMutedState(isSoundMuted());
+    }, 0);
+    return () => clearTimeout(timer);
   }, []);
 
   const toggleSound = () => {
@@ -113,17 +118,6 @@ export function QuizArena({
     setMutedState(next);
     setSoundMuted(next);
   };
-
-  // Reset state on question change
-  useEffect(() => {
-    setSelectedOptionId(null);
-    setHasAnswered(false);
-    hasAnsweredRef.current = false;
-    setIsTimeout(false);
-    setQuestionTimeLeft(QUESTION_TIME_LIMIT_SEC);
-    setEarnedFeedback(null);
-    startTimeRef.current = Date.now();
-  }, [session.currentIndex]);
 
   // Handle Answer Selection
   const handleSelectOption = useCallback(
@@ -136,7 +130,7 @@ export function QuizArena({
 
       const elapsedSec = Math.min(
         QUESTION_TIME_LIMIT_SEC,
-        Math.max(0.1, (Date.now() - startTimeRef.current) / 1000)
+        Math.max(0.1, (Date.now() - (startTimeRef.current || Date.now())) / 1000)
       );
 
       const isCorrect = !timedOut && optionId === currentQuestion.correctOptionId;
@@ -176,6 +170,21 @@ export function QuizArena({
     },
     [currentQuestion, onAnswerQuestion, session.streak]
   );
+
+  const handleNext = useCallback(() => {
+    if (currentIndex + 1 >= session.questions.length) {
+      onFinishSession();
+    } else {
+      setCurrentIndex((prev) => prev + 1);
+      setSelectedOptionId(null);
+      setHasAnswered(false);
+      hasAnsweredRef.current = false;
+      setIsTimeout(false);
+      setQuestionTimeLeft(QUESTION_TIME_LIMIT_SEC);
+      setEarnedFeedback(null);
+      startTimeRef.current = Date.now();
+    }
+  }, [currentIndex, session.questions.length, onFinishSession]);
 
   // Per-Question & Global Countdown Timer
   useEffect(() => {
@@ -243,24 +252,9 @@ export function QuizArena({
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [hasAnswered, handleSelectOption]);
+  }, [hasAnswered, handleSelectOption, handleNext]);
 
-  const handleNext = () => {
-    if (session.currentIndex + 1 >= session.questions.length) {
-      onFinishSession();
-    } else {
-      session.currentIndex += 1;
-      setSelectedOptionId(null);
-      setHasAnswered(false);
-      hasAnsweredRef.current = false;
-      setIsTimeout(false);
-      setQuestionTimeLeft(QUESTION_TIME_LIMIT_SEC);
-      setEarnedFeedback(null);
-      startTimeRef.current = Date.now();
-    }
-  };
-
-  const progressPercent = ((session.currentIndex + 1) / session.questions.length) * 100;
+  const progressPercent = ((currentIndex + 1) / session.questions.length) * 100;
   const timeProgressPercent = (questionTimeLeft / QUESTION_TIME_LIMIT_SEC) * 100;
 
   const formatMinutes = (totalSec: number) => {
@@ -299,7 +293,7 @@ export function QuizArena({
                 {session.track === 'backend' ? '☕ Backend Track' : '⚡ Frontend Track'}
               </span>
               <span className="hidden sm:inline-block text-xs text-zinc-500 font-mono">
-                Soal <span className="text-zinc-900 font-bold">{session.currentIndex + 1}</span>/{session.questions.length}
+                Soal <span className="text-zinc-900 font-bold">{currentIndex + 1}</span>/{session.questions.length}
               </span>
             </div>
           </div>
@@ -546,7 +540,7 @@ export function QuizArena({
                   onClick={handleNext}
                   className="flex items-center gap-2 px-6 py-3 rounded-full bg-zinc-900 text-white font-bold text-sm shadow-md hover:bg-zinc-800 transition-all hover:scale-105 active:scale-95 btn-glass"
                 >
-                  <span>{session.currentIndex + 1 >= session.questions.length ? 'Lihat Hasil Akhir' : 'Soal Berikutnya'}</span>
+                  <span>{currentIndex + 1 >= session.questions.length ? 'Lihat Hasil Akhir' : 'Soal Berikutnya'}</span>
                   <ChevronRight className="w-4 h-4 stroke-[3]" />
                 </button>
               </div>
